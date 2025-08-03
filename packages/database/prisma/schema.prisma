@@ -1,0 +1,154 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model School {
+  id                String   @id @default(cuid())
+  name              String
+  district          String?
+  settings          Json     @default("{}")
+  evaluationFramework Json   // School's rubric/framework
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  users             User[]
+  teachers          Teacher[]
+  observations      Observation[]
+  evaluations       Evaluation[]
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String
+  role              Role     @default(EVALUATOR)
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id])
+  
+  observations      Observation[]
+  evaluations       Evaluation[]
+  createdAt         DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  EVALUATOR
+  DISTRICT_ADMIN
+}
+
+model Teacher {
+  id                String   @id @default(cuid())
+  name              String
+  email             String?
+  subject           String?
+  gradeLevel        String?
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id])
+  
+  // Performance tracking
+  performanceHistory Json    @default("[]")
+  currentGoals      Json     @default("[]")
+  strengths         String[]
+  growthAreas       String[]
+  
+  observations      Observation[]
+  evaluations       Evaluation[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Observation {
+  id                String   @id @default(cuid())
+  teacherId         String
+  teacher           Teacher  @relation(fields: [teacherId], references: [id])
+  observerId        String
+  observer          User     @relation(fields: [observerId], references: [id])
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id])
+  
+  // Raw observation data
+  rawNotes          String   @db.Text
+  enhancedNotes     String?  @db.Text
+  
+  // Structured data
+  date              DateTime
+  duration          Int?     // minutes
+  observationType   ObservationType
+  focusAreas        String[]
+  
+  artifacts         ObservationArtifact[]
+  createdAt         DateTime @default(now())
+  
+  @@index([teacherId])
+  @@index([schoolId, createdAt])
+}
+
+enum ObservationType {
+  FORMAL
+  INFORMAL
+  WALKTHROUGH
+}
+
+model ObservationArtifact {
+  id                String   @id @default(cuid())
+  observationId     String
+  observation       Observation @relation(fields: [observationId], references: [id])
+  
+  fileName          String
+  fileUrl           String
+  fileType          String
+  ocrText           String?  @db.Text
+  processedData     Json?
+  
+  createdAt         DateTime @default(now())
+}
+
+model Evaluation {
+  id                String   @id @default(cuid())
+  teacherId         String
+  teacher           Teacher  @relation(fields: [teacherId], references: [id])
+  evaluatorId       String
+  evaluator         User     @relation(fields: [evaluatorId], references: [id])
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id])
+  
+  type              EvaluationType
+  status            EvaluationStatus @default(DRAFT)
+  
+  // Content
+  content           Json     // Structured evaluation data
+  summary           String?  @db.Text
+  recommendations   String[] 
+  nextSteps         String[]
+  
+  // Metrics (based on school framework)
+  scores            Json
+  
+  submittedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([teacherId])
+  @@index([schoolId, createdAt])
+}
+
+enum EvaluationType {
+  FORMATIVE
+  SUMMATIVE
+  MID_YEAR
+  END_YEAR
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+  ACKNOWLEDGED
+} 
