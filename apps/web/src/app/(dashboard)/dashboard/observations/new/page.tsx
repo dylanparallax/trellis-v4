@@ -1,3 +1,5 @@
+'use client'
+
 import { ObservationForm } from '@/components/observations/observation-form'
 
 export default function NewObservationPage() {

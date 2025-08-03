@@ -14,7 +14,7 @@ export function DemoBanner() {
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             <p className="text-sm font-medium">
-              🎓 You're viewing a demo with sample data
+              🎓 You&apos;re viewing a demo with sample data
             </p>
           </div>
           <Button
@@ -40,7 +40,7 @@ function InteractiveTour({ onClose }: { onClose: () => void }) {
       <div className="bg-white rounded-lg p-6 max-w-md mx-4">
         <h3 className="text-lg font-semibold mb-4">Welcome to Trellis AI!</h3>
         <div className="space-y-3 text-sm">
-          <p>This is a demo of our AI-powered teacher evaluation system. Here's what you can explore:</p>
+          <p>This is a demo of our AI-powered teacher evaluation system. Here&apos;s what you can explore:</p>
           <ul className="list-disc list-inside space-y-1 text-muted-foreground">
             <li>View sample teacher profiles and data</li>
             <li>Try the AI observation enhancement feature</li>

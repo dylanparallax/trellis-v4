@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, Upload, Eye, FileText, Clock } from 'lucide-react'
+import { Sparkles, Upload, Eye, FileText } from 'lucide-react'
 
 interface ObservationFormProps {
   teacherId?: string
-  onSubmit?: (data: any) => void
+  onSubmit?: (data: Record<string, unknown>) => void
 }
 
 export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
