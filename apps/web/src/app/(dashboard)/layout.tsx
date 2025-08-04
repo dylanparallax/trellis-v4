@@ -1,7 +1,6 @@
 import { ReactNode } from 'react'
 import { DashboardNav } from '@/components/dashboard/nav'
 import { Sidebar } from '@/components/dashboard/sidebar'
-import { DemoBanner } from '@/components/demo/demo-banner'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -12,7 +11,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <DemoBanner />
         <DashboardNav />
         <main className="flex-1 p-6">
           {children}

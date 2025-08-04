@@ -150,7 +150,7 @@ Excellent progress on the classroom management goal from last month's observatio
             <Button
               onClick={handleEnhance}
               disabled={!notes.trim() || isEnhancing}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+              className="bg-gradient-to-r from-brand-blue to-brand-orange hover:from-brand-blue/90 hover:to-brand-orange/90"
             >
               <Sparkles className="mr-2 h-4 w-4" />
               {isEnhancing ? 'Enhancing...' : 'Enhance with AI'}
@@ -160,16 +160,16 @@ Excellent progress on the classroom management goal from last month's observatio
       </Card>
 
       {enhancedNotes && (
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-brand-yellow/20 bg-brand-yellow/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-brand-orange">
               <Sparkles className="h-5 w-5" />
               AI Enhanced Notes
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap text-sm text-green-900 bg-green-100 p-4 rounded-md">
+              <pre className="whitespace-pre-wrap text-sm text-foreground bg-brand-yellow/10 p-4 rounded-md">
                 {enhancedNotes}
               </pre>
             </div>

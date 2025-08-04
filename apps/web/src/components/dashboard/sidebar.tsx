@@ -8,9 +8,9 @@ import {
   Eye, 
   FileText, 
   BarChart3, 
-  Settings,
-  GraduationCap
+  Settings
 } from 'lucide-react'
+import Image from 'next/image'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
@@ -25,10 +25,16 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="flex flex-col w-64 bg-card border-r">
-      <div className="flex items-center gap-2 p-6 border-b">
-        <GraduationCap className="h-8 w-8 text-primary" />
-        <h1 className="text-xl font-bold">Trellis AI</h1>
+    <div className="flex flex-col w-48 border-r">
+      <div className="flex items-center gap-3 p-4 border-b">
+        <Image
+          src="/trellis-light.svg"
+          alt="Trellis AI Logo"
+          width={32}
+          height={32}
+          className="h-8 w-auto"
+        />
+        
       </div>
       
       <nav className="flex-1 p-4 space-y-2">
