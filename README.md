@@ -1,6 +1,6 @@
 # Trellis AI - Teacher Evaluation Platform
 
-An AI-powered teacher evaluation and observation system designed for school districts. Transform rough observation notes into professional, growth-oriented feedback using advanced AI.
+An AI-powered teacher evaluation and observation system designed for school districts. Transform rough observation notes into professional, growth-oriented feedback using advanced AI. x
 
 ## 🚀 Features
 
