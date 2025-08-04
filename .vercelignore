@@ -1,7 +1,0 @@
-# Ignore everything except the web app
-*
-!apps/web/**
-!package.json
-!package-lock.json
-!vercel.json
-!turbo.json 
