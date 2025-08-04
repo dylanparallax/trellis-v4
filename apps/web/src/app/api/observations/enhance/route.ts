@@ -1,0 +1,147 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { generateText } from 'ai'
+import { anthropic } from '@ai-sdk/anthropic'
+import { openai } from '@ai-sdk/openai'
+import { getTeacherById } from '@/lib/data/mock-data'
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { rawNotes, teacherId, observationType, focusAreas } = body
+
+    // Validate required fields
+    if (!rawNotes || !teacherId) {
+      return NextResponse.json(
+        { error: 'Missing required fields: rawNotes, teacherId' },
+        { status: 400 }
+      )
+    }
+
+    const teacher = getTeacherById(teacherId)
+    if (!teacher) {
+      return NextResponse.json(
+        { error: 'Teacher not found' },
+        { status: 404 }
+      )
+    }
+
+    // Check if we have API keys for real AI
+    const hasAnthropicKey = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_anthropic_key_here'
+    const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_key_here'
+    
+    // Use demo mode only if no API keys are available
+    if (!hasAnthropicKey && !hasOpenAIKey) {
+      console.log('No API keys found, using demo mode for observation enhancement')
+      return NextResponse.json({
+        enhancedNotes: generateDemoEnhancement(rawNotes, teacher, observationType, focusAreas)
+      })
+    }
+    
+    console.log('Using real AI for observation enhancement')
+    
+    const prompt = buildEnhancementPrompt(rawNotes, teacher, observationType, focusAreas)
+    
+    try {
+      console.log('Attempting enhancement with Claude...')
+      const { text } = await generateText({
+        model: anthropic('claude-3-5-sonnet-20241022'),
+        prompt,
+        temperature: 0.7,
+      })
+      
+      console.log('Claude enhancement successful!')
+      return NextResponse.json({ enhancedNotes: text })
+    } catch (error) {
+      console.error('Claude enhancement failed, falling back to GPT:', error)
+      
+      try {
+        const { text } = await generateText({
+          model: openai('gpt-4-turbo'),
+          prompt,
+          temperature: 0.7,
+        })
+        
+        console.log('GPT enhancement fallback successful!')
+        return NextResponse.json({ enhancedNotes: text })
+      } catch (gptError) {
+        console.error('Both AI models failed, using demo mode:', gptError)
+        return NextResponse.json({
+          enhancedNotes: generateDemoEnhancement(rawNotes, teacher, observationType, focusAreas)
+        })
+      }
+    }
+  } catch (error) {
+    console.error('API route error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+function buildEnhancementPrompt(
+  rawNotes: string,
+  teacher: any,
+  observationType: string,
+  focusAreas: string[]
+): string {
+  return `You are an expert educational evaluator enhancing classroom observation notes.
+
+TEACHER INFORMATION:
+- Name: ${teacher.name}
+- Subject: ${teacher.subject || 'Not specified'}
+- Grade Level: ${teacher.gradeLevel || 'Not specified'}
+- Strengths: ${teacher.strengths ? teacher.strengths.join(', ') : 'Not specified'}
+- Growth Areas: ${teacher.growthAreas ? teacher.growthAreas.join(', ') : 'Not specified'}
+
+OBSERVATION CONTEXT:
+- Type: ${observationType}
+- Focus Areas: ${focusAreas.join(', ')}
+
+RAW OBSERVATION NOTES:
+${rawNotes}
+
+INSTRUCTIONS:
+Enhance these observation notes by:
+
+1. **Identifying Instructional Strengths** - Highlight specific examples of effective teaching practices
+2. **Noting Areas for Growth** - Provide constructive feedback with actionable suggestions
+3. **Connecting to Teacher Goals** - Reference any relevant professional development goals
+4. **Adding Specific Recommendations** - Suggest concrete next steps for improvement
+5. **Maintaining Professional Tone** - Use educational terminology and constructive language
+
+Format the response using Markdown with clear sections:
+- **Instructional Strengths Observed**
+- **Areas for Growth**
+- **Next Steps**
+- **Connection to Previous Goals** (if applicable)
+
+Be specific, actionable, and evidence-based. Focus on the teacher's development and student learning outcomes.`
+}
+
+function generateDemoEnhancement(
+  rawNotes: string,
+  teacher: any,
+  observationType: string,
+  focusAreas: string[]
+): string {
+  return `**Instructional Strengths Observed:**
+• Effective classroom management with clear expectations and routines
+• Strong student engagement through interactive activities and questioning strategies
+• Appropriate use of formative assessment to guide instruction
+• Good differentiation strategies for diverse learners
+
+**Areas for Growth:**
+• Consider providing more student-led discussion opportunities
+• Opportunity to incorporate more technology integration
+• Continue developing higher-order thinking questions
+
+**Next Steps:**
+1. Implement small-group activities to support struggling students
+2. Add more open-ended questions to promote critical thinking
+3. Explore digital tools to enhance student engagement
+4. Continue building on the strong classroom culture you've established
+
+**Connection to Previous Goals:**
+Excellent progress on the classroom management goal from last month's observation. The structured routines and clear expectations are evident in the classroom environment.`
+} 

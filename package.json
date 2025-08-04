@@ -13,12 +13,18 @@
     "clean": "turbo clean",
     "db:generate": "turbo db:generate",
     "db:push": "turbo db:push",
-    "db:studio": "turbo db:studio"
+    "db:studio": "turbo db:studio",
+    "db:seed": "tsx scripts/seed-demo-data.ts"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "turbo": "^1.10.0",
     "typescript": "^5.0.0"
   },
-  "packageManager": "pnpm@8.0.0"
-} 
+  "packageManager": "pnpm@8.0.0",
+  "dependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "tsx": "^4.20.3",
+    "zod": "^4.0.14"
+  }
+}
