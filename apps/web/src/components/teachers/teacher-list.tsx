@@ -8,13 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { 
   User, 
   Mail, 
-  BookOpen, 
-  GraduationCap, 
   TrendingUp, 
   Target,
   Plus,
   Search,
-  Filter,
   MoreHorizontal
 } from 'lucide-react'
 
@@ -295,7 +292,7 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-2">No teachers found</h3>
             <p className="text-muted-foreground mb-4">
-              Try adjusting your search or filters to find what you're looking for.
+              Try adjusting your search or filters to find what you&apos;re looking for.
             </p>
             <Button onClick={() => {
               setSearchTerm('')

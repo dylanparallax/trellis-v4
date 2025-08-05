@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Search, Filter, Eye, Calendar, Clock, User, ArrowLeft } from 'lucide-react'
+import { Plus, Search, Eye, Calendar, Clock, User } from 'lucide-react'
 import Link from 'next/link'
 
 interface Observation {

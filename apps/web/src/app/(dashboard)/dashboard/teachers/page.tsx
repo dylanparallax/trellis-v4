@@ -1,13 +1,25 @@
 'use client'
 
 import { TeacherList } from '@/components/teachers/teacher-list'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Users, TrendingUp, Target } from 'lucide-react'
-import Link from 'next/link'
+
+// Import Teacher type from the component
+interface Teacher {
+  id: string
+  name: string
+  email?: string
+  subject?: string
+  gradeLevel?: string
+  strengths: string[]
+  growthAreas: string[]
+  currentGoals: Array<{ goal: string; progress: number }>
+  observations: Array<{ id: string; date: string; type: string }>
+  evaluations: Array<{ id: string; type: string; status: string }>
+}
 
 export default function TeachersPage() {
-  const handleTeacherSelect = (teacher: any) => {
+  const handleTeacherSelect = (teacher: Teacher) => {
     // Navigate to teacher detail page
     window.location.href = `/dashboard/teachers/${teacher.id}`
   }

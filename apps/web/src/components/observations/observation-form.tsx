@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, Upload, Eye, FileText, User, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Sparkles, Upload, FileText, User, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface Teacher {
   id: string

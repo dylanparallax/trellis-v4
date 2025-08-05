@@ -48,7 +48,7 @@ export class AIEvaluationService {
       return {
         evaluation: text,
         message: `I've generated a comprehensive ${context.evaluationType.toLowerCase()} evaluation for ${context.teacher.name}. Here's what I found based on their observations and performance data:`,
-        suggestions: this.generateSuggestions(context)
+        suggestions: this.generateSuggestions()
       }
     } catch (error) {
       console.error('Claude evaluation failed, falling back to GPT:', error)
@@ -63,7 +63,7 @@ export class AIEvaluationService {
         return {
           evaluation: text,
           message: `I've generated a comprehensive ${context.evaluationType.toLowerCase()} evaluation for ${context.teacher.name}. Here's what I found based on their observations and performance data:`,
-          suggestions: this.generateSuggestions(context)
+          suggestions: this.generateSuggestions()
         }
       } catch (gptError) {
         console.error('Both AI models failed, using demo mode:', gptError)
@@ -289,7 +289,7 @@ ${teacher.growthAreas?.map(area => `- **${area}** - Opportunity for continued pr
     return {
       evaluation: demoEvaluation,
       message: `I've generated a comprehensive ${evaluationType.toLowerCase()} evaluation for ${teacher.name}. Here's what I found based on their observations and performance data:`,
-      suggestions: this.generateSuggestions(context)
+      suggestions: this.generateSuggestions()
     }
   }
 
@@ -331,7 +331,7 @@ ${teacher.growthAreas?.map(area => `- **${area}** - Opportunity for continued pr
     }
   }
 
-  private generateSuggestions(context: EvaluationContext): string[] {
+  private generateSuggestions(): string[] {
     return [
       "Ask me to add more specific examples from recent observations",
       "Request additional recommendations for professional development",

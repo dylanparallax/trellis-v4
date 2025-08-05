@@ -4,62 +4,72 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
 import { AIEvaluationService } from '@/lib/ai/evaluation-service'
 
+// Add proper types
+interface Teacher {
+  name: string
+  subject?: string
+  gradeLevel?: string
+  yearsOfExperience?: number
+  currentGoals?: Array<{ goal: string; progress: number }>
+  strengths?: string[]
+  growthAreas?: string[]
+}
+
+interface Observation {
+  date: Date
+  enhancedNotes?: string
+  rawNotes?: string
+}
+
+interface Evaluation {
+  createdAt: Date
+  type: string
+  summary: string
+}
+
+interface EvaluationContext {
+  teacher: Teacher
+  evaluationType: string
+  schoolYear: string
+  previousObservations: Observation[]
+  previousEvaluations: Evaluation[]
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { teacher, evaluationType, schoolYear } = body
+    const { teacherId, evaluationType, schoolYear } = await request.json()
 
-    // Validate required fields
-    if (!teacher || !evaluationType || !schoolYear) {
-      return NextResponse.json(
-        { error: 'Missing required fields: teacher, evaluationType, schoolYear' },
-        { status: 400 }
-      )
-    }
+    // Fetch teacher data
+    const teacherResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/teachers/${teacherId}`)
+    const teacher = await teacherResponse.json()
+
+    // Fetch previous observations
+    const observationsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/observations?teacherId=${teacherId}`)
+    const observations = await observationsResponse.json()
+
+    // Fetch previous evaluations
+    const evaluationsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/evaluations?teacherId=${teacherId}`)
+    const evaluations = await evaluationsResponse.json()
 
     // Create evaluation context
-    const context = {
+    const context: EvaluationContext = {
       teacher,
       evaluationType,
       schoolYear,
-      previousObservations: [], // TODO: Fetch from database
-      previousEvaluations: [], // TODO: Fetch from database
-      chatHistory: []
+      previousObservations: observations,
+      previousEvaluations: evaluations
     }
 
-    // Check if we have API keys for real AI
-    const hasAnthropicKey = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_anthropic_key_here'
-    const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_key_here'
-    
-    console.log('Server API Key Check:', { 
-      hasAnthropicKey: !!hasAnthropicKey, 
-      hasOpenAIKey: !!hasOpenAIKey,
-      anthropicKey: process.env.ANTHROPIC_API_KEY ? 'present' : 'missing',
-      openaiKey: process.env.OPENAI_API_KEY ? 'present' : 'missing'
-    })
-    
-    // Use demo mode only if no API keys are available
-    if (!hasAnthropicKey && !hasOpenAIKey) {
-      console.log('No API keys found, using demo mode')
-      const evaluationService = new AIEvaluationService()
-      const demoResponse = evaluationService.generateDemoEvaluation(context)
-      return NextResponse.json(demoResponse)
-    }
-    
-    console.log('Using real AI with Claude Sonnet 4')
-    
-    // Build the prompt
     const prompt = buildInitialEvaluationPrompt(context)
-    
+
     try {
-      console.log('Attempting to generate with Claude Sonnet 4...')
       const { text } = await generateText({
         model: anthropic('claude-3-5-sonnet-20241022'),
         prompt,
         temperature: 0.7,
       })
       
-      console.log('Claude generation successful!')
+      console.log('Claude evaluation successful!')
       
       const response = {
         evaluation: text,
@@ -103,7 +113,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildInitialEvaluationPrompt(context: any): string {
+function buildInitialEvaluationPrompt(context: EvaluationContext): string {
   const teacher = context.teacher
   const observations = context.previousObservations
   const evaluations = context.previousEvaluations
@@ -125,13 +135,13 @@ EVALUATION CONTEXT:
 - Previous Observations: ${observations.length} total
 
 RECENT OBSERVATIONS:
-${observations.slice(0, 5).map((obs: any) => `
+${observations.slice(0, 5).map((obs: Observation) => `
 Date: ${obs.date.toLocaleDateString()}
 Notes: ${obs.enhancedNotes || obs.rawNotes}
 `).join('\n')}
 
 PREVIOUS EVALUATIONS:
-${evaluations.slice(0, 3).map((evaluation: any) => `
+${evaluations.slice(0, 3).map((evaluation: Evaluation) => `
 Date: ${evaluation.createdAt.toLocaleDateString()}
 Type: ${evaluation.type}
 Summary: ${evaluation.summary}
@@ -152,7 +162,7 @@ Use specific examples from observations when available. Be constructive and acti
 Format the response as a clean, structured evaluation report.`
 }
 
-function generateSuggestions(context: any): string[] {
+function generateSuggestions(context: EvaluationContext): string[] {
   return [
     "Add specific examples from recent observations",
     "Include measurable goals for the next evaluation period",

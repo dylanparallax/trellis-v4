@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateText } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
-import { openai } from '@ai-sdk/openai'
 import { AIEvaluationService } from '@/lib/ai/evaluation-service'
 
 export async function POST(request: NextRequest) {

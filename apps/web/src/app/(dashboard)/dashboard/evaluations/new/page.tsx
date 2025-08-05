@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Sparkles, User, FileText, Calendar, ArrowLeft } from 'lucide-react'
+import { Search, Sparkles, User, FileText, ArrowLeft } from 'lucide-react'
 
 export default function NewEvaluationPage() {
   const router = useRouter()

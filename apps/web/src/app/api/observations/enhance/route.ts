@@ -2,47 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
-import { getTeacherById } from '@/lib/data/mock-data'
+
+// Add proper types
+interface Teacher {
+  name: string
+  subject?: string
+  gradeLevel?: string
+  strengths?: string[]
+  growthAreas?: string[]
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { rawNotes, teacherId, observationType, focusAreas } = body
+    const { rawNotes, teacher, observationType, focusAreas } = await request.json()
 
     // Validate required fields
-    if (!rawNotes || !teacherId) {
+    if (!rawNotes || !teacher || !observationType) {
       return NextResponse.json(
-        { error: 'Missing required fields: rawNotes, teacherId' },
+        { error: 'Missing required fields: rawNotes, teacher, observationType' },
         { status: 400 }
       )
     }
 
-    const teacher = getTeacherById(teacherId)
-    if (!teacher) {
-      return NextResponse.json(
-        { error: 'Teacher not found' },
-        { status: 404 }
-      )
-    }
+    const prompt = buildEnhancementPrompt(rawNotes, teacher, observationType, focusAreas || [])
 
-    // Check if we have API keys for real AI
-    const hasAnthropicKey = process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_anthropic_key_here'
-    const hasOpenAIKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_key_here'
-    
-    // Use demo mode only if no API keys are available
-    if (!hasAnthropicKey && !hasOpenAIKey) {
-      console.log('No API keys found, using demo mode for observation enhancement')
-      return NextResponse.json({
-        enhancedNotes: generateDemoEnhancement(rawNotes, teacher, observationType, focusAreas)
-      })
-    }
-    
-    console.log('Using real AI for observation enhancement')
-    
-    const prompt = buildEnhancementPrompt(rawNotes, teacher, observationType, focusAreas)
-    
     try {
-      console.log('Attempting enhancement with Claude...')
       const { text } = await generateText({
         model: anthropic('claude-3-5-sonnet-20241022'),
         prompt,
@@ -66,7 +50,7 @@ export async function POST(request: NextRequest) {
       } catch (gptError) {
         console.error('Both AI models failed, using demo mode:', gptError)
         return NextResponse.json({
-          enhancedNotes: generateDemoEnhancement(rawNotes, teacher, observationType, focusAreas)
+          enhancedNotes: generateDemoEnhancement(rawNotes, teacher, observationType, focusAreas || [])
         })
       }
     }
@@ -81,7 +65,7 @@ export async function POST(request: NextRequest) {
 
 function buildEnhancementPrompt(
   rawNotes: string,
-  teacher: any,
+  teacher: Teacher,
   observationType: string,
   focusAreas: string[]
 ): string {
@@ -121,7 +105,7 @@ Be specific, actionable, and evidence-based. Focus on the teacher's development 
 
 function generateDemoEnhancement(
   rawNotes: string,
-  teacher: any,
+  teacher: Teacher,
   observationType: string,
   focusAreas: string[]
 ): string {

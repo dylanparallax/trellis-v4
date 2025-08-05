@@ -1,11 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { 
@@ -16,7 +14,6 @@ import {
   User, 
   Bot, 
   FileText,
-  MessageSquare,
   Copy,
   Check,
   ArrowLeft,
@@ -66,12 +63,66 @@ export default function EvaluationChatPage() {
 
   const currentEvaluation = evaluationVersions.find(v => v.id === currentVersionId)
 
+  const generateInitialEvaluation = useCallback(async () => {
+    if (!teacher) return
+    
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/evaluations/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          teacherId: teacher.id,
+          evaluationType: evaluationType || 'Annual',
+          schoolYear: schoolYear || '2024-2025'
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate evaluation')
+      }
+
+      const data = await response.json()
+      
+      const initialMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: data.evaluation,
+        timestamp: new Date()
+      }
+      
+      setMessages([initialMessage])
+      
+      // Create initial version
+      createEvaluationVersion(
+        data.evaluation,
+        `${evaluationType || 'Annual'} Evaluation`,
+        'Initial AI-generated evaluation'
+      )
+      
+    } catch (error) {
+      console.error('Error generating initial evaluation:', error)
+      // Add error message
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'Sorry, I encountered an error generating the initial evaluation. Please try again.',
+        timestamp: new Date()
+      }
+      setMessages([errorMessage])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [teacher, evaluationType, schoolYear])
+
   useEffect(() => {
     if (teacher && messages.length === 0) {
       // Generate initial evaluation
       generateInitialEvaluation()
     }
-  }, [teacher])
+  }, [teacher, messages.length, generateInitialEvaluation])
 
   useEffect(() => {
     scrollToBottom()
@@ -94,69 +145,6 @@ export default function EvaluationChatPage() {
     setEvaluationVersions(prev => [...prev, version])
     setCurrentVersionId(version.id)
     return version
-  }
-
-  const generateInitialEvaluation = async () => {
-    if (!teacher) return
-    
-    setIsLoading(true)
-    
-    try {
-      const response = await fetch('/api/evaluations/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          teacher,
-          evaluationType: (evaluationType as 'FORMATIVE' | 'SUMMATIVE') || 'FORMATIVE',
-          schoolYear: schoolYear || '2024-2025'
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to generate evaluation')
-      }
-
-      const data = await response.json()
-      
-      // Create initial evaluation version
-      const initialVersion = createEvaluationVersion(
-        data.evaluation,
-        `Initial ${evaluationType} Evaluation`,
-        'AI-generated initial evaluation based on teacher data and observations'
-      )
-      
-      // Add chat message about the generation with artifact reference
-      const initialMessage: Message = {
-        id: '1',
-        role: 'assistant',
-        content: `I've generated a comprehensive ${evaluationType?.toLowerCase()} evaluation for ${teacher?.name}.`,
-        timestamp: new Date(),
-        artifactId: initialVersion.id
-      }
-      
-      setMessages([initialMessage])
-    } catch (error) {
-      console.error('Failed to generate evaluation:', error)
-      // Fallback to sample evaluation
-      const fallbackVersion = createEvaluationVersion(
-        generateSampleEvaluation(),
-        `Initial ${evaluationType} Evaluation`,
-        'Sample evaluation (fallback)'
-      )
-      
-      const fallbackMessage: Message = {
-        id: '1',
-        role: 'assistant',
-        content: `I've generated a comprehensive ${evaluationType?.toLowerCase()} evaluation for ${teacher?.name}.`,
-        timestamp: new Date(),
-        artifactId: fallbackVersion.id
-      }
-      setMessages([fallbackMessage])
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   const handleSendMessage = async () => {

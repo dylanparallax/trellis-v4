@@ -33,7 +33,7 @@ export default function LoginPage() {
       } else {
         router.push('/dashboard')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred')
     } finally {
       setIsLoading(false)
@@ -47,7 +47,7 @@ export default function LoginPage() {
     try {
       // For demo mode, just redirect to dashboard
       router.push('/dashboard')
-    } catch (err) {
+    } catch (_err) {
       setError('Demo login failed')
       setIsLoading(false)
     }
