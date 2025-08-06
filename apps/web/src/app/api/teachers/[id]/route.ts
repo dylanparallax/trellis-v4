@@ -20,8 +20,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params
     const teacher = await prisma.teacher.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         school: true,
         observations: {
@@ -58,11 +59,12 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params
     const body = await request.json()
     const validated = teacherUpdateSchema.parse(body)
 
     const teacher = await prisma.teacher.update({
-      where: { id: params.id },
+      where: { id },
       data: validated,
       include: {
         school: true
@@ -90,9 +92,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params
     // Check if teacher has any observations or evaluations
     const teacherWithData = await prisma.teacher.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: {
@@ -118,7 +121,7 @@ export async function DELETE(
     }
 
     await prisma.teacher.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: 'Teacher deleted successfully' })
@@ -129,4 +132,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-} 
+}
