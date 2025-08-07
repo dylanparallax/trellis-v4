@@ -19,10 +19,10 @@ const teacherUpdateSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const teacher = await prisma.teacher.findUnique({
       where: { id },
       include: {
@@ -58,10 +58,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const validated = teacherUpdateSchema.parse(body)
 
@@ -78,7 +78,7 @@ export async function PUT(
     console.error('Error updating teacher:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { error: 'Validation failed', details: error.issues },
         { status: 400 }
       )
     }
@@ -91,10 +91,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     // Check if teacher has any observations or evaluations
     const teacherWithData = await prisma.teacher.findUnique({
       where: { id },

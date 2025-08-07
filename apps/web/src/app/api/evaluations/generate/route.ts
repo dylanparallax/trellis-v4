@@ -2,37 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
+import { prisma } from '@trellis/database'
 import { AIEvaluationService } from '@/lib/ai/evaluation-service'
-
-// Add proper types
-interface Teacher {
-  name: string
-  subject?: string
-  gradeLevel?: string
-  yearsOfExperience?: number
-  currentGoals?: Array<{ goal: string; progress: number }>
-  strengths?: string[]
-  growthAreas?: string[]
-}
-
-interface Observation {
-  date: Date
-  enhancedNotes?: string
-  rawNotes?: string
-}
-
-interface Evaluation {
-  createdAt: Date
-  type: string
-  summary: string
-}
+import type { Teacher, Observation, Evaluation } from '@trellis/database'
 
 interface EvaluationContext {
   teacher: Teacher
-  evaluationType: string
+  evaluationType: 'FORMATIVE' | 'SUMMATIVE'
   schoolYear: string
   previousObservations: Observation[]
   previousEvaluations: Evaluation[]
+  chatHistory: Array<{ role: 'user' | 'assistant'; content: string; timestamp: Date }>
 }
 
 export async function POST(request: NextRequest) {
@@ -57,7 +37,8 @@ export async function POST(request: NextRequest) {
       evaluationType,
       schoolYear,
       previousObservations: observations,
-      previousEvaluations: evaluations
+      previousEvaluations: evaluations,
+      chatHistory: []
     }
 
     const prompt = buildInitialEvaluationPrompt(context)
@@ -100,7 +81,7 @@ export async function POST(request: NextRequest) {
       } catch (gptError) {
         console.error('Both AI models failed, using demo mode:', gptError)
         const evaluationService = new AIEvaluationService()
-        const demoResponse = evaluationService.generateDemoEvaluation(context)
+        const demoResponse = evaluationService.generateDemoChatResponse('Generate evaluation', context, '')
         return NextResponse.json(demoResponse)
       }
     }
@@ -124,7 +105,6 @@ TEACHER INFORMATION:
 - Name: ${teacher.name}
 - Subject: ${teacher.subject || 'Not specified'}
 - Grade Level: ${teacher.gradeLevel || 'Not specified'}
-- Years of Experience: ${teacher.yearsOfExperience || 'Not specified'}
 - Current Goals: ${teacher.currentGoals ? JSON.stringify(teacher.currentGoals) : 'Not specified'}
 - Strengths: ${teacher.strengths ? teacher.strengths.join(', ') : 'Not specified'}
 - Growth Areas: ${teacher.growthAreas ? teacher.growthAreas.join(', ') : 'Not specified'}

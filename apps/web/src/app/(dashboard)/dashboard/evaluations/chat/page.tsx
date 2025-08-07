@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -42,7 +42,7 @@ interface EvaluationVersion {
   description: string
 }
 
-export default function EvaluationChatPage() {
+function EvaluationChatContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const teacherId = searchParams.get('teacher')
@@ -256,269 +256,201 @@ export default function EvaluationChatPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
-      <div className="border-b bg-background p-4">
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
-              onClick={() => router.push('/dashboard/evaluations')}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              size="sm"
+              onClick={() => router.back()}
+              className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              <span>Back</span>
             </Button>
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-sm font-medium text-primary">
-                {teacher.name.charAt(0)}
-              </span>
-            </div>
             <div>
-              <h1 className="text-xl font-semibold">{teacher.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {evaluationType} Evaluation • {schoolYear}
-              </p>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Evaluation Chat
+              </h1>
+              {teacher && (
+                <p className="text-sm text-gray-500">
+                  {teacher.name} • {evaluationType || 'Annual'} Evaluation
+                </p>
+              )}
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={generateInitialEvaluation}
-              disabled={isLoading}
-              className="bg-primary hover:bg-blue-500 text-white border-0"
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              {isLoading ? 'Generating...' : 'Generate'}
-            </Button>
+          <div className="flex items-center space-x-2">
+            {currentEvaluation && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyEvaluation}
+                  className="flex items-center space-x-2"
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <span>{copied ? 'Copied!' : 'Copy'}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={downloadEvaluation}
+                  className="flex items-center space-x-2"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download</span>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex">
-        {/* Chat Interface */}
-        <div className="w-[40%] flex flex-col border-r">
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-3xl ${message.role === 'user' ? 'order-2' : 'order-1'}`}>
-                  <div className={`flex items-start space-x-3 ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      message.role === 'user' 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-brand-blue text-white'
-                    }`}>
-                      {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                    </div>
-                    
-                    <div className={`flex-1 ${message.role === 'user' ? 'text-right' : ''}`}>
-                      <div className={`inline-block p-4 rounded-lg ${
-                        message.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}>
-                        <div className="whitespace-pre-wrap">{message.content}</div>
-                      </div>
-                      
-                      {/* Artifact Icon */}
-                      {message.artifactId && (
-                        <div className="mt-3 flex items-center gap-2">
-                          <button
-                            onClick={() => handleArtifactClick(message.artifactId!)}
-                            className="flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg hover:bg-muted/50 transition-colors group"
-                          >
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-blue to-brand-orange flex items-center justify-center">
-                              <FileText className="h-3 w-3 text-white" />
-                            </div>
-                            <span className="text-sm font-medium text-foreground group-hover:text-brand-blue">
-                              {evaluationVersions.find(v => v.id === message.artifactId)?.title || 'Evaluation Document'}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              v{evaluationVersions.find(v => v.id === message.artifactId)?.version}
-                            </span>
-                          </button>
-                        </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <Sparkles className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Start Your Evaluation
+                </h3>
+                <p className="text-gray-500 max-w-md">
+                  I'll help you create a comprehensive evaluation for {teacher?.name || 'this teacher'}. 
+                  Let me know what you'd like to focus on or ask me to generate an initial evaluation.
+                </p>
+                <Button
+                  onClick={generateInitialEvaluation}
+                  disabled={isLoading || !teacher}
+                  className="mt-4"
+                >
+                  {isLoading ? 'Generating...' : 'Generate Initial Evaluation'}
+                </Button>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-3xl rounded-lg px-4 py-3 ${
+                      message.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white border border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 mb-2">
+                      {message.role === 'user' ? (
+                        <User className="h-4 w-4" />
+                      ) : (
+                        <Bot className="h-4 w-4" />
                       )}
-                      
-                      <div className={`text-xs text-muted-foreground mt-1 ${
-                        message.role === 'user' ? 'text-right' : ''
-                      }`}>
+                      <span className="text-sm font-medium">
+                        {message.role === 'user' ? 'You' : 'AI Assistant'}
+                      </span>
+                      <span className="text-xs opacity-70">
                         {message.timestamp.toLocaleTimeString()}
-                      </div>
+                      </span>
                     </div>
+                    <div className="prose prose-sm max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+                  <div className="flex items-center space-x-2">
+                    <Bot className="h-4 w-4" />
+                    <span className="text-sm font-medium">AI Assistant</span>
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input Area */}
+          <div className="border-t border-gray-200 p-6 bg-white">
+            <div className="flex space-x-4">
+              <Textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask me to modify the evaluation, add specific examples, or clarify any points..."
+                className="flex-1 min-h-[60px] resize-none"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={isLoading || !input.trim()}
+                className="self-end"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="w-80 bg-white border-l border-gray-200 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Evaluation Versions</h3>
+          <div className="space-y-2">
+            {evaluationVersions.map((version) => (
+              <div
+                key={version.id}
+                className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                  version.id === currentVersionId
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setCurrentVersionId(version.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-sm text-gray-900">
+                      {version.title}
+                    </h4>
+                    <p className="text-xs text-gray-500">{version.description}</p>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Clock className="h-3 w-3 text-gray-400" />
+                    <span className="text-xs text-gray-500">
+                      {version.timestamp.toLocaleTimeString()}
+                    </span>
                   </div>
                 </div>
               </div>
             ))}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="max-w-3xl">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center">
-                      <Bot className="h-4 w-4" />
-                    </div>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-blue"></div>
-                        <span>AI is thinking...</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Input - Now positioned directly after messages */}
-            <div className="pt-4">
-              <div className="flex space-x-2">
-                <Textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask me to modify the evaluation, add specific details, or make any changes..."
-                  className="flex-1 min-h-[60px] max-h-[120px] resize-none"
-                  disabled={isLoading || !currentEvaluation}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!input.trim() || isLoading || !currentEvaluation}
-                  className="bg-gradient-to-r from-brand-blue to-brand-orange hover:from-brand-blue/90 hover:to-brand-orange/90"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            <div ref={messagesEndRef} />
           </div>
-        </div>
-
-        {/* Evaluation Document Panel */}
-        <div className="w-[70%] bg-muted/30">
-          <div className="p-4 border-b">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Evaluation Document
-              </h3>
-              {currentEvaluation && (
-                <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                  v{currentEvaluation.version}
-                </div>
-              )}
-            </div>
-            {currentEvaluation && (
-              <div className="mt-2 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {currentEvaluation.timestamp.toLocaleString()}
-                </div>
-                <div className="mt-1 font-medium">{currentEvaluation.title}</div>
-                <div className="mt-1">{currentEvaluation.description}</div>
-              </div>
-            )}
-          </div>
-          
-          {/* Version History */}
-          {evaluationVersions.length > 1 && (
-            <div className="p-3 border-b bg-background/50">
-              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-2">
-                <History className="h-3 w-3" />
-                Version History
-              </div>
-              <div className="space-y-1">
-                {evaluationVersions.slice().reverse().map((version) => (
-                  <button
-                    key={version.id}
-                    onClick={() => setCurrentVersionId(version.id)}
-                    className={`w-full text-left p-2 rounded text-xs transition-colors ${
-                      currentVersionId === version.id
-                        ? 'bg-primary/10 text-primary border border-primary/20'
-                        : 'hover:bg-muted/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">v{version.version}</span>
-                      <span className="text-muted-foreground">
-                        {version.timestamp.toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <div className="text-muted-foreground truncate">{version.title}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Evaluation Content */}
-          <div className="flex-1 overflow-y-auto">
-            {currentEvaluation ? (
-              <div className="p-6">
-                <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-h3:text-base prose-p:text-sm prose-li:text-sm prose-strong:text-foreground prose-strong:font-semibold">
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({children}) => <h1 className="text-xl font-bold text-foreground border-b border-border pb-2 mb-4">{children}</h1>,
-                      h2: ({children}) => <h2 className="text-lg font-semibold text-foreground mt-6 mb-3">{children}</h2>,
-                      h3: ({children}) => <h3 className="text-base font-medium text-foreground mt-4 mb-2">{children}</h3>,
-                      p: ({children}) => <p className="text-sm text-foreground mb-3 leading-relaxed">{children}</p>,
-                      ul: ({children}) => <ul className="list-disc list-inside space-y-1 mb-4">{children}</ul>,
-                      ol: ({children}) => <ol className="list-decimal list-inside space-y-1 mb-4">{children}</ol>,
-                      li: ({children}) => <li className="text-sm text-foreground">{children}</li>,
-                      strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
-                      em: ({children}) => <em className="italic text-foreground">{children}</em>,
-                      hr: () => <hr className="border-border my-6" />,
-                      blockquote: ({children}) => <blockquote className="border-l-4 border-primary/20 pl-4 italic text-muted-foreground">{children}</blockquote>
-                    }}
-                  >
-                    {currentEvaluation.content}
-                  </ReactMarkdown>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No evaluation generated yet.</p>
-                <p className="text-sm">Click &quot;Generate&quot; to create the first evaluation.</p>
-              </div>
-            )}
-          </div>
-          
-          {/* Action Buttons at Bottom */}
-          {currentEvaluation && (
-            <div className="border-t bg-background p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-muted-foreground">
-                  Version {currentEvaluation.version} • {currentEvaluation.timestamp.toLocaleDateString()}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={copyEvaluation} title={copied ? 'Copied!' : 'Copy'}>
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    <span className="ml-2 text-xs">Copy</span>
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={downloadEvaluation} title="Download">
-                    <Download className="h-4 w-4" />
-                    <span className="ml-2 text-xs">Download</span>
-                  </Button>
-                  <Button variant="ghost" size="sm" title="Save">
-                    <Save className="h-4 w-4" />
-                    <span className="ml-2 text-xs">Save</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
+  )
+}
+
+export default function EvaluationChatPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EvaluationChatContent />
+    </Suspense>
   )
 }
 
