@@ -120,4 +120,4 @@ jspm_packages/
 .turbo
 
 # Prisma
-packages/database/prisma/migrations/ 
+packages/database/prisma/migrations/ # ignore local backups

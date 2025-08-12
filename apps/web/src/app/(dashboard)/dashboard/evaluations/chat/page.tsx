@@ -4,23 +4,21 @@ import { useState, useRef, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import dynamic from 'next/dynamic'
 import { 
   Send, 
   Download, 
-  Save, 
   Sparkles, 
   User, 
   Bot, 
-  FileText,
   Copy,
   Check,
   ArrowLeft,
-  Clock,
-  History
+  Clock
 } from 'lucide-react'
-import { getTeacherById } from '@/lib/data/mock-data'
+const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
+import remarkGfm from 'remark-gfm'
+
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -42,6 +40,13 @@ interface EvaluationVersion {
   description: string
 }
 
+type ApiTeacher = {
+  id: string
+  name: string
+  subject?: string
+  gradeLevel?: string
+}
+
 function EvaluationChatContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -59,7 +64,39 @@ function EvaluationChatContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  const teacher = getTeacherById(teacherId || '')
+  const [teacher, setTeacher] = useState<ApiTeacher | null>(null)
+  const [teacherError, setTeacherError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const run = async () => {
+      if (!teacherId) return
+      try {
+        const res = await fetch(`/api/teachers/${teacherId}`)
+        if (!res.ok) {
+          throw new Error('Failed to load teacher')
+        }
+        const data = await res.json()
+        setTeacher({ id: data.id, name: data.name, subject: data.subject, gradeLevel: data.gradeLevel })
+      } catch {
+        setTeacherError('Unable to load teacher')
+      }
+    }
+    run()
+  }, [teacherId])
+
+  const createEvaluationVersion = useCallback((content: string, title: string, description: string): EvaluationVersion => {
+    const newVersion: EvaluationVersion = {
+      id: Date.now().toString(),
+      version: (evaluationVersions?.length || 0) + 1,
+      content,
+      timestamp: new Date(),
+      title,
+      description,
+    }
+    setEvaluationVersions(prev => [...prev, newVersion])
+    setCurrentVersionId(newVersion.id)
+    return newVersion
+  }, [evaluationVersions])
 
   const currentEvaluation = evaluationVersions.find(v => v.id === currentVersionId)
 
@@ -75,7 +112,7 @@ function EvaluationChatContent() {
         },
         body: JSON.stringify({
           teacherId: teacher.id,
-          evaluationType: evaluationType || 'Annual',
+          evaluationType: (evaluationType as 'FORMATIVE' | 'SUMMATIVE') || 'FORMATIVE',
           schoolYear: schoolYear || '2024-2025'
         }),
       })
@@ -115,7 +152,7 @@ function EvaluationChatContent() {
     } finally {
       setIsLoading(false)
     }
-  }, [teacher, evaluationType, schoolYear])
+  }, [teacher, evaluationType, schoolYear, createEvaluationVersion])
 
   useEffect(() => {
     if (teacher && messages.length === 0) {
@@ -132,20 +169,7 @@ function EvaluationChatContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const createEvaluationVersion = (content: string, title: string, description: string): EvaluationVersion => {
-    const version: EvaluationVersion = {
-      id: Date.now().toString(),
-      version: evaluationVersions.length + 1,
-      content,
-      timestamp: new Date(),
-      title,
-      description
-    }
-    
-    setEvaluationVersions(prev => [...prev, version])
-    setCurrentVersionId(version.id)
-    return version
-  }
+  
 
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading || !teacher || !currentEvaluation) return
@@ -169,7 +193,7 @@ function EvaluationChatContent() {
         },
         body: JSON.stringify({
           userMessage: input,
-          teacher,
+          teacherId: teacher.id,
           evaluationType: (evaluationType as 'FORMATIVE' | 'SUMMATIVE') || 'FORMATIVE',
           schoolYear: schoolYear || '2024-2025',
           currentEvaluation: currentEvaluation.content
@@ -247,16 +271,13 @@ function EvaluationChatContent() {
     URL.revokeObjectURL(url)
   }
 
-  const handleArtifactClick = (artifactId: string) => {
-    setCurrentVersionId(artifactId)
-  }
+  // artifact click is handled via version list onClick
 
-  if (!teacher) {
-    return <div>Teacher not found</div>
-  }
+  if (teacherError) return <div>{teacherError}</div>
+  if (!teacher) return <div>Loading teacher...</div>
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
@@ -322,8 +343,8 @@ function EvaluationChatContent() {
                   Start Your Evaluation
                 </h3>
                 <p className="text-gray-500 max-w-md">
-                  I'll help you create a comprehensive evaluation for {teacher?.name || 'this teacher'}. 
-                  Let me know what you'd like to focus on or ask me to generate an initial evaluation.
+                   I&apos;ll help you create a comprehensive evaluation for {teacher?.name || 'this teacher'}. 
+                   Let me know what you&apos;d like to focus on or ask me to generate an initial evaluation.
                 </p>
                 <Button
                   onClick={generateInitialEvaluation}
@@ -453,41 +474,3 @@ export default function EvaluationChatPage() {
     </Suspense>
   )
 }
-
-function generateSampleEvaluation(): string {
-  return `TEACHER EVALUATION REPORT
-
-Teacher: Sarah Johnson
-Subject: Mathematics
-Grade Level: 5
-Evaluation Type: Formative
-School Year: 2024-2025
-Date: December 15, 2024
-
-EXECUTIVE SUMMARY
-Ms. Johnson demonstrates strong instructional practices with particular strengths in student engagement and differentiated instruction. Her classroom management is exemplary, and she effectively uses formative assessment to guide instruction.
-
-STRENGTHS
-• Excellent classroom management with clear expectations and routines
-• Strong use of manipulatives and hands-on activities for math concepts
-• Effective differentiation strategies for diverse learners
-• Consistent use of formative assessment to inform instruction
-• Positive relationships with students and parents
-
-AREAS FOR GROWTH
-• Opportunity to incorporate more technology-based learning activities
-• Consider implementing more student-led discussions and problem-solving
-• Continue developing higher-order thinking questions
-
-RECOMMENDATIONS
-1. Explore digital math tools and apps to enhance student engagement
-2. Implement more collaborative problem-solving activities
-3. Continue professional development in differentiated instruction
-
-NEXT STEPS
-• Schedule follow-up observation in 6 weeks
-• Provide resources for technology integration
-• Continue current professional development plan
-
-Overall Rating: Proficient (3.8/5.0)`
-} 

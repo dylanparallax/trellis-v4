@@ -9,7 +9,7 @@ export function DemoBanner() {
   
   return (
     <>
-      <div className="bg-gradient-to-r from-brand-blue to-brand-orange text-white p-3">
+      <div className="bg-white text-foreground p-3 border-b">
         <div className="container flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
@@ -19,9 +19,8 @@ export function DemoBanner() {
           </div>
           <Button
             size="sm"
-            variant="secondary"
+            variant="outline"
             onClick={() => setShowTour(true)}
-            className="bg-white/20 hover:bg-white/30 text-white border-white/30"
           >
             <Play className="mr-2 h-3 w-3" />
             Take a Tour

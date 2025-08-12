@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Sparkles, Upload, FileText, User, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Sparkles, Upload, Award, User, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface Teacher {
   id: string
@@ -336,7 +336,7 @@ Excellent progress on the classroom management goal from last month's observatio
             <Button
               onClick={handleEnhance}
               disabled={!notes.trim() || isEnhancing}
-              className="bg-gradient-to-r from-brand-blue to-brand-orange hover:from-brand-blue/90 hover:to-brand-orange/90"
+              className=""
             >
               <Sparkles className="mr-2 h-4 w-4" />
               {isEnhancing ? 'Enhancing...' : 'Enhance with AI'}
@@ -346,7 +346,7 @@ Excellent progress on the classroom management goal from last month's observatio
       </Card>
 
       {enhancedNotes && (
-        <Card className="border-brand-yellow/20 bg-brand-yellow/5">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-brand-orange">
               <Sparkles className="h-5 w-5" />
@@ -355,7 +355,7 @@ Excellent progress on the classroom management goal from last month's observatio
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap text-sm text-foreground bg-brand-yellow/10 p-4 rounded-md">
+              <pre className="whitespace-pre-wrap text-sm text-foreground bg-muted p-4 rounded-md">
                 {enhancedNotes}
               </pre>
             </div>
@@ -399,7 +399,7 @@ Excellent progress on the classroom management goal from last month's observatio
               {artifacts.map((file, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-md">
                   <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <Award className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <span className="text-sm font-medium">{file.name}</span>
                       <p className="text-xs text-muted-foreground">
@@ -465,7 +465,6 @@ Excellent progress on the classroom management goal from last month's observatio
         <Button 
           onClick={handleSubmit} 
           disabled={!isValid || isSubmitting}
-          className="bg-gradient-to-r from-brand-blue to-brand-orange hover:from-brand-blue/90 hover:to-brand-orange/90"
         >
           {isSubmitting ? 'Submitting...' : 'Submit Observation'}
         </Button>

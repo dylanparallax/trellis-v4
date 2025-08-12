@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
 import { z } from 'zod'
+import { getAuthContext } from '@/lib/auth/server'
 
 const observationSchema = z.object({
   teacherId: z.string().min(1, 'Teacher ID is required'),
@@ -19,20 +20,14 @@ const observationSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { searchParams } = new URL(request.url)
     const teacherId = searchParams.get('teacherId')
-    const schoolId = searchParams.get('schoolId')
-    
-    if (!teacherId && !schoolId) {
-      return NextResponse.json(
-        { error: 'Either teacherId or schoolId is required' },
-        { status: 400 }
-      )
-    }
 
     const where: Record<string, string> = {}
     if (teacherId) where.teacherId = teacherId
-    if (schoolId) where.schoolId = schoolId
+    where.schoolId = auth.schoolId
 
     const observations = await prisma.observation.findMany({
       where,
@@ -68,19 +63,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await request.json()
     const validated = observationSchema.parse(body)
-    
-    // For now, we'll use default values for demo
-    // In a real app, these would come from the authenticated user's context
-    const observerId = 'demo-observer-1'
-    const schoolId = 'demo-school-1'
     
     const observation = await prisma.observation.create({
       data: {
         teacherId: validated.teacherId,
-        observerId,
-        schoolId,
+        observerId: auth.userId,
+        schoolId: auth.schoolId,
         rawNotes: validated.rawNotes,
         enhancedNotes: validated.enhancedNotes,
         observationType: validated.observationType,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
 import { z } from 'zod'
+import { getAuthContext } from '@/lib/auth/server'
 
 const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -17,18 +18,11 @@ const teacherSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const schoolId = searchParams.get('schoolId')
-    
-    if (!schoolId) {
-      return NextResponse.json(
-        { error: 'School ID is required' },
-        { status: 400 }
-      )
-    }
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const teachers = await prisma.teacher.findMany({
-      where: { schoolId },
+      where: { schoolId: auth.schoolId },
       include: {
         observations: {
           orderBy: { date: 'desc' },
@@ -54,17 +48,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await request.json()
     const validated = teacherSchema.parse(body)
-    
-    // For now, we'll use a default school ID
-    // In a real app, this would come from the authenticated user's context
-    const schoolId = 'demo-school-1'
     
     const teacher = await prisma.teacher.create({
       data: {
         ...validated,
-        schoolId,
+        schoolId: auth.schoolId,
         performanceHistory: [],
         currentGoals: validated.currentGoals,
         strengths: validated.strengths,

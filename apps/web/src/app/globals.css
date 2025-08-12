@@ -125,6 +125,13 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
+}
+
+/* Removed gradient background */
+
+/* Glass panel utility */
+.glass-panel {
+  @apply bg-background/70 backdrop-blur supports-[backdrop-filter]:bg-background/60 border;
 }

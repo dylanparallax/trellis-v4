@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 
 export function DashboardNav() {
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="glass-panel sticky top-0 z-40">
       <div className="flex h-16 items-center px-4 gap-4">
         <div className="flex-1">
           <div className="relative max-w-sm">
@@ -20,13 +20,18 @@ export function DashboardNav() {
         </div>
         
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:scale-[1.02] transition-transform"
+            aria-label="Notifications"
+          >
             <Bell className="h-4 w-4" />
           </Button>
           
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Lincoln Elementary</span>
-            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.15)]" />
           </div>
         </div>
       </div>

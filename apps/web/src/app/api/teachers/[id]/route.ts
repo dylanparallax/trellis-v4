@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
 import { z } from 'zod'
+import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 
 const teacherUpdateSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
@@ -22,6 +23,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
     const teacher = await prisma.teacher.findUnique({
       where: { id },
@@ -45,6 +48,7 @@ export async function GET(
         { status: 404 }
       )
     }
+    assertSameSchool(teacher, auth.schoolId)
 
     return NextResponse.json(teacher)
   } catch (error) {
@@ -61,9 +65,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
     const body = await request.json()
     const validated = teacherUpdateSchema.parse(body)
+
+    // Scope update to same school via pre-check
+    const existing = await prisma.teacher.findUnique({ where: { id } })
+    if (!existing) return NextResponse.json({ error: 'Teacher not found' }, { status: 404 })
+    assertSameSchool(existing, auth.schoolId)
 
     const teacher = await prisma.teacher.update({
       where: { id },
@@ -94,6 +105,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
     // Check if teacher has any observations or evaluations
     const teacherWithData = await prisma.teacher.findUnique({
@@ -114,6 +127,7 @@ export async function DELETE(
         { status: 404 }
       )
     }
+    assertSameSchool(teacherWithData, auth.schoolId)
 
     if (teacherWithData._count.observations > 0 || teacherWithData._count.evaluations > 0) {
       return NextResponse.json(

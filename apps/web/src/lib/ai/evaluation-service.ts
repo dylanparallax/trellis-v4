@@ -1,7 +1,27 @@
 import { openai } from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
-import type { Teacher, Observation, Evaluation } from '@trellis/database'
+// Minimal domain types to decouple from Prisma client exports
+type Teacher = {
+  id: string
+  name: string
+  subject?: string
+  gradeLevel?: string
+  strengths?: string[]
+  growthAreas?: string[]
+}
+
+type Observation = {
+  date: Date | string
+  enhancedNotes?: string
+  rawNotes: string
+}
+
+type Evaluation = {
+  createdAt: Date | string
+  type: string
+  summary?: string
+}
 
 export interface EvaluationContext {
   teacher: Teacher
@@ -25,6 +45,8 @@ export interface EvaluationResponse {
 }
 
 export class AIEvaluationService {
+  private static readonly ANTHROPIC_MODEL = 'claude-3-5-sonnet-20241022'
+  private static readonly OPENAI_MODEL = 'gpt-4-turbo'
   private hasValidAPIKeys(): boolean {
     const hasAnthropicKey = !!(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_anthropic_key_here')
     const hasOpenAIKey = !!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_key_here')
@@ -33,14 +55,14 @@ export class AIEvaluationService {
 
   async generateInitialEvaluation(context: EvaluationContext): Promise<EvaluationResponse> {
     if (!this.hasValidAPIKeys()) {
-      return this.generateDemoEvaluation(context)
+      throw new Error('AI API keys are not configured')
     }
 
     const prompt = this.buildInitialEvaluationPrompt(context)
     
     try {
       const { text } = await generateText({
-        model: anthropic('claude-sonnet-4-20250514'),
+        model: anthropic(AIEvaluationService.ANTHROPIC_MODEL),
         prompt,
         temperature: 0.7,
       })
@@ -55,7 +77,7 @@ export class AIEvaluationService {
       
       try {
         const { text } = await generateText({
-          model: openai('gpt-4-turbo'),
+          model: openai(AIEvaluationService.OPENAI_MODEL),
           prompt,
           temperature: 0.7,
         })
@@ -66,8 +88,8 @@ export class AIEvaluationService {
           suggestions: this.generateSuggestions()
         }
       } catch (gptError) {
-        console.error('Both AI models failed, using demo mode:', gptError)
-        return this.generateDemoEvaluation(context)
+        console.error('Both AI models failed for initial evaluation:', gptError)
+        throw new Error('AI generation failed')
       }
     }
   }
@@ -78,14 +100,14 @@ export class AIEvaluationService {
     currentEvaluation: string
   ): Promise<EvaluationResponse> {
     if (!this.hasValidAPIKeys()) {
-      return this.generateDemoChatResponse(userMessage, context, currentEvaluation)
+      throw new Error('AI API keys are not configured')
     }
 
     const prompt = this.buildChatPrompt(userMessage, context, currentEvaluation)
     
     try {
       const { text } = await generateText({
-        model: anthropic('claude-sonnet-4-20250514'),
+        model: anthropic(AIEvaluationService.ANTHROPIC_MODEL),
         prompt,
         temperature: 0.7,
       })
@@ -102,7 +124,7 @@ export class AIEvaluationService {
       
       try {
         const { text } = await generateText({
-          model: openai('gpt-4-turbo'),
+          model: openai(AIEvaluationService.OPENAI_MODEL),
           prompt,
           temperature: 0.7,
         })
@@ -115,8 +137,8 @@ export class AIEvaluationService {
           suggestions: []
         }
       } catch (gptError) {
-        console.error('Both AI models failed for chat, using demo mode:', gptError)
-        return this.generateDemoChatResponse(userMessage, context, currentEvaluation)
+        console.error('Both AI models failed for chat:', gptError)
+        throw new Error('AI chat failed')
       }
     }
   }
@@ -141,17 +163,16 @@ EVALUATION CONTEXT:
 - Previous Observations: ${observations.length} total
 
 RECENT OBSERVATIONS:
-${observations.slice(0, 5).map(obs => `
-Date: ${obs.date.toLocaleDateString()}
-Notes: ${obs.enhancedNotes || obs.rawNotes}
-`).join('\n')}
+${observations.slice(0, 5).map(obs => {
+  const date = typeof obs.date === 'string' ? new Date(obs.date) : obs.date
+  return `\nDate: ${date.toLocaleDateString()}\nNotes: ${obs.enhancedNotes || obs.rawNotes}\n`
+}).join('')}
 
 PREVIOUS EVALUATIONS:
-${evaluations.slice(0, 3).map(evaluation => `
-Date: ${evaluation.createdAt.toLocaleDateString()}
-Type: ${evaluation.type}
-Summary: ${evaluation.summary}
-`).join('\n')}
+${evaluations.slice(0, 3).map(evaluation => {
+  const date = typeof evaluation.createdAt === 'string' ? new Date(evaluation.createdAt) : evaluation.createdAt
+  return `\nDate: ${date.toLocaleDateString()}\nType: ${evaluation.type}\nSummary: ${evaluation.summary || ''}\n`
+}).join('')}
 
 INSTRUCTIONS:
 Create a professional, comprehensive teacher evaluation report using Markdown formatting. Include:
@@ -298,30 +319,45 @@ ${teacher.growthAreas?.map(area => `- **${area}** - Opportunity for continued pr
     context: EvaluationContext,
     currentEvaluation: string
   ): EvaluationResponse {
-    const teacher = context.teacher
     const lowerMessage = userMessage.toLowerCase()
     
     let updatedEvaluation = currentEvaluation
     let message = "I've updated the evaluation based on your feedback."
-    
-    if (lowerMessage.includes('strength') || lowerMessage.includes('strong')) {
-      updatedEvaluation = currentEvaluation.replace(
-        'STRENGTHS',
-        'STRENGTHS\n• Additional strength: Demonstrated excellent growth in instructional practices'
+
+    // Regex-based section manipulation for Markdown headings
+    const addBulletUnderHeading = (markdown: string, heading: string, bullet: string) => {
+      const headingRegex = new RegExp(`(^|\n)##\\s+${heading}\\s*\n`, 'i')
+      const match = markdown.match(headingRegex)
+      if (!match) return markdown
+      const insertIndex = (match.index ?? 0) + match[0].length
+      return markdown.slice(0, insertIndex) + `- ${bullet}\n` + markdown.slice(insertIndex)
+    }
+
+    if (lowerMessage.includes('strength')) {
+      updatedEvaluation = addBulletUnderHeading(
+        updatedEvaluation,
+        'Strengths',
+        'Demonstrated excellent growth in instructional practices'
       )
-      message = "I've added more specific details about your strengths in the evaluation."
+      message = "I've added a new strength under the Strengths section."
     } else if (lowerMessage.includes('technology') || lowerMessage.includes('digital')) {
-      updatedEvaluation = currentEvaluation.replace(
-        'AREAS FOR GROWTH',
-        'AREAS FOR GROWTH\n• Enhanced technology integration opportunities'
+      updatedEvaluation = addBulletUnderHeading(
+        updatedEvaluation,
+        'Areas for Growth',
+        'Enhance technology integration with purposeful student use'
       )
-      message = "I've updated the evaluation to include more technology integration suggestions."
+      message = "I added a technology-focused growth item."
     } else if (lowerMessage.includes('recommendation') || lowerMessage.includes('suggest')) {
-      updatedEvaluation = currentEvaluation.replace(
-        'RECOMMENDATIONS',
-        'RECOMMENDATIONS\n4. Consider implementing more student-centered learning approaches'
-      )
-      message = "I've added an additional recommendation to the evaluation."
+      // Insert as next numbered item in Recommendations
+      const recRegex = /(\n##\s+Recommendations\s*\n)([\s\S]*?)(\n##\s+|$)/i
+      const match = updatedEvaluation.match(recRegex)
+      if (match) {
+        const listBlock = match[2]
+        const nextNumber = (listBlock.match(/^\d+\./gm) || []).length + 1
+        const injected = `${match[1]}${listBlock} ${nextNumber}. Consider implementing more student-centered learning approaches\n${match[3]}`
+        updatedEvaluation = updatedEvaluation.replace(recRegex, injected)
+      }
+      message = "I added an additional recommendation."
     }
     
     return {

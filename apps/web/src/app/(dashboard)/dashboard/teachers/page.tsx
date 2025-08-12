@@ -1,51 +1,22 @@
-'use client'
-
 import { TeacherList } from '@/components/teachers/teacher-list'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Users, TrendingUp, Target } from 'lucide-react'
-
-// Import Teacher type from the component
-interface Teacher {
-  id: string
-  name: string
-  email?: string
-  subject?: string
-  gradeLevel?: string
-  strengths: string[]
-  growthAreas: string[]
-  currentGoals: Array<{ goal: string; progress: number }>
-  observations: Array<{ id: string; date: string; type: string }>
-  evaluations: Array<{ id: string; type: string; status: string }>
-}
+import { Plus, Apple, TrendingUp, Target } from 'lucide-react'
+import Link from 'next/link'
 
 export default function TeachersPage() {
-  const handleTeacherSelect = (teacher: Teacher) => {
-    // Navigate to teacher detail page
-    window.location.href = `/dashboard/teachers/${teacher.id}`
-  }
-
-  const handleAddTeacher = () => {
-    // Navigate to add teacher page
-    window.location.href = '/dashboard/teachers/new'
-  }
-
   return (
     <div className="space-y-6">
-      {/* Header Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Teachers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Apple className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">25</div>
-            <p className="text-xs text-muted-foreground">
-              +2 from last month
-            </p>
+            <p className="text-xs text-muted-foreground">+2 from last month</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Teachers</CardTitle>
@@ -53,12 +24,9 @@ export default function TeachersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-muted-foreground">
-              92% active rate
-            </p>
+            <p className="text-xs text-muted-foreground">92% active rate</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Performance</CardTitle>
@@ -66,12 +34,9 @@ export default function TeachersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">3.8</div>
-            <p className="text-xs text-muted-foreground">
-              +0.2 from last quarter
-            </p>
+            <p className="text-xs text-muted-foreground">+0.2 from last quarter</p>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Observations</CardTitle>
@@ -79,18 +44,18 @@ export default function TeachersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">156</div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
+            <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Teacher List */}
-      <TeacherList 
-        onTeacherSelect={handleTeacherSelect}
-        onAddTeacher={handleAddTeacher}
-      />
+      <TeacherList />
+      <div className="flex justify-end">
+        <Link href="/dashboard/teachers/new" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+          <Plus className="h-4 w-4" />
+          Add Teacher
+        </Link>
+      </div>
     </div>
   )
-} 
+}

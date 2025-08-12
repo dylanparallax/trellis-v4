@@ -48,10 +48,8 @@ export async function POST(request: NextRequest) {
         console.log('GPT enhancement fallback successful!')
         return NextResponse.json({ enhancedNotes: text })
       } catch (gptError) {
-        console.error('Both AI models failed, using demo mode:', gptError)
-        return NextResponse.json({
-          enhancedNotes: generateDemoEnhancement(rawNotes, teacher, observationType, focusAreas || [])
-        })
+        console.error('Both AI models failed for enhancement:', gptError)
+        return NextResponse.json({ error: 'AI enhancement failed' }, { status: 502 })
       }
     }
   } catch (error) {

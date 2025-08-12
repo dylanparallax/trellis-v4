@@ -1,152 +1,123 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { generateText } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
-import { openai } from '@ai-sdk/openai'
-import { prisma } from '@trellis/database'
-import { AIEvaluationService } from '@/lib/ai/evaluation-service'
-import type { Teacher, Observation, Evaluation } from '@trellis/database'
+export const runtime = 'nodejs'
 
-interface EvaluationContext {
-  teacher: Teacher
-  evaluationType: 'FORMATIVE' | 'SUMMATIVE'
-  schoolYear: string
-  previousObservations: Observation[]
-  previousEvaluations: Evaluation[]
-  chatHistory: Array<{ role: 'user' | 'assistant'; content: string; timestamp: Date }>
-}
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { prisma } from '@trellis/database'
+import { getAuthContext } from '@/lib/auth/server'
+import { AIEvaluationService } from '@/lib/ai/evaluation-service'
+import { getTeacherById, getObservationsByTeacherId, getEvaluationsByTeacherId } from '@/lib/data/mock-data'
+
+const requestSchema = z.object({
+  teacherId: z.string().min(1, 'teacherId is required'),
+  evaluationType: z.enum(['FORMATIVE', 'SUMMATIVE']),
+  schoolYear: z.string().min(1, 'schoolYear is required'),
+})
 
 export async function POST(request: NextRequest) {
   try {
-    const { teacherId, evaluationType, schoolYear } = await request.json()
+    const json = await request.json()
+    const { teacherId, evaluationType, schoolYear } = requestSchema.parse(json)
+    const isDemo = process.env.DEMO_MODE === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
-    // Fetch teacher data
-    const teacherResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/teachers/${teacherId}`)
-    const teacher = await teacherResponse.json()
+    // Demo-mode fallback only when explicitly enabled
+    if (isDemo) {
+      const mock = getTeacherById(teacherId)
+      if (!mock) {
+        return NextResponse.json({ error: 'Teacher not found' }, { status: 404 })
+      }
 
-    // Fetch previous observations
-    const observationsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/observations?teacherId=${teacherId}`)
-    const observations = await observationsResponse.json()
+      const teacher = {
+        id: mock.id,
+        name: mock.name,
+        subject: mock.subject ?? undefined,
+        gradeLevel: mock.gradeLevel ?? undefined,
+        strengths: mock.strengths ?? [],
+        growthAreas: mock.growthAreas ?? [],
+      }
 
-    // Fetch previous evaluations
-    const evaluationsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/evaluations?teacherId=${teacherId}`)
-    const evaluations = await evaluationsResponse.json()
+      const previousObservations = getObservationsByTeacherId(teacherId).map((o) => ({
+        date: o.date as Date,
+        enhancedNotes: (o as { enhancedNotes?: string }).enhancedNotes ?? undefined,
+        rawNotes: (o as { rawNotes: string }).rawNotes,
+      }))
+      const previousEvaluations = getEvaluationsByTeacherId(teacherId).map((e) => ({
+        createdAt: e.createdAt as Date,
+        type: e.type as 'FORMATIVE' | 'SUMMATIVE' | 'MID_YEAR' | 'END_YEAR',
+        summary: e.summary ?? undefined,
+      }))
 
-    // Create evaluation context
-    const context: EvaluationContext = {
+      const evaluationService = new AIEvaluationService()
+      const response = await evaluationService.generateInitialEvaluation({
+        teacher,
+        evaluationType,
+        schoolYear,
+        previousObservations,
+        previousEvaluations,
+        chatHistory: [],
+      })
+
+      return NextResponse.json(response)
+    }
+
+    // Auth only required when using real DB
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Fetch core entities from DB (non-demo)
+    const teacherRecord = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+    })
+    if (!teacherRecord) {
+      return NextResponse.json({ error: 'Teacher not found' }, { status: 404 })
+    }
+    // Scope validation
+    if (teacherRecord.schoolId !== auth.schoolId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    const teacher = {
+      id: teacherRecord.id,
+      name: teacherRecord.name,
+      subject: teacherRecord.subject ?? undefined,
+      gradeLevel: teacherRecord.gradeLevel ?? undefined,
+      strengths: teacherRecord.strengths ?? [],
+      growthAreas: teacherRecord.growthAreas ?? [],
+    }
+
+    const [obsRecords, evalRecords] = await Promise.all([
+      prisma.observation.findMany({ where: { teacherId }, orderBy: { date: 'desc' }, take: 10 }),
+      prisma.evaluation.findMany({ where: { teacherId }, orderBy: { createdAt: 'desc' }, take: 5 }),
+    ])
+
+    const previousObservations = obsRecords.map((o) => ({
+      date: o.date,
+      enhancedNotes: o.enhancedNotes ?? undefined,
+      rawNotes: o.rawNotes,
+    }))
+    const previousEvaluations = evalRecords.map((e) => ({
+      createdAt: e.createdAt,
+      type: e.type,
+      summary: e.summary ?? undefined,
+    }))
+
+    const evaluationService = new AIEvaluationService()
+    const response = await evaluationService.generateInitialEvaluation({
       teacher,
       evaluationType,
       schoolYear,
-      previousObservations: observations,
-      previousEvaluations: evaluations,
-      chatHistory: []
-    }
+      previousObservations,
+      previousEvaluations,
+      chatHistory: [],
+    })
 
-    const prompt = buildInitialEvaluationPrompt(context)
-
-    try {
-      const { text } = await generateText({
-        model: anthropic('claude-3-5-sonnet-20241022'),
-        prompt,
-        temperature: 0.7,
-      })
-      
-      console.log('Claude evaluation successful!')
-      
-      const response = {
-        evaluation: text,
-        message: `I've generated a comprehensive ${evaluationType.toLowerCase()} evaluation for ${teacher.name}. Here's what I found based on their observations and performance data:`,
-        suggestions: generateSuggestions(context)
-      }
-      
-      return NextResponse.json(response)
-    } catch (error) {
-      console.error('Claude evaluation failed, falling back to GPT:', error)
-      
-      try {
-        const { text } = await generateText({
-          model: openai('gpt-4-turbo'),
-          prompt,
-          temperature: 0.7,
-        })
-        
-        console.log('GPT fallback successful!')
-        
-        const response = {
-          evaluation: text,
-          message: `I've generated a comprehensive ${evaluationType.toLowerCase()} evaluation for ${teacher.name}. Here's what I found based on their observations and performance data:`,
-          suggestions: generateSuggestions(context)
-        }
-        
-        return NextResponse.json(response)
-      } catch (gptError) {
-        console.error('Both AI models failed, using demo mode:', gptError)
-        const evaluationService = new AIEvaluationService()
-        const demoResponse = evaluationService.generateDemoChatResponse('Generate evaluation', context, '')
-        return NextResponse.json(demoResponse)
-      }
-    }
+    return NextResponse.json(response)
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.issues },
+        { status: 400 }
+      )
+    }
     console.error('API route error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
-function buildInitialEvaluationPrompt(context: EvaluationContext): string {
-  const teacher = context.teacher
-  const observations = context.previousObservations
-  const evaluations = context.previousEvaluations
-  
-  return `You are an expert educational evaluator creating a comprehensive ${context.evaluationType} teacher evaluation.
-
-TEACHER INFORMATION:
-- Name: ${teacher.name}
-- Subject: ${teacher.subject || 'Not specified'}
-- Grade Level: ${teacher.gradeLevel || 'Not specified'}
-- Current Goals: ${teacher.currentGoals ? JSON.stringify(teacher.currentGoals) : 'Not specified'}
-- Strengths: ${teacher.strengths ? teacher.strengths.join(', ') : 'Not specified'}
-- Growth Areas: ${teacher.growthAreas ? teacher.growthAreas.join(', ') : 'Not specified'}
-
-EVALUATION CONTEXT:
-- Type: ${context.evaluationType}
-- School Year: ${context.schoolYear}
-- Previous Observations: ${observations.length} total
-
-RECENT OBSERVATIONS:
-${observations.slice(0, 5).map((obs: Observation) => `
-Date: ${obs.date.toLocaleDateString()}
-Notes: ${obs.enhancedNotes || obs.rawNotes}
-`).join('\n')}
-
-PREVIOUS EVALUATIONS:
-${evaluations.slice(0, 3).map((evaluation: Evaluation) => `
-Date: ${evaluation.createdAt.toLocaleDateString()}
-Type: ${evaluation.type}
-Summary: ${evaluation.summary}
-`).join('\n')}
-
-INSTRUCTIONS:
-Create a professional, comprehensive teacher evaluation report that includes:
-
-1. EXECUTIVE SUMMARY (2-3 paragraphs)
-2. STRENGTHS (bullet points with specific examples)
-3. AREAS FOR GROWTH (bullet points with actionable feedback)
-4. RECOMMENDATIONS (numbered list of specific next steps)
-5. NEXT STEPS (timeline and follow-up actions)
-6. Overall Rating (Proficient/Developing/Needs Improvement with numerical score)
-
-Use specific examples from observations when available. Be constructive and actionable. Focus on evidence-based feedback. Use professional educational language.
-
-Format the response as a clean, structured evaluation report.`
-}
-
-function generateSuggestions(context: EvaluationContext): string[] {
-  return [
-    "Add specific examples from recent observations",
-    "Include measurable goals for the next evaluation period",
-    "Suggest professional development opportunities",
-    "Provide actionable feedback for growth areas"
-  ]
-} 

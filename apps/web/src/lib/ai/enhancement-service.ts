@@ -2,9 +2,25 @@ import { openai } from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 import { OBSERVATION_ENHANCEMENT_PROMPT } from '@trellis/ai-prompts'
-import type { Teacher, Observation } from '@trellis/database'
+// Minimal domain types to avoid Prisma type coupling
+type Teacher = {
+  name: string
+  subject?: string
+  gradeLevel?: string
+  currentGoals?: unknown
+  strengths: string[]
+  growthAreas: string[]
+}
+
+type Observation = {
+  date: Date | string
+  enhancedNotes?: string
+  rawNotes: string
+}
 
 export class AIEnhancementService {
+  private static readonly ANTHROPIC_MODEL = 'claude-3-5-sonnet-20241022'
+  private static readonly OPENAI_MODEL = 'gpt-4-turbo'
   async enhanceObservation(
     rawNotes: string,
     teacher: Teacher,
@@ -19,7 +35,7 @@ export class AIEnhancementService {
     try {
       // Try Claude first
       const { text } = await generateText({
-        model: anthropic('claude-3-sonnet'),
+        model: anthropic(AIEnhancementService.ANTHROPIC_MODEL),
         prompt,
         temperature: 0.7,
       })
@@ -30,7 +46,7 @@ export class AIEnhancementService {
       
       // Fallback to GPT
       const { text } = await generateText({
-        model: openai('gpt-4-turbo'),
+        model: openai(AIEnhancementService.OPENAI_MODEL),
         prompt,
         temperature: 0.7,
       })
@@ -54,8 +70,11 @@ export class AIEnhancementService {
     `
     
     const previousObservations = history
-      .slice(0, 5) // Last 5 observations
-      .map(obs => `- ${obs.date.toLocaleDateString()}: ${obs.enhancedNotes || obs.rawNotes}`)
+      .slice(0, 5)
+      .map((obs) => {
+        const date = typeof obs.date === 'string' ? new Date(obs.date) : obs.date
+        return `- ${date.toLocaleDateString()}: ${obs.enhancedNotes || obs.rawNotes}`
+      })
       .join('\n')
     
     const schoolPriorities = 'Focus on student engagement, differentiated instruction, and assessment strategies'
@@ -92,7 +111,7 @@ export class AIEnhancementService {
     
     try {
       const { text } = await generateText({
-        model: anthropic('claude-3-sonnet'),
+        model: anthropic(AIEnhancementService.ANTHROPIC_MODEL),
         prompt,
         temperature: 0.5,
       })

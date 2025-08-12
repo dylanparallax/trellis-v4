@@ -1,9 +1,7 @@
-'use client'
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Plus, FileText, MessageSquare, ArrowLeft } from 'lucide-react'
+import { Search, Plus, Award, MessageSquare, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function EvaluationsPage() {
@@ -47,8 +45,8 @@ export default function EvaluationsPage() {
             className="pl-10"
           />
         </div>
-        <Button variant="outline" size="icon">
-          <FileText className="h-4 w-4" />
+        <Button variant="outline" size="icon" aria-label="Export evaluations">
+          <Award className="h-4 w-4" />
         </Button>
       </div>
 
@@ -78,7 +76,7 @@ export default function EvaluationsPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
+          <Award className="h-4 w-4" />
                     {evaluation.schoolYear}
                   </div>
                   <div className="flex items-center gap-1">

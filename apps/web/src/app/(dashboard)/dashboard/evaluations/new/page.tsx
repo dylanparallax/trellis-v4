@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, Sparkles, User, FileText, ArrowLeft } from 'lucide-react'
+import { Search, Sparkles, User, Award, ArrowLeft } from 'lucide-react'
 
 export default function NewEvaluationPage() {
   const router = useRouter()
@@ -107,7 +107,7 @@ export default function NewEvaluationPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+              <Award className="h-5 w-5" />
               Evaluation Settings
             </CardTitle>
             <CardDescription>
@@ -168,7 +168,7 @@ export default function NewEvaluationPage() {
       </div>
 
       {/* Generate Button */}
-      <Card className="border-brand-blue/20 bg-brand-blue/5">
+      <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -185,11 +185,7 @@ export default function NewEvaluationPage() {
               disabled={!selectedTeacher}
               variant="default"
               size="lg"
-              className={`${
-                selectedTeacher 
-                  ? 'bg-gradient-to-r from-brand-blue to-brand-orange hover:from-brand-blue/90 hover:to-brand-orange/90 text-white shadow-lg' 
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+              className={`${selectedTeacher ? '' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
             >
               <Sparkles className="mr-2 h-5 w-5" />
               {selectedTeacher ? 'Generate Evaluation' : 'Select a Teacher First'}

@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
-import { supabase } from '@/lib/auth/supabase'
+import { Mail, Lock, Binoculars, EyeOff } from 'lucide-react'
+import { supabase, isSupabaseConfigured } from '@/lib/auth/supabase'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -23,18 +23,20 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      if (!isSupabaseConfigured) {
+        // Demo mode: skip Supabase and go to dashboard
+        router.push('/dashboard')
+        return
+      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
         setError(error.message)
       } else {
         router.push('/dashboard')
       }
-    } catch (_err) {
-      setError('An unexpected error occurred')
+    } catch {
+      setError(isSupabaseConfigured ? 'Login failed. Check your credentials.' : 'Demo mode: could not reach Supabase, routing locally.')
     } finally {
       setIsLoading(false)
     }
@@ -47,14 +49,14 @@ export default function LoginPage() {
     try {
       // For demo mode, just redirect to dashboard
       router.push('/dashboard')
-    } catch (_err) {
+    } catch {
       setError('Demo login failed')
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Welcome to Trellis AI</CardTitle>
@@ -101,7 +103,7 @@ export default function LoginPage() {
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Binoculars className="h-4 w-4 text-muted-foreground" />
                   )}
                 </button>
               </div>
@@ -115,7 +117,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-brand-blue to-brand-orange hover:from-brand-blue/90 hover:to-brand-orange/90"
+              className="w-full"
               disabled={isLoading}
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
@@ -128,7 +130,7 @@ export default function LoginPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
+                <span className="bg-white px-2 text-muted-foreground">
                   Or
                 </span>
               </div>

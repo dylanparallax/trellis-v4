@@ -1,18 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /* keep builds strict to catch issues early */
   eslint: {
-    ignoreDuringBuilds: true, // Temporarily disable ESLint during builds
+    ignoreDuringBuilds: false,
   },
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
+  reactStrictMode: true,
 };
 
 export default nextConfig;

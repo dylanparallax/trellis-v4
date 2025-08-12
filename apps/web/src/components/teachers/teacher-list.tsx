@@ -29,23 +29,23 @@ interface Teacher {
 }
 
 interface TeacherListProps {
-  onTeacherSelect?: (teacher: Teacher) => void
   onAddTeacher?: () => void
 }
 
-export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps) {
+export function TeacherList({ onAddTeacher }: TeacherListProps) {
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [filteredTeachers, setFilteredTeachers] = useState<Teacher[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('all')
   const [selectedGrade, setSelectedGrade] = useState('all')
+  const [selectedTag, setSelectedTag] = useState<string>('')
 
   // Fetch teachers from API
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const response = await fetch('/api/teachers?schoolId=demo-school-1')
+        const response = await fetch('/api/teachers')
         if (response.ok) {
           const data = await response.json()
           setTeachers(data)
@@ -86,8 +86,16 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
       filtered = filtered.filter(teacher => teacher.gradeLevel === selectedGrade)
     }
 
+    // Tag filter (strengths or growth areas)
+    if (selectedTag) {
+      filtered = filtered.filter(teacher =>
+        (teacher.strengths || []).includes(selectedTag) ||
+        (teacher.growthAreas || []).includes(selectedTag)
+      )
+    }
+
     setFilteredTeachers(filtered)
-  }, [teachers, searchTerm, selectedSubject, selectedGrade])
+  }, [teachers, searchTerm, selectedSubject, selectedGrade, selectedTag])
 
   const getUniqueSubjects = () => {
     const subjects = teachers.map(t => t.subject).filter(Boolean) as string[]
@@ -99,9 +107,7 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
     return [...new Set(grades)].sort()
   }
 
-  const getRecentObservations = (teacher: Teacher) => {
-    return teacher.observations.slice(0, 3)
-  }
+  // neutral tag appearance for a cleaner look; clickable to filter
 
   const getEvaluationStatus = (teacher: Teacher) => {
     const recentEvaluation = teacher.evaluations[0]
@@ -140,7 +146,7 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
             {filteredTeachers.length} of {teachers.length} teachers
           </p>
         </div>
-        <Button onClick={onAddTeacher} className="bg-gradient-to-r from-brand-blue to-brand-orange">
+        <Button onClick={onAddTeacher}>
           <Plus className="mr-2 h-4 w-4" />
           Add Teacher
         </Button>
@@ -162,7 +168,7 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
               </div>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
@@ -184,6 +190,18 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
                   <option key={grade} value={grade}>Grade {grade}</option>
                 ))}
               </select>
+              {selectedTag && (
+                <div className="flex items-center gap-2 ml-2 text-sm">
+                  <Badge variant="secondary" className="text-xs">{selectedTag}</Badge>
+                  <button
+                    type="button"
+                    className="underline text-muted-foreground"
+                    onClick={() => setSelectedTag('')}
+                  >
+                    Clear tag
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -192,16 +210,15 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
       {/* Teacher Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredTeachers.map((teacher) => (
-          <Card 
-            key={teacher.id} 
-            className="hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => onTeacherSelect?.(teacher)}
-          >
+          <a href={`/dashboard/teachers/${teacher.id}`} key={teacher.id} className="block">
+            <Card 
+              className="hover:shadow-lg transition-shadow cursor-pointer"
+            >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-brand-blue to-brand-orange rounded-full flex items-center justify-center">
-                    <User className="h-5 w-5 text-white" />
+                  <div className="w-10 h-10 bg-amber-100 rounded-full border-amber-500 flex items-center justify-center border">
+                    <User className="h-5 w-5 text-amber-500" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">{teacher.name}</CardTitle>
@@ -233,7 +250,15 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
                 </h4>
                 <div className="flex flex-wrap gap-1">
                   {teacher.strengths.slice(0, 3).map((strength, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="text-xs cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setSelectedTag(strength)
+                      }}
+                    >
                       {strength}
                     </Badge>
                   ))}
@@ -259,7 +284,7 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
                     </div>
                     <div className="w-full bg-muted rounded-full h-1.5">
                       <div 
-                        className="bg-gradient-to-r from-brand-blue to-brand-orange h-1.5 rounded-full transition-all"
+                        className="bg-primary h-1.5 rounded-full transition-all"
                         style={{ width: `${goal.progress}%` }}
                       />
                     </div>
@@ -282,7 +307,8 @@ export function TeacherList({ onTeacherSelect, onAddTeacher }: TeacherListProps)
                 </div>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          </a>
         ))}
       </div>
 
