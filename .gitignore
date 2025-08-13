@@ -121,3 +121,4 @@ jspm_packages/
 
 # Prisma
 packages/database/prisma/migrations/ # ignore local backups
+.env.local.backup

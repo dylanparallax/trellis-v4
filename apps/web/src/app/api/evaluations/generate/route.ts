@@ -99,6 +99,11 @@ export async function POST(request: NextRequest) {
       summary: e.summary ?? undefined,
     }))
 
+    const school = await prisma.school.findUnique({ where: { id: auth.schoolId } })
+    const settings = (school?.settings as any) || {}
+    const frameworkText = (school?.evaluationFramework as any)?.text || ''
+    const promptGuidelines = settings?.prompts?.guidelines || ''
+
     const evaluationService = new AIEvaluationService()
     const response = await evaluationService.generateInitialEvaluation({
       teacher,
@@ -107,6 +112,8 @@ export async function POST(request: NextRequest) {
       previousObservations,
       previousEvaluations,
       chatHistory: [],
+      frameworkText,
+      promptGuidelines,
     })
 
     return NextResponse.json(response)

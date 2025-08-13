@@ -30,6 +30,8 @@ export interface EvaluationContext {
   previousObservations: Observation[]
   previousEvaluations: Evaluation[]
   chatHistory: ChatMessage[]
+  frameworkText?: string
+  promptGuidelines?: string
 }
 
 export interface ChatMessage {
@@ -144,6 +146,8 @@ export class AIEvaluationService {
   }
 
   private buildInitialEvaluationPrompt(context: EvaluationContext): string {
+    const frameworkText = context.frameworkText ?? (process as any).env.EVALUATION_FRAMEWORK_TEXT || ''
+    const guidelines = context.promptGuidelines ?? (process as any).env.EVALUATION_PROMPT_GUIDELINES || ''
     const teacher = context.teacher
     const observations = context.previousObservations
     const evaluations = context.previousEvaluations
@@ -161,6 +165,8 @@ EVALUATION CONTEXT:
 - Type: ${context.evaluationType}
 - School Year: ${context.schoolYear}
 - Previous Observations: ${observations.length} total
+${frameworkText ? `\nEVALUATION FRAMEWORK (reference):\n${frameworkText}\n` : ''}
+${guidelines ? `\nPROMPT GUIDELINES:\n${guidelines}\n` : ''}
 
 RECENT OBSERVATIONS:
 ${observations.slice(0, 5).map(obs => {
