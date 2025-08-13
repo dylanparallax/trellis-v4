@@ -16,16 +16,18 @@ export async function POST(request: NextRequest) {
     // Ensure app user exists (first-time Supabase signup)
     let existingUser = await prisma.user.findUnique({ where: { email: auth.email } })
     if (!existingUser) {
+      // Create user without school initially - will be updated after school creation
       existingUser = await prisma.user.create({
         data: {
           email: auth.email,
           name: auth.name ?? auth.email.split('@')[0],
           role: 'EVALUATOR',
+          schoolId: '', // Temporary empty string, will be updated
         },
       })
     }
     // If user already has a school, skip
-    if (existingUser.schoolId) {
+    if (existingUser.schoolId && existingUser.schoolId !== '') {
       return NextResponse.json({ message: 'Already onboarded', schoolId: existingUser.schoolId })
     }
 
