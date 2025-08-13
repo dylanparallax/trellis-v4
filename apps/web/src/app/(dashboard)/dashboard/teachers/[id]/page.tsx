@@ -7,11 +7,11 @@ import { prisma } from '@trellis/database'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 
 type PageParams = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function TeacherDetailPage({ params }: PageParams) {
-  const { id } = params
+  const { id } = await params
   const auth = await getAuthContext()
   if (!auth) return notFound()
 
