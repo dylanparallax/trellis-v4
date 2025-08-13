@@ -212,13 +212,13 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
         {filteredTeachers.map((teacher) => (
           <a href={`/dashboard/teachers/${teacher.id}`} key={teacher.id} className="block">
             <Card 
-              className="hover:shadow-lg transition-shadow cursor-pointer"
+              className="hover:shadow-lg hover:bg-blue-100/10 transition-shadow cursor-pointer"
             >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-full border-indigo-500 flex items-center justify-center border">
-                    <User className="h-5 w-5 text-indigo-500" />
+                  <div className="w-10 h-10 bg-indigo-100/50 rounded-full border-indigo-500 flex items-center justify-center border">
+                    <User className="h-4 w-4 text-indigo-500" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">{teacher.name}</CardTitle>
@@ -233,11 +233,11 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
               </div>
             </CardHeader>
             
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-8">
               {/* Contact Info */}
               {teacher.email && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-sm text-blue-500">
+                  <Mail className="h-3 w-3" />
                   <span>{teacher.email}</span>
                 </div>
               )}
@@ -245,7 +245,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
               {/* Strengths */}
               <div>
                 <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
-                  <TrendingUp className="h-4 w-4" />
+                 
                   Strengths
                 </h4>
                 <div className="flex flex-wrap gap-1">
@@ -273,7 +273,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
               {/* Goals Progress */}
               <div>
                 <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
-                  <Target className="h-4 w-4" />
+                  
                   Current Goals
                 </h4>
                 {teacher.currentGoals.slice(0, 2).map((goal, index) => (
@@ -284,7 +284,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                     </div>
                     <div className="w-full bg-muted rounded-full h-1.5">
                       <div 
-                        className="bg-primary h-1.5 rounded-full transition-all"
+                        className="bg-green-200 h-2 rounded-full transition-all"
                         style={{ width: `${goal.progress}%` }}
                       />
                     </div>

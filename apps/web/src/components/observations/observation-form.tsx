@@ -247,7 +247,7 @@ Excellent progress on the classroom management goal from last month's observatio
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium flex items-center gap-2">
-                <User className="h-4 w-4" />
+    
                 Teacher
               </label>
               <select
@@ -266,7 +266,7 @@ Excellent progress on the classroom management goal from last month's observatio
             </div>
             
             <div>
-              <label className="text-sm font-medium">Observation Type</label>
+              <label className="text-sm font-medium flex items-center gap-2">Observation Type</label>
               <select
                 value={observationType}
                 onChange={(e) => setObservationType(e.target.value)}
@@ -280,7 +280,6 @@ Excellent progress on the classroom management goal from last month's observatio
             
             <div>
               <label className="text-sm font-medium flex items-center gap-2">
-                <Clock className="h-4 w-4" />
                 Duration (minutes)
               </label>
               <Input
@@ -296,9 +295,9 @@ Excellent progress on the classroom management goal from last month's observatio
 
           <div>
             <label className="text-sm font-medium">Focus Areas</label>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-1 grid grid-cols-2 gap-2">
               {['Student Engagement', 'Differentiation', 'Assessment', 'Classroom Management', 'Technology Integration', 'Student Collaboration'].map((area) => (
-                <label key={area} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer">
+                <label key={area} className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
                   <input
                     type="checkbox"
                     checked={focusAreas.includes(area)}
@@ -309,9 +308,9 @@ Excellent progress on the classroom management goal from last month's observatio
                         setFocusAreas(prev => prev.filter(a => a !== area))
                       }
                     }}
-                    className="rounded"
+                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-2 focus:ring-offset-0"
                   />
-                  <span className="text-sm">{area}</span>
+                  <span className="text-sm leading-5 select-none">{area}</span>
                 </label>
               ))}
             </div>

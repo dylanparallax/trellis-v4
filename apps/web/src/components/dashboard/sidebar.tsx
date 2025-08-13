@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { 
-  Settings,
+  Settings2,
   Gauge,
   Apple,
   Binoculars,
@@ -18,14 +18,14 @@ const navigation = [
   { name: 'Observations', href: '/dashboard/observations', icon: Binoculars },
   { name: 'Evaluations', href: '/dashboard/evaluations', icon: Award },
   // { name: 'Analytics', href: '/dashboard/analytics', icon: ChartSpline },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="flex flex-col w-56 border-r bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+    <div className="flex flex-col w-48 border-r bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="flex items-center gap-3 p-4 border-b">
         <Image
           src="/trellis-light.svg"
