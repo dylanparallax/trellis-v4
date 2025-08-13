@@ -11,6 +11,22 @@ export async function middleware(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
+  // If Supabase is not configured, avoid attempting network calls in middleware.
+  // Instead, require auth by redirecting dashboard routes to /login.
+  const isSupabaseConfigured = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+    !supabaseUrl.includes('placeholder') &&
+    supabaseAnonKey !== 'placeholder-key'
+  )
+
+  if (!isSupabaseConfigured) {
+    if (req.nextUrl.pathname.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
+    return NextResponse.next()
+  }
+
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       get(name: string) {
