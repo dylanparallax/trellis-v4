@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { signOut } from '@/lib/auth/supabase'
+import { signOut, getCurrentUser } from '@/lib/auth/supabase'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { 
   Settings2,
   Gauge,
@@ -34,10 +35,38 @@ const navigation = [
   { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
 ]
 
+// Custom hook to get current user
+function useCurrentUser() {
+  const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const { user, error } = await getCurrentUser()
+        if (error) {
+          console.error('Error fetching user:', error)
+        } else {
+          setUser(user)
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUser()
+  }, [])
+
+  return { user, loading }
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const { user, loading } = useCurrentUser()
 
   const handleLogout = async () => {
     try {
@@ -51,6 +80,45 @@ export function Sidebar() {
     } catch (error) {
       console.error('Logout error:', error)
     }
+  }
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return 'U'
+    
+    const { user_metadata } = user
+    if (user_metadata?.full_name) {
+      return user_metadata.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+    }
+    if (user.email) {
+      return user.email[0].toUpperCase()
+    }
+    return 'U'
+  }
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (!user) return 'User'
+    
+    const { user_metadata } = user
+    if (user_metadata?.full_name) {
+      return user_metadata.full_name
+    }
+    if (user.email) {
+      return user.email.split('@')[0]
+    }
+    return 'User'
+  }
+
+  // Get user role/subtitle
+  const getUserRole = () => {
+    if (!user) return 'Loading...'
+    
+    const { user_metadata } = user
+    if (user_metadata?.role) {
+      return user_metadata.role
+    }
+    return 'User'
   }
 
   return (
@@ -96,11 +164,17 @@ export function Sidebar() {
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary">JD</span>
+                  <span className="text-sm font-medium text-primary">
+                    {loading ? '...' : getUserInitials()}
+                  </span>
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-medium truncate">John Doe</p>
-                  <p className="text-xs text-muted-foreground truncate">Administrator</p>
+                  <p className="text-sm font-medium truncate">
+                    {loading ? 'Loading...' : getUserDisplayName()}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {getUserRole()}
+                  </p>
                 </div>
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground ml-2" />
