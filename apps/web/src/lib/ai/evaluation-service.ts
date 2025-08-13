@@ -146,8 +146,8 @@ export class AIEvaluationService {
   }
 
   private buildInitialEvaluationPrompt(context: EvaluationContext): string {
-    const frameworkText = context.frameworkText ?? (process as any).env.EVALUATION_FRAMEWORK_TEXT || ''
-    const guidelines = context.promptGuidelines ?? (process as any).env.EVALUATION_PROMPT_GUIDELINES || ''
+    const frameworkText = (context.frameworkText ?? process.env.EVALUATION_FRAMEWORK_TEXT) || ''
+    const guidelines = (context.promptGuidelines ?? process.env.EVALUATION_PROMPT_GUIDELINES) || ''
     const teacher = context.teacher
     const observations = context.previousObservations
     const evaluations = context.previousEvaluations
