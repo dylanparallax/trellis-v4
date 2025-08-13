@@ -1,16 +1,29 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { signOut } from '@/lib/auth/supabase'
 import { 
   Settings2,
   Gauge,
   Apple,
   Binoculars,
-  Award
+  Award,
+  User,
+  LogOut,
+  ChevronDown
 } from 'lucide-react'
 import Image from 'next/image'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Gauge },
@@ -23,6 +36,22 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await signOut()
+      if (error) {
+        console.error('Logout error:', error)
+      } else {
+        // Redirect to login page after successful logout
+        router.push('/login')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
 
   return (
     <div className="flex flex-col w-48 border-r bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
@@ -59,15 +88,41 @@ export function Sidebar() {
       </nav>
       
       <div className="px-4 py-2 border-t sticky bottom-0 z-40">
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-sm font-medium text-primary">JD</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">John Doe</p>
-            <p className="text-xs text-muted-foreground truncate">Administrator</p>
-          </div>
-        </div>
+        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-between p-2 h-auto hover:bg-accent"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary">JD</span>
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-medium truncate">John Doe</p>
+                  <p className="text-xs text-muted-foreground truncate">Administrator</p>
+                </div>
+              </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings" className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                Account Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              className="cursor-pointer text-red-600 focus:text-red-600"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Log Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )

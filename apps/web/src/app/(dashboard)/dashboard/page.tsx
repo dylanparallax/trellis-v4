@@ -6,7 +6,6 @@ import Link from 'next/link'
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <OnboardingBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -180,37 +179,4 @@ const recentObservations = [
     date: '3 days ago',
     type: 'Formal'
   }
-] 
-
-function OnboardingBanner() {
-  async function createSchool(formData: FormData) {
-    'use server'
-    const schoolName = String(formData.get('schoolName') || '').trim()
-    const district = String(formData.get('district') || '').trim()
-    if (!schoolName) {
-      return
-    }
-    await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/onboarding`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ schoolName, district }),
-      cache: 'no-store'
-    })
-  }
-
-  return (
-    <form action={createSchool} className="rounded-lg border bg-card p-4 grid gap-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="font-medium">First time here?</p>
-          <p className="text-sm text-muted-foreground">Create your school to get started.</p>
-        </div>
-      </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        <input name="schoolName" placeholder="School name" className="border rounded-md px-3 py-2" required />
-        <input name="district" placeholder="District (optional)" className="border rounded-md px-3 py-2" />
-        <Button type="submit" className="w-full md:w-auto">Create School</Button>
-      </div>
-    </form>
-  )
-}
+]
