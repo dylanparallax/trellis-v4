@@ -8,8 +8,6 @@ import { Badge } from '@/components/ui/badge'
 import { 
   User, 
   Mail, 
-  TrendingUp, 
-  Target,
   Plus,
   Search,
   MoreHorizontal

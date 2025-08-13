@@ -101,29 +101,4 @@ Format the response using Markdown with clear sections:
 Be specific, actionable, and evidence-based. Focus on the teacher's development and student learning outcomes.`
 }
 
-function generateDemoEnhancement(
-  rawNotes: string,
-  teacher: Teacher,
-  observationType: string,
-  focusAreas: string[]
-): string {
-  return `**Instructional Strengths Observed:**
-• Effective classroom management with clear expectations and routines
-• Strong student engagement through interactive activities and questioning strategies
-• Appropriate use of formative assessment to guide instruction
-• Good differentiation strategies for diverse learners
-
-**Areas for Growth:**
-• Consider providing more student-led discussion opportunities
-• Opportunity to incorporate more technology integration
-• Continue developing higher-order thinking questions
-
-**Next Steps:**
-1. Implement small-group activities to support struggling students
-2. Add more open-ended questions to promote critical thinking
-3. Explore digital tools to enhance student engagement
-4. Continue building on the strong classroom culture you've established
-
-**Connection to Previous Goals:**
-Excellent progress on the classroom management goal from last month's observation. The structured routines and clear expectations are evident in the classroom environment.`
-} 
+ 

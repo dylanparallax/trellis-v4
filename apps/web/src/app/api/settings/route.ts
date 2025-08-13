@@ -18,9 +18,9 @@ export async function GET() {
     const school = await prisma.school.findUnique({ where: { id: auth.schoolId } })
     if (!school) return NextResponse.json({ error: 'School not found' }, { status: 404 })
 
-    const settings = (school.settings as any) || {}
-    const frameworkText = (school.evaluationFramework as any)?.text ?? ''
-    const promptGuidelines = settings?.prompts?.guidelines ?? ''
+    const settings = (school.settings as Record<string, unknown>) || {}
+    const frameworkText = (school.evaluationFramework as { text?: string })?.text ?? ''
+    const promptGuidelines = (settings?.prompts as { guidelines?: string })?.guidelines ?? ''
 
     return NextResponse.json({ evaluationFrameworkText: frameworkText, promptGuidelines })
   } catch (err) {
@@ -40,12 +40,12 @@ export async function PUT(request: NextRequest) {
     const school = await prisma.school.findUnique({ where: { id: auth.schoolId } })
     if (!school) return NextResponse.json({ error: 'School not found' }, { status: 404 })
 
-    const nextSettings = { ...(school.settings as any) }
+    const nextSettings = { ...(school.settings as Record<string, unknown>) }
     if (promptGuidelines !== undefined) {
-      nextSettings.prompts = { ...(nextSettings.prompts || {}), guidelines: promptGuidelines }
+      nextSettings.prompts = { ...(nextSettings.prompts as Record<string, unknown> || {}), guidelines: promptGuidelines }
     }
 
-    const data: any = { settings: nextSettings }
+    const data: Record<string, unknown> = { settings: nextSettings }
     if (evaluationFrameworkText !== undefined) {
       data.evaluationFramework = { text: evaluationFrameworkText }
     }

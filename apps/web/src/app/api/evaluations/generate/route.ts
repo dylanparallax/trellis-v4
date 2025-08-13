@@ -100,9 +100,9 @@ export async function POST(request: NextRequest) {
     }))
 
     const school = await prisma.school.findUnique({ where: { id: auth.schoolId } })
-    const settings = (school?.settings as any) || {}
-    const frameworkText = (school?.evaluationFramework as any)?.text || ''
-    const promptGuidelines = settings?.prompts?.guidelines || ''
+    const settings = (school?.settings as Record<string, unknown>) || {}
+    const frameworkText = (school?.evaluationFramework as { text?: string })?.text || ''
+    const promptGuidelines = (settings?.prompts as { guidelines?: string })?.guidelines || ''
 
     const evaluationService = new AIEvaluationService()
     const response = await evaluationService.generateInitialEvaluation({

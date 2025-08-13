@@ -16,7 +16,7 @@ const teacherSchema = z.object({
   })).default([])
 })
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

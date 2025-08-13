@@ -17,9 +17,9 @@ async function getObservations(): Promise<ObservationItem[]> {
   const res = await fetch(url.toString(), { cache: 'no-store' })
   if (!res.ok) return []
   const data = await res.json()
-  return data.map((o: any) => ({
+  return data.map((o: Record<string, unknown>) => ({
     ...o,
-    date: typeof o.date === 'string' ? o.date : new Date(o.date).toISOString(),
+    date: typeof o.date === 'string' ? o.date : new Date(o.date as string | Date).toISOString(),
   }))
 }
 

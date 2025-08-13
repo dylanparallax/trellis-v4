@@ -52,7 +52,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     return {
       userId: data.user.id,
       email: data.user.email,
-      name: (data.user.user_metadata as any)?.name ?? null,
+      name: (data.user.user_metadata as { name?: string })?.name ?? null,
       role: 'EVALUATOR',
       schoolId: '',
     }
@@ -70,7 +70,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
 export function assertSameSchool<T extends { schoolId: string }>(entity: T, schoolId: string) {
   if (entity.schoolId !== schoolId) {
     const err = new Error('Forbidden')
-    ;(err as any).status = 403
+    ;(err as Error & { status?: number }).status = 403
     throw err
   }
 }
