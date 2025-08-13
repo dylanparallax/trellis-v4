@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 
 export function DashboardNav() {
   return (
-    <header className="glass-panel sticky top-0 z-40">
+    <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/\]\0">
       <div className="flex h-16 items-center px-4 gap-4">
         <div className="flex-1">
           <div className="relative max-w-sm">
