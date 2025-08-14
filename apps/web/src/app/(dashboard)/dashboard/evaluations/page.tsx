@@ -3,8 +3,29 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Plus, Award, MessageSquare, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { prisma } from '@trellis/database'
+import { getAuthContext } from '@/lib/auth/server'
 
-export default function EvaluationsPage() {
+function formatDate(d: Date) {
+  return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function currentSchoolYear() {
+  const now = new Date()
+  const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1
+  return `${startYear}-${startYear + 1}`
+}
+
+export default async function EvaluationsPage() {
+  const auth = await getAuthContext()
+  const evaluations = auth?.schoolId
+    ? await prisma.evaluation.findMany({
+        where: { schoolId: auth.schoolId },
+        include: { teacher: { select: { id: true, name: true, subject: true, gradeLevel: true } } },
+        orderBy: { createdAt: 'desc' },
+      })
+    : []
+
   return (
     <div className="space-y-6">
       {/* Back Navigation */}
@@ -51,51 +72,36 @@ export default function EvaluationsPage() {
       </div>
 
       <div className="grid gap-4">
-        {evaluations.map((evaluation) => (
-          <Card key={evaluation.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-medium text-primary">
-                      {evaluation.teacherName.charAt(0)}
-                    </span>
+        {evaluations.length === 0 ? (
+          <Card className="p-6 text-sm text-muted-foreground">No evaluations yet.</Card>
+        ) : (
+          evaluations.map((evaluation) => (
+            <Card key={evaluation.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary">
+                        {evaluation.teacher.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{evaluation.teacher.name}</CardTitle>
+                      <CardDescription>{evaluation.teacher.subject || 'Subject N/A'} • Grade {evaluation.teacher.gradeLevel || 'N/A'}</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">{evaluation.teacherName}</CardTitle>
-                    <CardDescription>{evaluation.subject} • Grade {evaluation.gradeLevel}</CardDescription>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium">{evaluation.type}</div>
-                  <div className="text-xs text-muted-foreground">{evaluation.date}</div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-          <Award className="h-4 w-4" />
-                    {evaluation.schoolYear}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="h-4 w-4" />
-                    {evaluation.chatMessages} messages
+                  <div className="text-right">
+                    <div className="text-sm font-medium">{evaluation.type}</div>
+                    <div className="text-xs text-muted-foreground">{formatDate(evaluation.createdAt)}</div>
                   </div>
                 </div>
-                
-                <div className="text-sm">
-                  <p className="line-clamp-3 text-muted-foreground">
-                    {evaluation.summary}
-                  </p>
-                </div>
-                
+              </CardHeader>
+              <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="flex gap-1">
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
-                        evaluation.status === 'Draft' 
+                        evaluation.status === 'DRAFT' 
                           ? 'bg-yellow-100 text-yellow-800' 
                           : 'bg-green-100 text-green-800'
                       }`}
@@ -105,56 +111,17 @@ export default function EvaluationsPage() {
                   </div>
                   
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/evaluations/${evaluation.id}`}>
+                    <Link href={`/dashboard/evaluations/chat?teacher=${evaluation.teacherId}&type=${evaluation.type}&year=${currentSchoolYear()}`}>
                       <MessageSquare className="mr-2 h-4 w-4" />
-                      Continue Chat
+                      Open Chat
                     </Link>
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   )
-}
-
-const evaluations = [
-  {
-    id: '1',
-    teacherName: 'Sarah Johnson',
-    subject: 'Mathematics',
-    gradeLevel: '5',
-    type: 'Formative',
-    date: 'Dec 15, 2024',
-    schoolYear: '2024-2025',
-    chatMessages: 12,
-    summary: 'Comprehensive evaluation focusing on student engagement and differentiated instruction. Strong progress in classroom management and assessment strategies.',
-    status: 'Draft'
-  },
-  {
-    id: '2',
-    teacherName: 'Michael Chen',
-    subject: 'Science',
-    gradeLevel: '4',
-    type: 'Summative',
-    date: 'Dec 10, 2024',
-    schoolYear: '2024-2025',
-    chatMessages: 8,
-    summary: 'Excellent performance in inquiry-based learning and student collaboration. Demonstrated strong growth in technology integration.',
-    status: 'Completed'
-  },
-  {
-    id: '3',
-    teacherName: 'Emily Rodriguez',
-    subject: 'English Language Arts',
-    gradeLevel: '3',
-    type: 'Formative',
-    date: 'Dec 8, 2024',
-    schoolYear: '2024-2025',
-    chatMessages: 15,
-    summary: 'Outstanding progress in literacy instruction and student reading comprehension. Effective use of formative assessment.',
-    status: 'Draft'
-  }
-] 
+} 

@@ -1,25 +1,45 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Sparkles, User, Award, ArrowLeft } from 'lucide-react'
 
+interface TeacherItem {
+  id: string
+  name: string
+  subject?: string
+  gradeLevel?: string
+}
+
 export default function NewEvaluationPage() {
   const router = useRouter()
+  const [teachers, setTeachers] = useState<TeacherItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedTeacher, setSelectedTeacher] = useState('')
   const [evaluationType, setEvaluationType] = useState('FORMATIVE')
   const [schoolYear, setSchoolYear] = useState('2024-2025')
   const [searchQuery, setSearchQuery] = useState('')
 
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const res = await fetch('/api/teachers', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setTeachers(data.map((t: any) => ({ id: t.id, name: t.name, subject: t.subject, gradeLevel: t.gradeLevel })))
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    run()
+  }, [])
+
   const handleGenerateEvaluation = () => {
     if (!selectedTeacher) return
-    
-    console.log('Generating evaluation for:', selectedTeacher, evaluationType, schoolYear)
-    
-    // Navigate to the evaluation chat page
     router.push(`/dashboard/evaluations/chat?teacher=${selectedTeacher}&type=${evaluationType}&year=${schoolYear}`)
   }
 
@@ -74,31 +94,37 @@ export default function NewEvaluationPage() {
             </div>
             
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {filteredTeachers.map((teacher) => (
-                <div
-                  key={teacher.id}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedTeacher === teacher.id
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:bg-muted'
-                  }`}
-                  onClick={() => setSelectedTeacher(teacher.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {teacher.name.charAt(0)}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-medium">{teacher.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {teacher.subject || 'Not specified'} • Grade {teacher.gradeLevel || 'Not specified'}
+              {isLoading ? (
+                <div className="text-sm text-muted-foreground p-2">Loading teachers...</div>
+              ) : filteredTeachers.length === 0 ? (
+                <div className="text-sm text-muted-foreground p-2">No teachers found.</div>
+              ) : (
+                filteredTeachers.map((teacher) => (
+                  <div
+                    key={teacher.id}
+                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selectedTeacher === teacher.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:bg-muted'
+                    }`}
+                    onClick={() => setSelectedTeacher(teacher.id)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-medium text-primary">
+                          {teacher.name.charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="font-medium">{teacher.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {teacher.subject || 'Not specified'} • Grade {teacher.gradeLevel || 'Not specified'}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -195,8 +221,4 @@ export default function NewEvaluationPage() {
       </Card>
     </div>
   )
-}
-
-import { mockTeachers } from '@/lib/data/mock-data'
-
-const teachers = mockTeachers 
+} 
