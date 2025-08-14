@@ -43,7 +43,7 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const response = await fetch('/api/teachers?schoolId=demo-school-1')
+        const response = await fetch('/api/teachers')
         if (response.ok) {
           const data = await response.json()
           setTeachers(data)
@@ -70,6 +70,7 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
     
     setIsEnhancing(true)
     try {
+      const selectedTeacher = teachers.find(t => t.id === selectedTeacherId)
       const response = await fetch('/api/observations/enhance', {
         method: 'POST',
         headers: {
@@ -77,7 +78,13 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
         },
         body: JSON.stringify({
           rawNotes: notes,
-          teacherId: selectedTeacherId,
+          teacher: selectedTeacher ? {
+            name: selectedTeacher.name,
+            subject: selectedTeacher.subject,
+            gradeLevel: selectedTeacher.gradeLevel,
+            strengths: selectedTeacher.strengths,
+            growthAreas: selectedTeacher.growthAreas,
+          } : { name: 'Unknown' },
           observationType,
           focusAreas
         })

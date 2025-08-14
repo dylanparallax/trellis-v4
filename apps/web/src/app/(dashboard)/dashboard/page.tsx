@@ -2,15 +2,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Apple, Users, Binoculars, Award, TrendingUp, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { prisma } from '@trellis/database'
+import { getAuthContext } from '@/lib/auth/server'
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const auth = await getAuthContext()
+  const school = auth?.schoolId ? await prisma.school.findUnique({ where: { id: auth.schoolId } }) : null
+  const schoolName = school?.name || ''
+
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
+  const [totalTeachers, observationsThisMonth, draftEvaluations, recentObservations] = await Promise.all([
+    auth?.schoolId ? prisma.teacher.count({ where: { schoolId: auth.schoolId } }) : Promise.resolve(0),
+    auth?.schoolId
+      ? prisma.observation.count({ where: { schoolId: auth.schoolId, date: { gte: monthStart, lt: monthEnd } } })
+      : Promise.resolve(0),
+    auth?.schoolId ? prisma.evaluation.count({ where: { schoolId: auth.schoolId, status: 'DRAFT' } }) : Promise.resolve(0),
+    auth?.schoolId
+      ? prisma.observation.findMany({
+          where: { schoolId: auth.schoolId },
+          include: { teacher: { select: { name: true, subject: true, gradeLevel: true } } },
+          orderBy: { date: 'desc' },
+          take: 5,
+        })
+      : Promise.resolve([]),
+  ])
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back! Here&apos;s what&apos;s happening at Lincoln Elementary.
+            {schoolName ? `Welcome back! Here's what's happening at ${schoolName}.` : 'Welcome back!'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -30,9 +56,9 @@ export default function DashboardPage() {
             <Apple className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">25</div>
+            <div className="text-2xl font-bold">{totalTeachers}</div>
             <p className="text-xs text-muted-foreground">
-              +2 from last month
+              {/* Placeholder trend */}
             </p>
           </CardContent>
         </Card>
@@ -43,22 +69,22 @@ export default function DashboardPage() {
             <Binoculars className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">47</div>
+            <div className="text-2xl font-bold">{observationsThisMonth}</div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              {/* Placeholder trend */}
             </p>
           </CardContent>
         </Card>
         
         <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Evaluations Due</CardTitle>
+            <CardTitle className="text-sm font-medium">Draft Evaluations</CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{draftEvaluations}</div>
             <p className="text-xs text-muted-foreground">
-              3 overdue
+              {/* Placeholder */}
             </p>
           </CardContent>
         </Card>
@@ -69,9 +95,9 @@ export default function DashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.2/5</div>
+            <div className="text-2xl font-bold">N/A</div>
             <p className="text-xs text-muted-foreground">
-              +0.3 from last quarter
+              {/* No data */}
             </p>
           </CardContent>
         </Card>
@@ -87,26 +113,30 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentObservations.map((observation) => (
-                <div key={observation.id} className="flex items-center space-x-4">
-            <div className="w-8 h-8 rounded-full bg-white text-foreground flex items-center justify-center shadow-sm border">
-                    <span className="text-sm font-medium">
-                      {observation.teacherName.charAt(0)}
-                    </span>
+              {recentObservations.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No recent observations.</p>
+              ) : (
+                recentObservations.map((observation) => (
+                  <div key={observation.id} className="flex items-center space-x-4">
+                    <div className="w-8 h-8 rounded-full bg-white text-foreground flex items-center justify-center shadow-sm border">
+                      <span className="text-sm font-medium">
+                        {observation.teacher.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {observation.teacher.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {observation.teacher.subject || 'Subject N/A'} • {new Date(observation.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {observation.observationType}
+                    </div>
                   </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {observation.teacherName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {observation.subject} • {observation.date}
-                    </p>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {observation.type}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -137,46 +167,9 @@ export default function DashboardPage() {
                 Manage Teachers
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/dashboard/analytics">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                View Analytics
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
     </div>
   )
 }
-
-const recentObservations = [
-  {
-    id: '1',
-    teacherName: 'Sarah Johnson',
-    subject: 'Mathematics',
-    date: '2 hours ago',
-    type: 'Formal'
-  },
-  {
-    id: '2',
-    teacherName: 'Michael Chen',
-    subject: 'Science',
-    date: '1 day ago',
-    type: 'Informal'
-  },
-  {
-    id: '3',
-    teacherName: 'Emily Rodriguez',
-    subject: 'English',
-    date: '2 days ago',
-    type: 'Walkthrough'
-  },
-  {
-    id: '4',
-    teacherName: 'David Thompson',
-    subject: 'History',
-    date: '3 days ago',
-    type: 'Formal'
-  }
-]
