@@ -14,6 +14,13 @@ interface TeacherItem {
   gradeLevel?: string
 }
 
+type ApiTeacher = {
+  id: string
+  name: string
+  subject?: string | null
+  gradeLevel?: string | null
+}
+
 export default function NewEvaluationPage() {
   const router = useRouter()
   const [teachers, setTeachers] = useState<TeacherItem[]>([])
@@ -28,8 +35,15 @@ export default function NewEvaluationPage() {
       try {
         const res = await fetch('/api/teachers', { cache: 'no-store' })
         if (res.ok) {
-          const data = await res.json()
-          setTeachers(data.map((t: any) => ({ id: t.id, name: t.name, subject: t.subject, gradeLevel: t.gradeLevel })))
+          const data: ApiTeacher[] = await res.json()
+          setTeachers(
+            data.map((t: ApiTeacher) => ({
+              id: t.id,
+              name: t.name,
+              subject: t.subject ?? undefined,
+              gradeLevel: t.gradeLevel ?? undefined,
+            }))
+          )
         }
       } finally {
         setIsLoading(false)
