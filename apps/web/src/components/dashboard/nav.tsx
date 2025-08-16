@@ -4,7 +4,11 @@ import { Bell, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-export function DashboardNav() {
+type DashboardNavProps = {
+  schoolName?: string
+}
+
+export function DashboardNav({ schoolName }: DashboardNavProps) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/\]\0">
       <div className="flex h-16 items-center px-4 gap-4">
@@ -30,7 +34,7 @@ export function DashboardNav() {
           </Button>
           
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Lincoln Elementary</span>
+            <span className="text-sm text-muted-foreground">{schoolName || 'Your School'}</span>
             <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.15)]" />
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Apple, Users, Binoculars, Award, TrendingUp, Plus } from 'lucide-react'
+import { Users, Binoculars, Award, TrendingUp, Plus } from 'lucide-react'
 import Link from 'next/link'
 
 export default function DashboardPage() {
@@ -9,9 +9,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here&apos;s what&apos;s happening at Lincoln Elementary.
-          </p>
+          <p className="text-muted-foreground">Welcome back!</p>
         </div>
         <div className="flex gap-2">
           <Button asChild>
@@ -27,13 +25,11 @@ export default function DashboardPage() {
         <Card className="bg-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Teachers</CardTitle>
-            <Apple className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">25</div>
-            <p className="text-xs text-muted-foreground">
-              +2 from last month
-            </p>
+            <div className="text-2xl font-bold">—</div>
+            <p className="text-xs text-muted-foreground">No data yet</p>
           </CardContent>
         </Card>
         
@@ -43,10 +39,8 @@ export default function DashboardPage() {
             <Binoculars className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">47</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
+            <div className="text-2xl font-bold">—</div>
+            <p className="text-xs text-muted-foreground">No data yet</p>
           </CardContent>
         </Card>
         
@@ -56,10 +50,8 @@ export default function DashboardPage() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">
-              3 overdue
-            </p>
+            <div className="text-2xl font-bold">—</div>
+            <p className="text-xs text-muted-foreground">No data yet</p>
           </CardContent>
         </Card>
         
@@ -69,10 +61,8 @@ export default function DashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.2/5</div>
-            <p className="text-xs text-muted-foreground">
-              +0.3 from last quarter
-            </p>
+            <div className="text-2xl font-bold">—</div>
+            <p className="text-xs text-muted-foreground">No data yet</p>
           </CardContent>
         </Card>
       </div>
@@ -86,28 +76,7 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentObservations.map((observation) => (
-                <div key={observation.id} className="flex items-center space-x-4">
-            <div className="w-8 h-8 rounded-full bg-white text-foreground flex items-center justify-center shadow-sm border">
-                    <span className="text-sm font-medium">
-                      {observation.teacherName.charAt(0)}
-                    </span>
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {observation.teacherName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {observation.subject} • {observation.date}
-                    </p>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {observation.type}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="text-sm text-muted-foreground">No recent observations</div>
           </CardContent>
         </Card>
         
@@ -149,34 +118,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
-const recentObservations = [
-  {
-    id: '1',
-    teacherName: 'Sarah Johnson',
-    subject: 'Mathematics',
-    date: '2 hours ago',
-    type: 'Formal'
-  },
-  {
-    id: '2',
-    teacherName: 'Michael Chen',
-    subject: 'Science',
-    date: '1 day ago',
-    type: 'Informal'
-  },
-  {
-    id: '3',
-    teacherName: 'Emily Rodriguez',
-    subject: 'English',
-    date: '2 days ago',
-    type: 'Walkthrough'
-  },
-  {
-    id: '4',
-    teacherName: 'David Thompson',
-    subject: 'History',
-    date: '3 days ago',
-    type: 'Formal'
-  }
-]
