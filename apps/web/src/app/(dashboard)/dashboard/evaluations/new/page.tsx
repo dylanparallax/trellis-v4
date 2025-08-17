@@ -156,7 +156,7 @@ export default function NewEvaluationPage() {
               <select
                 value={schoolYear}
                 onChange={(e) => setSchoolYear(e.target.value)}
-                className="w-full mt-1 p-2 border rounded-md"
+                className="w-full mt-1 p-2 pr-8 border rounded-md"
               >
                 <option value="2024-2025">2024-2025</option>
                 <option value="2023-2024">2023-2024</option>

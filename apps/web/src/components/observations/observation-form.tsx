@@ -253,7 +253,7 @@ Excellent progress on the classroom management goal from last month's observatio
               <select
                 value={selectedTeacherId}
                 onChange={(e) => setSelectedTeacherId(e.target.value)}
-                className="w-full mt-1 p-2 border rounded-md bg-background"
+                className="w-full mt-1 p-2 pr-8 border rounded-md bg-background"
                 required
               >
                 <option value="">Select a teacher...</option>
@@ -270,7 +270,7 @@ Excellent progress on the classroom management goal from last month's observatio
               <select
                 value={observationType}
                 onChange={(e) => setObservationType(e.target.value)}
-                className="w-full mt-1 p-2 border rounded-md bg-background"
+                className="w-full mt-1 p-2 pr-8 border rounded-md bg-background"
               >
                 <option value="FORMAL">Formal</option>
                 <option value="INFORMAL">Informal</option>
