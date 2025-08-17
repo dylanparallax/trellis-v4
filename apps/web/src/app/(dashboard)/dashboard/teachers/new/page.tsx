@@ -14,8 +14,9 @@ export default function NewTeacherPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [subject, setSubject] = useState('')
-  const [gradeLevel, setGradeLevel] = useState('')
+    const [gradeLevel, setGradeLevel] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+  
   const [strengths, setStrengths] = useState('')
   const [growthAreas, setGrowthAreas] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -55,7 +56,7 @@ export default function NewTeacherPage() {
         strengths: parseCsv(strengths),
         growthAreas: parseCsv(growthAreas),
         currentGoals: [],
-        // photoUrl: uploadedUrl, // Removed - field doesn't exist in database yet
+        photoUrl: uploadedUrl,
       }
       
       console.log('Creating teacher with data:', body)
