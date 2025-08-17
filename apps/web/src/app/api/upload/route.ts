@@ -20,13 +20,14 @@ export async function POST(req: NextRequest) {
     const bytes = new Uint8Array(arrayBuffer)
     const filePath = `teachers/${Date.now()}-${file.name}`
 
-    const { data, error } = await supabase.storage.from('public').upload(filePath, bytes, {
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'profilePic'
+    const { data, error } = await supabase.storage.from(bucket).upload(filePath, bytes, {
       contentType: file.type || 'application/octet-stream',
       upsert: false,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    const { data: publicUrl } = supabase.storage.from('public').getPublicUrl(filePath)
+    const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(filePath)
     return NextResponse.json({ url: publicUrl.publicUrl })
   } catch (err) {
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
