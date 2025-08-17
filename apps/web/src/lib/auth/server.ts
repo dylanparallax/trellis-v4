@@ -62,37 +62,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
 
   try {
     const { prisma } = await import('@trellis/database')
-    let appUser = await prisma.user.findUnique({ where: { email: data.user.email } })
-    if (!appUser && process.env.NODE_ENV === 'development') {
-      // Auto-provision user and school in dev to keep flows working locally
-      let resolvedSchoolId = userMetadata?.schoolId || ''
-      if (resolvedSchoolId) {
-        const schoolExists = await prisma.school.findUnique({ where: { id: resolvedSchoolId } })
-        if (!schoolExists) resolvedSchoolId = ''
-      }
-
-      if (!resolvedSchoolId) {
-        const candidateName = userMetadata?.schoolName || process.env.NEXT_PUBLIC_DEFAULT_SCHOOL_NAME || 'Local School'
-        const existingByName = await prisma.school.findFirst({ where: { name: candidateName } })
-        const school = existingByName || await prisma.school.create({
-          data: {
-            name: candidateName,
-            settings: {},
-            evaluationFramework: {},
-          }
-        })
-        resolvedSchoolId = school.id
-      }
-
-      appUser = await prisma.user.create({
-        data: {
-          email: data.user.email,
-          name: userMetadata?.name || data.user.email.split('@')[0],
-          role: 'EVALUATOR',
-          schoolId: resolvedSchoolId,
-        }
-      })
-    }
+    const appUser = await prisma.user.findUnique({ where: { email: data.user.email } })
 
     return {
       userId: appUser.id,
