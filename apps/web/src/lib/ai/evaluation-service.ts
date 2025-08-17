@@ -56,7 +56,11 @@ export class AIEvaluationService {
   }
 
   async generateInitialEvaluation(context: EvaluationContext): Promise<EvaluationResponse> {
+    const isDemo = process.env.DEMO_MODE === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
     if (!this.hasValidAPIKeys()) {
+      if (isDemo) {
+        return this.generateDemoEvaluation(context)
+      }
       throw new Error('AI API keys are not configured')
     }
 
@@ -101,7 +105,11 @@ export class AIEvaluationService {
     context: EvaluationContext,
     currentEvaluation: string
   ): Promise<EvaluationResponse> {
+    const isDemo = process.env.DEMO_MODE === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
     if (!this.hasValidAPIKeys()) {
+      if (isDemo) {
+        return this.generateDemoChatResponse(userMessage, context, currentEvaluation)
+      }
       throw new Error('AI API keys are not configured')
     }
 
@@ -352,7 +360,7 @@ ${teacher.growthAreas?.map(area => `- **${area}** - Opportunity for continued pr
         'Areas for Growth',
         'Enhance technology integration with purposeful student use'
       )
-      message = "I added a technology-focused growth item."
+      message = 'I added a technology-focused growth item.'
     } else if (lowerMessage.includes('recommendation') || lowerMessage.includes('suggest')) {
       // Insert as next numbered item in Recommendations
       const recRegex = /(\n##\s+Recommendations\s*\n)([\s\S]*?)(\n##\s+|$)/i
@@ -363,7 +371,7 @@ ${teacher.growthAreas?.map(area => `- **${area}** - Opportunity for continued pr
         const injected = `${match[1]}${listBlock} ${nextNumber}. Consider implementing more student-centered learning approaches\n${match[3]}`
         updatedEvaluation = updatedEvaluation.replace(recRegex, injected)
       }
-      message = "I added an additional recommendation."
+      message = 'I added an additional recommendation.'
     }
     
     return {
