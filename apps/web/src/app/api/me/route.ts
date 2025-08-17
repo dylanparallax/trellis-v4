@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth/server'
 import { prisma } from '@trellis/database'
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
 
 export async function GET() {
   try {
@@ -29,6 +30,36 @@ export async function GET() {
         }
       } catch {
         // ignore and use auth fallbacks
+      }
+    }
+
+    // Fallback: query Supabase directly with service role if still missing
+    if ((!name || !schoolName) && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+      try {
+        const admin = createSupabaseAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+        if (!name || !schoolId) {
+          const { data: dbUser } = await admin
+            .from('User')
+            .select('name, schoolId')
+            .eq('email', auth.email)
+            .limit(1)
+            .maybeSingle()
+          if (dbUser) {
+            name = name || dbUser.name
+            schoolId = schoolId || dbUser.schoolId
+          }
+        }
+        if (!schoolName && schoolId) {
+          const { data: school } = await admin
+            .from('School')
+            .select('name')
+            .eq('id', schoolId)
+            .limit(1)
+            .maybeSingle()
+          if (school) schoolName = school.name
+        }
+      } catch {
+        // ignore
       }
     }
 
