@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 html {
-  font-size: 13px; /* This scales everything down proportionally */
+  font-size: 14px; /* This scales everything down proportionally */
 }
 
 @custom-variant dark (&:is(.dark *));
