@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/auth/server'
+import { mockTeachers } from '@/lib/data/mock-data'
 
 const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -20,6 +21,18 @@ export async function GET() {
   try {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Demo-mode fallback
+    if (process.env.DEMO_MODE === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+      // Return a minimal slice of fields consistent with usage in clients
+      const teachers = mockTeachers.map(t => ({
+        id: t.id,
+        name: t.name,
+        subject: t.subject ?? '',
+        gradeLevel: t.gradeLevel ?? '',
+      }))
+      return NextResponse.json(teachers)
+    }
 
     const teachers = await prisma.teacher.findMany({
       where: { schoolId: auth.schoolId },
