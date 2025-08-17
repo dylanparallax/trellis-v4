@@ -20,6 +20,12 @@ export function DashboardNav({ schoolName }: DashboardNavProps) {
         const { user } = await getCurrentUser()
         const meta = (user?.user_metadata as { schoolName?: string } | undefined)
         if (isMounted && meta?.schoolName) setClientSchoolName(meta.schoolName)
+        // Prefer DB-backed value via API if available
+        const res = await fetch('/api/me', { cache: 'no-store' })
+        if (isMounted && res.ok) {
+          const data: { schoolName?: string } = await res.json()
+          if (data?.schoolName) setClientSchoolName(data.schoolName)
+        }
       } catch {
         // ignore
       }
