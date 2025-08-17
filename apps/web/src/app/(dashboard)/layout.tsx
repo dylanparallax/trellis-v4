@@ -25,6 +25,10 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
   if (!schoolName && auth?.schoolName) {
     schoolName = auth.schoolName
   }
+  // Final fallback: env default
+  if (!schoolName && process.env.NEXT_PUBLIC_DEFAULT_SCHOOL_NAME) {
+    schoolName = process.env.NEXT_PUBLIC_DEFAULT_SCHOOL_NAME
+  }
 
   return (
     <div className="flex min-h-screen">
