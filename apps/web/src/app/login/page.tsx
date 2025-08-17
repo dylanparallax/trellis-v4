@@ -145,6 +145,11 @@ export default function LoginPage() {
               Try Demo Mode
             </Button>
           </div>
+
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            Don’t have an account?{' '}
+            <a href="/signup" className="underline">Create one</a>
+          </div>
         </CardContent>
       </Card>
     </div>
