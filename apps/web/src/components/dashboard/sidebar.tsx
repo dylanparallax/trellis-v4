@@ -38,6 +38,7 @@ const navigation = [
 // Custom hook to get current user
 function useCurrentUser() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [profileName, setProfileName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -49,6 +50,12 @@ function useCurrentUser() {
         } else {
           setUser(user)
         }
+        // Fetch DB-backed name/role
+        const res = await fetch('/api/me', { cache: 'no-store' })
+        if (res.ok) {
+          const data: { name?: string | null } = await res.json()
+          if (data?.name) setProfileName(data.name)
+        }
       } catch (error) {
         console.error('Error fetching user:', error)
       } finally {
@@ -59,14 +66,14 @@ function useCurrentUser() {
     fetchUser()
   }, [])
 
-  return { user, loading }
+  return { user, profileName, loading }
 }
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const { user, loading } = useCurrentUser()
+  const { user, profileName, loading } = useCurrentUser()
 
   const handleLogout = async () => {
     try {
@@ -98,15 +105,15 @@ export function Sidebar() {
 
   // Get user display name
   const getUserDisplayName = () => {
+    if (profileName) return profileName
     if (!user) return 'User'
-    
     const { user_metadata } = user
-    if (user_metadata?.full_name) {
-      return user_metadata.full_name
+    if (user_metadata?.full_name) return user_metadata.full_name
+    if (user_metadata?.name) return user_metadata.name
+    if (user_metadata?.firstName || user_metadata?.lastName) {
+      return `${user_metadata.firstName ?? ''} ${user_metadata.lastName ?? ''}`.trim() || 'User'
     }
-    if (user.email) {
-      return user.email.split('@')[0]
-    }
+    if (user.email) return user.email.split('@')[0]
     return 'User'
   }
 
