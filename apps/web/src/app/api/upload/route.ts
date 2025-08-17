@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const filePath = `teachers/${Date.now()}-${file.name}`
 
     const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'profilePic'
-    const { data, error } = await supabase.storage.from(bucket).upload(filePath, bytes, {
+    const { error } = await supabase.storage.from(bucket).upload(filePath, bytes, {
       contentType: file.type || 'application/octet-stream',
       upsert: false,
     })
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(filePath)
     return NextResponse.json({ url: publicUrl.publicUrl })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }

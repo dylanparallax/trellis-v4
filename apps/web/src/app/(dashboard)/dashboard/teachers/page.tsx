@@ -51,7 +51,7 @@ export default async function TeachersPage() {
     const numbers: number[] = []
     for (const e of evaluations) {
       const scores = e.scores as unknown as { overall?: number } | null
-      const overall = scores && typeof scores === 'object' ? (scores as any).overall : undefined
+      const overall = scores && typeof scores === 'object' ? scores.overall : undefined
       if (typeof overall === 'number' && Number.isFinite(overall)) numbers.push(overall)
     }
     if (numbers.length > 0) {
