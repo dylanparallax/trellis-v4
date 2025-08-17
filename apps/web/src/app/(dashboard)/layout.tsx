@@ -1,3 +1,4 @@
+export const runtime = 'nodejs'
 import { ReactNode } from 'react'
 import { DashboardNav } from '@/components/dashboard/nav'
 import { Sidebar } from '@/components/dashboard/sidebar'
