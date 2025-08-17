@@ -21,6 +21,10 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
       schoolName = undefined
     }
   }
+  // Fallback to auth metadata if DB name not available
+  if (!schoolName && auth?.schoolName) {
+    schoolName = auth.schoolName
+  }
 
   return (
     <div className="flex min-h-screen">

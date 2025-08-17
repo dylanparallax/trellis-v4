@@ -7,6 +7,7 @@ export type AuthContext = {
   name: string | null
   role: 'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN'
   schoolId: string
+  schoolName?: string
 }
 
 export async function getSupabaseServerClient() {
@@ -39,6 +40,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
       name: 'Demo User',
       role: 'ADMIN',
       schoolId: 'demo-school-1',
+      schoolName: 'Demo School',
     }
   }
   const supabase = await getSupabaseServerClient()
@@ -46,13 +48,15 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   if (error || !data.user?.email) return null
 
   const isDbConfigured = Boolean(process.env.DATABASE_URL)
+  const userMetadata = (data.user.user_metadata as { name?: string; schoolName?: string; schoolId?: string }) || {}
   if (!isDbConfigured) {
     return {
       userId: data.user.id,
       email: data.user.email,
-      name: (data.user.user_metadata as { name?: string })?.name ?? null,
+      name: userMetadata?.name ?? null,
       role: 'EVALUATOR',
-      schoolId: '',
+      schoolId: userMetadata?.schoolId ?? '',
+      schoolName: userMetadata?.schoolName,
     }
   }
 
@@ -63,9 +67,10 @@ export async function getAuthContext(): Promise<AuthContext | null> {
       return {
         userId: data.user.id,
         email: data.user.email,
-        name: (data.user.user_metadata as { name?: string })?.name ?? null,
+        name: userMetadata?.name ?? null,
         role: 'EVALUATOR',
-        schoolId: '',
+        schoolId: userMetadata?.schoolId ?? '',
+        schoolName: userMetadata?.schoolName,
       }
     }
 
@@ -75,14 +80,17 @@ export async function getAuthContext(): Promise<AuthContext | null> {
       name: appUser.name,
       role: appUser.role as AuthContext['role'],
       schoolId: appUser.schoolId,
+      // layout will fetch school name from DB; keep optional metadata as fallback
+      schoolName: userMetadata?.schoolName,
     }
   } catch {
     return {
       userId: data.user.id,
       email: data.user.email,
-      name: (data.user.user_metadata as { name?: string })?.name ?? null,
+      name: userMetadata?.name ?? null,
       role: 'EVALUATOR',
-      schoolId: '',
+      schoolId: userMetadata?.schoolId ?? '',
+      schoolName: userMetadata?.schoolName,
     }
   }
 }
