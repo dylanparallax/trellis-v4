@@ -1,4 +1,5 @@
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 import { ReactNode } from 'react'
 import { DashboardNav } from '@/components/dashboard/nav'
 import { Sidebar } from '@/components/dashboard/sidebar'
