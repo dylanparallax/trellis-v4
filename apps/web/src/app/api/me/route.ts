@@ -34,9 +34,10 @@ export async function GET() {
     }
 
     // Fallback: query Supabase directly with service role if still missing
-    if ((!name || !schoolName) && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
+    if ((!name || !schoolName) && process.env.NEXT_PUBLIC_SUPABASE_URL && serviceKey) {
       try {
-        const admin = createSupabaseAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY)
+        const admin = createSupabaseAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceKey)
         if (!name || !schoolId) {
           const { data: dbUser } = await admin
             .from('User')
@@ -64,7 +65,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ name, role, email: auth.email, schoolId, schoolName })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
