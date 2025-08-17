@@ -30,12 +30,21 @@ export default function NewTeacherPage() {
     try {
       let uploadedUrl: string | undefined
       if (photoFile) {
-        const form = new FormData()
-        form.append('file', photoFile)
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: form })
-        if (!uploadRes.ok) throw new Error('Photo upload failed')
-        const uploaded = await uploadRes.json()
-        uploadedUrl = uploaded.url as string
+        try {
+          const form = new FormData()
+          form.append('file', photoFile)
+          const uploadRes = await fetch('/api/upload', { method: 'POST', body: form })
+          if (!uploadRes.ok) {
+            console.warn('Photo upload failed, continuing without photo')
+            // Continue without photo instead of failing completely
+          } else {
+            const uploaded = await uploadRes.json()
+            uploadedUrl = uploaded.url as string
+          }
+        } catch (uploadError) {
+          console.warn('Photo upload error, continuing without photo:', uploadError)
+          // Continue without photo instead of failing completely
+        }
       }
 
       const body = {
@@ -46,16 +55,26 @@ export default function NewTeacherPage() {
         strengths: parseCsv(strengths),
         growthAreas: parseCsv(growthAreas),
         currentGoals: [],
-        photoUrl: uploadedUrl,
+        // photoUrl: uploadedUrl, // Removed - field doesn't exist in database yet
       }
+      
+      console.log('Creating teacher with data:', body)
+      
       const res = await fetch('/api/teachers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (!res.ok) throw new Error('Failed to create teacher')
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        console.error('Teacher creation failed:', res.status, errorData)
+        throw new Error(`Failed to create teacher: ${errorData.error || res.statusText}`)
+      }
+      
       router.push('/dashboard/teachers')
     } catch (err: unknown) {
+      console.error('Teacher creation error:', err)
       setError(err instanceof Error ? err.message : 'Failed to create teacher')
     } finally {
       setIsSubmitting(false)

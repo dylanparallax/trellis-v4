@@ -8,7 +8,7 @@ const teacherSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   subject: z.string().optional().or(z.literal('')),
   gradeLevel: z.string().optional().or(z.literal('')),
-  photoUrl: z.string().url().optional().or(z.literal('')),
+  // photoUrl: z.string().url().optional().or(z.literal('')), // Removed - field doesn't exist in database yet
   strengths: z.array(z.string()).default([]),
   growthAreas: z.array(z.string()).default([]),
   currentGoals: z.array(z.object({
@@ -62,8 +62,7 @@ export async function POST(request: NextRequest) {
         currentGoals: validated.currentGoals,
         strengths: validated.strengths,
         growthAreas: validated.growthAreas,
-        // @ts-expect-error runtime may not have column until migration applied
-        photoUrl: validated.photoUrl || undefined,
+        // photoUrl: validated.photoUrl || undefined, // Removed - field doesn't exist in database yet
       },
       include: {
         school: true
