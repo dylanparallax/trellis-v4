@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
+import { prisma } from '@trellis/database'
 
 // Add proper types
 interface Teacher {
@@ -14,17 +15,49 @@ interface Teacher {
 
 export async function POST(request: NextRequest) {
   try {
-    const { rawNotes, teacher, observationType, focusAreas } = await request.json()
+    const body = await request.json()
+    const rawNotes: string | undefined = body?.rawNotes
+    const observationType: string | undefined = body?.observationType
+    const focusAreas: string[] = Array.isArray(body?.focusAreas) ? body.focusAreas : []
+    const teacherId: string | undefined = body?.teacherId
+    const teacherInput: Teacher | undefined = body?.teacher
 
-    // Validate required fields
-    if (!rawNotes || !teacher || !observationType) {
-      return NextResponse.json(
-        { error: 'Missing required fields: rawNotes, teacher, observationType' },
-        { status: 400 }
-      )
+    if (!rawNotes || !observationType) {
+      return NextResponse.json({ error: 'Missing required fields: rawNotes, observationType' }, { status: 400 })
     }
 
-    const prompt = buildEnhancementPrompt(rawNotes, teacher, observationType, focusAreas || [])
+    // Resolve teacher from input or DB (using teacherId)
+    let teacher: Teacher | null = null
+    if (teacherInput && typeof teacherInput?.name === 'string') {
+      teacher = {
+        name: teacherInput.name,
+        subject: teacherInput.subject,
+        gradeLevel: teacherInput.gradeLevel,
+        strengths: teacherInput.strengths,
+        growthAreas: teacherInput.growthAreas,
+      }
+    } else if (teacherId) {
+      const t = await prisma.teacher.findUnique({
+        where: { id: teacherId },
+        select: { name: true, subject: true, gradeLevel: true, strengths: true, growthAreas: true },
+      })
+      if (t) {
+        teacher = {
+          name: t.name,
+          subject: t.subject || undefined,
+          gradeLevel: t.gradeLevel || undefined,
+          strengths: t.strengths || [],
+          growthAreas: t.growthAreas || [],
+        }
+      }
+    }
+
+    // Fallback minimal teacher if not resolvable
+    if (!teacher) {
+      teacher = { name: 'Teacher' }
+    }
+
+    const prompt = buildEnhancementPrompt(rawNotes, teacher, observationType, focusAreas)
 
     try {
       const { text } = await generateText({
