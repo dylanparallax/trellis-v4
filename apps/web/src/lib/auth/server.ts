@@ -48,7 +48,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   if (error || !data.user?.email) return null
 
   const isDbConfigured = Boolean(process.env.DATABASE_URL)
-  const userMetadata = (data.user.user_metadata as { name?: string; schoolName?: string; schoolId?: string }) || {}
+  const userMetadata = (data.user.user_metadata as { name?: string; full_name?: string; firstName?: string; lastName?: string; schoolName?: string; schoolId?: string }) || {}
   if (!isDbConfigured) {
     return {
       userId: data.user.id,
@@ -77,7 +77,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     return {
       userId: data.user.id,
       email: data.user.email,
-      name: userMetadata?.name ?? null,
+      name: userMetadata?.name || userMetadata?.full_name || `${userMetadata?.firstName ?? ''} ${userMetadata?.lastName ?? ''}`.trim() || null,
       role: 'EVALUATOR',
       schoolId: userMetadata?.schoolId ?? '',
       schoolName: userMetadata?.schoolName,
