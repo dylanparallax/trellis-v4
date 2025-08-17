@@ -1,147 +1,160 @@
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Binoculars, Award, ArrowLeft, Paperclip } from 'lucide-react'
-import { prisma } from '@trellis/database'
-import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
+'use client'
 
-type PageParams = {
-  params: Promise<{ id: string }>
+import { useEffect, useState } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import Link from 'next/link'
+import { ArrowLeft, Upload as UploadIcon } from 'lucide-react'
+
+type Teacher = {
+  id: string
+  name: string
+  email?: string | null
+  subject?: string | null
+  gradeLevel?: string | null
+  strengths: string[]
+  growthAreas: string[]
+  currentGoals: Array<{ goal: string; progress: number }>
+  photoUrl?: string | null
 }
 
-export default async function TeacherDetailPage({ params }: PageParams) {
-  const { id } = await params
-  const auth = await getAuthContext()
-  if (!auth) return notFound()
+export default function EditTeacherPage() {
+  const router = useRouter()
+  const params = useParams<{ id: string }>()
+  const teacherId = params.id
+  const [teacher, setTeacher] = useState<Teacher | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
 
-  const teacher = await prisma.teacher.findUnique({
-    where: { id },
-    include: {
-      observations: { orderBy: { date: 'desc' }, include: { artifacts: true } },
-      evaluations: { orderBy: { createdAt: 'desc' } },
-      school: true,
-    },
-  })
-  if (!teacher) return notFound()
-  assertSameSchool(teacher, auth.schoolId)
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(`/api/teachers/${teacherId}`, { cache: 'no-store' })
+        if (!res.ok) throw new Error('Failed to load teacher')
+        const t = await res.json()
+        setTeacher(t)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load teacher')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    if (teacherId) void load()
+  }, [teacherId])
 
-  const observations = teacher.observations || []
-  const evaluations = teacher.evaluations || []
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    let photoUrl: string | undefined
+    if (photoFile) {
+      try {
+        const form = new FormData()
+        form.append('file', photoFile)
+        const up = await fetch('/api/upload', { method: 'POST', body: form })
+        if (up.ok) {
+          const data = await up.json()
+          photoUrl = data.url
+        }
+      } catch {}
+    }
+    try {
+      const res = await fetch(`/api/teachers/${teacherId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: teacher?.name,
+          email: teacher?.email || '',
+          subject: teacher?.subject || '',
+          gradeLevel: teacher?.gradeLevel || '',
+          strengths: teacher?.strengths,
+          growthAreas: teacher?.growthAreas,
+          currentGoals: teacher?.currentGoals,
+          photoUrl,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to save teacher')
+      router.push('/dashboard/teachers')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save teacher')
+    }
+  }
 
-  const schoolYear = new Date().getFullYear()
+  if (isLoading) return <div className="p-6">Loading…</div>
+  if (!teacher) return <div className="p-6">{error || 'Not found'}</div>
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" asChild>
-          <Link href="/dashboard/teachers" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" /> Back to Teachers
+          <Link href="/dashboard/teachers" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Teachers
           </Link>
         </Button>
       </div>
 
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{teacher.name}</h1>
-          <p className="text-muted-foreground">
-            {teacher.subject || 'Subject N/A'} • Grade {teacher.gradeLevel || 'N/A'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link href={`/dashboard/observations/new?teacherId=${teacher.id}`} className="flex items-center gap-2">
-              <Binoculars className="h-4 w-4" /> Add Observation
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href={`/dashboard/evaluations/chat?teacher=${teacher.id}&type=SUMMATIVE&year=${schoolYear}-${schoolYear + 1}`} className="flex items-center gap-2">
-              <Award className="h-4 w-4" /> Create Evaluation
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Observations</CardTitle>
-            <CardDescription>Recent observation history</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {observations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No observations yet.</p>
-            ) : (
-              observations.map((obs) => (
-                <div key={obs.id} className="flex items-center justify-between border rounded-md p-3">
-                  <div className="space-y-1">
-                    <div className="text-sm font-medium">{new Date(obs.date).toLocaleDateString()}</div>
-                    <div className="text-xs text-muted-foreground">{obs.observationType}</div>
-                    {obs.focusAreas?.length > 0 && (
-                      <div className="text-xs text-muted-foreground">Focus: {obs.focusAreas.join(', ')}</div>
-                    )}
-                    {obs.artifacts?.length > 0 && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Paperclip className="h-3 w-3" /> {obs.artifacts.length} artifact{obs.artifacts.length > 1 ? 's' : ''}
-                      </div>
-                    )}
-                  </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/observations?teacherId=${teacher.id}`}>View</Link>
-                  </Button>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Evaluations</CardTitle>
-            <CardDescription>Latest evaluations</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {evaluations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No evaluations yet.</p>
-            ) : (
-              evaluations.map((ev) => (
-                <div key={ev.id} className="flex items-center justify-between border rounded-md p-3">
-                  <div className="space-y-1">
-                    <div className="text-sm font-medium">{ev.type}</div>
-                    <div className="text-xs text-muted-foreground">{new Date(ev.createdAt).toLocaleDateString()} • {ev.status}</div>
-                  </div>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/evaluations/chat?teacher=${teacher.id}&type=${ev.type}&year=${schoolYear}-${schoolYear + 1}`}>Open</Link>
-                  </Button>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight">Edit Teacher</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Teacher details and metadata</CardDescription>
+          <CardTitle>Teacher Details</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          <div>
-            <div className="text-xs text-muted-foreground">Email</div>
-            <div className="text-sm">{teacher.email || '—'}</div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">Strengths</div>
-            <div className="text-sm">{(teacher.strengths || []).join(', ') || '—'}</div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">Growth Areas</div>
-            <div className="text-sm">{(teacher.growthAreas || []).join(', ') || '—'}</div>
-          </div>
+        <CardContent>
+          <form onSubmit={handleSave} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Name</label>
+                <Input value={teacher.name} onChange={(e) => setTeacher({ ...teacher, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input type="email" value={teacher.email ?? ''} onChange={(e) => setTeacher({ ...teacher, email: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Subject</label>
+                <Input value={teacher.subject ?? ''} onChange={(e) => setTeacher({ ...teacher, subject: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Grade Level</label>
+                <Input value={teacher.gradeLevel ?? ''} onChange={(e) => setTeacher({ ...teacher, gradeLevel: e.target.value })} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <UploadIcon className="h-4 w-4" /> New Photo (optional)
+                </label>
+                <input type="file" accept="image/*" className="mt-1" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} />
+                {teacher.photoUrl ? (
+                  <p className="text-xs text-muted-foreground mt-1 truncate">Current: {teacher.photoUrl}</p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Strengths (comma-separated)</label>
+                <Textarea value={teacher.strengths.join(', ')} onChange={(e) => setTeacher({ ...teacher, strengths: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Growth Areas (comma-separated)</label>
+                <Textarea value={teacher.growthAreas.join(', ')} onChange={(e) => setTeacher({ ...teacher, growthAreas: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} />
+              </div>
+            </div>
+
+            {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>}
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" asChild>
+                <Link href="/dashboard/teachers">Cancel</Link>
+              </Button>
+              <Button type="submit">Save Changes</Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
   )
 }
-
-
