@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
-import { User, Mail, BookOpen, GraduationCap, Image as ImageIcon, ArrowLeft } from 'lucide-react'
+import { User, Mail, BookOpen, GraduationCap, Upload as UploadIcon, ArrowLeft } from 'lucide-react'
 
 export default function NewTeacherPage() {
   const router = useRouter()
@@ -15,7 +15,7 @@ export default function NewTeacherPage() {
   const [email, setEmail] = useState('')
   const [subject, setSubject] = useState('')
   const [gradeLevel, setGradeLevel] = useState('')
-  const [photoUrl, setPhotoUrl] = useState('')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [strengths, setStrengths] = useState('')
   const [growthAreas, setGrowthAreas] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -28,6 +28,16 @@ export default function NewTeacherPage() {
     setIsSubmitting(true)
     setError('')
     try {
+      let uploadedUrl: string | undefined
+      if (photoFile) {
+        const form = new FormData()
+        form.append('file', photoFile)
+        const uploadRes = await fetch('/api/upload', { method: 'POST', body: form })
+        if (!uploadRes.ok) throw new Error('Photo upload failed')
+        const uploaded = await uploadRes.json()
+        uploadedUrl = uploaded.url as string
+      }
+
       const body = {
         name,
         email: email || undefined,
@@ -36,7 +46,7 @@ export default function NewTeacherPage() {
         strengths: parseCsv(strengths),
         growthAreas: parseCsv(growthAreas),
         currentGoals: [],
-        photoUrl: photoUrl || undefined, // not in schema yet; safely ignored by server
+        photoUrl: uploadedUrl,
       }
       const res = await fetch('/api/teachers', {
         method: 'POST',
@@ -98,9 +108,9 @@ export default function NewTeacherPage() {
               </div>
               <div className="md:col-span-2">
                 <label className="text-sm font-medium flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" /> Photo URL (optional)
+                  <UploadIcon className="h-4 w-4" /> Photo (optional)
                 </label>
-                <Input value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://.../photo.jpg" className="mt-1" />
+                <input type="file" accept="image/*" className="mt-1" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} />
               </div>
             </div>
 
