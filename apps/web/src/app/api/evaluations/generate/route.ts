@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { prisma } from '@trellis/database'
 import { getAuthContext } from '@/lib/auth/server'
 import { AIEvaluationService } from '@/lib/ai/evaluation-service'
-import { getTeacherById, getObservationsByTeacherId, getEvaluationsByTeacherId } from '@/lib/data/mock-data'
 
 const requestSchema = z.object({
   teacherId: z.string().min(1, 'teacherId is required'),
@@ -17,47 +16,7 @@ export async function POST(request: NextRequest) {
   try {
     const json = await request.json()
     const { teacherId, evaluationType, schoolYear } = requestSchema.parse(json)
-    const isDemo = process.env.DEMO_MODE === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
-
-    // Demo-mode fallback only when explicitly enabled
-    if (isDemo) {
-      const mock = getTeacherById(teacherId)
-      if (!mock) {
-        return NextResponse.json({ error: 'Teacher not found' }, { status: 404 })
-      }
-
-      const teacher = {
-        id: mock.id,
-        name: mock.name,
-        subject: mock.subject ?? undefined,
-        gradeLevel: mock.gradeLevel ?? undefined,
-        strengths: mock.strengths ?? [],
-        growthAreas: mock.growthAreas ?? [],
-      }
-
-      const previousObservations = getObservationsByTeacherId(teacherId).map((o) => ({
-        date: o.date as Date,
-        enhancedNotes: (o as { enhancedNotes?: string }).enhancedNotes ?? undefined,
-        rawNotes: (o as { rawNotes: string }).rawNotes,
-      }))
-      const previousEvaluations = getEvaluationsByTeacherId(teacherId).map((e) => ({
-        createdAt: e.createdAt as Date,
-        type: e.type as 'FORMATIVE' | 'SUMMATIVE' | 'MID_YEAR' | 'END_YEAR',
-        summary: e.summary ?? undefined,
-      }))
-
-      const evaluationService = new AIEvaluationService()
-      const response = await evaluationService.generateInitialEvaluation({
-        teacher,
-        evaluationType,
-        schoolYear,
-        previousObservations,
-        previousEvaluations,
-        chatHistory: [],
-      })
-
-      return NextResponse.json(response)
-    }
+    // Remove demo mock data path: always use real DB
 
     // Auth only required when using real DB
     const auth = await getAuthContext()
