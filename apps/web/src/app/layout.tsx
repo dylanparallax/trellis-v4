@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     images: ["/trellis-card.png"],
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/trellis-light.svg",
   },
 };
 
