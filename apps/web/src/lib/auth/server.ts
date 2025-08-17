@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
-import { prisma } from '@trellis/database'
 
 export type AuthContext = {
   userId: string
@@ -46,9 +45,8 @@ export async function getAuthContext(): Promise<AuthContext | null> {
   const { data, error } = await supabase.auth.getUser()
   if (error || !data.user?.email) return null
 
-  const appUser = await prisma.user.findUnique({ where: { email: data.user.email } })
-  if (!appUser) {
-    // Allow access to onboarding even if DB user does not exist yet
+  const isDbConfigured = Boolean(process.env.DATABASE_URL)
+  if (!isDbConfigured) {
     return {
       userId: data.user.id,
       email: data.user.email,
@@ -58,12 +56,34 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     }
   }
 
-  return {
-    userId: appUser.id,
-    email: appUser.email,
-    name: appUser.name,
-    role: appUser.role as AuthContext['role'],
-    schoolId: appUser.schoolId,
+  try {
+    const { prisma } = await import('@trellis/database')
+    const appUser = await prisma.user.findUnique({ where: { email: data.user.email } })
+    if (!appUser) {
+      return {
+        userId: data.user.id,
+        email: data.user.email,
+        name: (data.user.user_metadata as { name?: string })?.name ?? null,
+        role: 'EVALUATOR',
+        schoolId: '',
+      }
+    }
+
+    return {
+      userId: appUser.id,
+      email: appUser.email,
+      name: appUser.name,
+      role: appUser.role as AuthContext['role'],
+      schoolId: appUser.schoolId,
+    }
+  } catch {
+    return {
+      userId: data.user.id,
+      email: data.user.email,
+      name: (data.user.user_metadata as { name?: string })?.name ?? null,
+      role: 'EVALUATOR',
+      schoolId: '',
+    }
   }
 }
 
