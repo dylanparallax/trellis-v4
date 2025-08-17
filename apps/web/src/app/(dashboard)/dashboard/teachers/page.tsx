@@ -70,12 +70,6 @@ export default async function TeachersPage() {
       </div>
 
       <TeacherList />
-      <div className="flex justify-end">
-        <Link href="/dashboard/teachers/new" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">
-          <Plus className="h-4 w-4" />
-          Add Teacher
-        </Link>
-      </div>
     </div>
   )
 }

@@ -12,6 +12,7 @@ import {
   Search,
   MoreHorizontal
 } from 'lucide-react'
+import Link from 'next/link'
 
 interface Teacher {
   id: string
@@ -144,10 +145,19 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
             {filteredTeachers.length} of {teachers.length} teachers
           </p>
         </div>
-        <Button onClick={onAddTeacher}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Teacher
-        </Button>
+        {onAddTeacher ? (
+          <Button onClick={onAddTeacher}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Teacher
+          </Button>
+        ) : (
+          <Button asChild>
+            <Link href="/dashboard/teachers/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Teacher
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
