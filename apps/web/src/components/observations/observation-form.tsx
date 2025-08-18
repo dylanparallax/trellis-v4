@@ -222,7 +222,7 @@ Excellent progress on the classroom management goal from last month's observatio
     }
   }
 
-  const isValid = selectedTeacherId && notes.trim() && duration.trim()
+  const isValid = Boolean(selectedTeacherId && notes.trim())
 
   if (isLoadingTeachers) {
     return (
@@ -288,7 +288,6 @@ Excellent progress on the classroom management goal from last month's observatio
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="45"
                 className="mt-1"
-                required
               />
             </div>
           </div>
