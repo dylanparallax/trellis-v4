@@ -24,8 +24,11 @@ async function getObservation(id: string) {
   return res.json()
 }
 
-export default async function ObservationDetailPage({ params }: { params: { id: string } }) {
-  const observation = await getObservation(params.id)
+type PageParams = { params: Promise<{ id: string }> }
+
+export default async function ObservationDetailPage({ params }: PageParams) {
+  const { id } = await params
+  const observation = await getObservation(id)
   if (!observation) {
     return (
       <div className="p-6">
