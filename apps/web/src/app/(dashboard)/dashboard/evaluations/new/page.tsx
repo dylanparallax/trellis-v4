@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,9 @@ export default function NewEvaluationPage() {
   const [evaluationType, setEvaluationType] = useState('FORMATIVE')
   const [schoolYear, setSchoolYear] = useState('2024-2025')
   const [searchQuery, setSearchQuery] = useState('')
+  const [teachers, setTeachers] = useState<Array<{ id: string; name: string; subject?: string | null; gradeLevel?: string | null }>>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   const handleGenerateEvaluation = () => {
     if (!selectedTeacher) return
@@ -23,10 +26,29 @@ export default function NewEvaluationPage() {
     router.push(`/dashboard/evaluations/chat?teacher=${selectedTeacher}&type=${evaluationType}&year=${schoolYear}`)
   }
 
-  const filteredTeachers = teachers.filter(teacher =>
-    teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (teacher.subject?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-  )
+  useEffect(() => {
+    let isMounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/teachers', { cache: 'no-store' })
+        if (!res.ok) throw new Error('Failed to load teachers')
+        const data = await res.json()
+        if (isMounted) setTeachers(data)
+      } catch (e) {
+        if (isMounted) setLoadError('Failed to load teachers')
+      } finally {
+        if (isMounted) setIsLoading(false)
+      }
+    })()
+    return () => { isMounted = false }
+  }, [])
+
+  const filteredTeachers = useMemo(() => {
+    const q = searchQuery.toLowerCase()
+    return teachers.filter((t) =>
+      t.name.toLowerCase().includes(q) || (t.subject?.toLowerCase() || '').includes(q)
+    )
+  }, [teachers, searchQuery])
 
   return (
     <div className="space-y-6">
@@ -74,7 +96,13 @@ export default function NewEvaluationPage() {
             </div>
             
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {filteredTeachers.map((teacher) => (
+              {isLoading ? (
+                <div className="text-sm text-muted-foreground">Loading teachers…</div>
+              ) : loadError ? (
+                <div className="text-sm text-destructive">{loadError}</div>
+              ) : filteredTeachers.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No teachers found</div>
+              ) : filteredTeachers.map((teacher) => (
                 <div
                   key={teacher.id}
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -196,7 +224,3 @@ export default function NewEvaluationPage() {
     </div>
   )
 }
-
-import { mockTeachers } from '@/lib/data/mock-data'
-
-const teachers = mockTeachers 
