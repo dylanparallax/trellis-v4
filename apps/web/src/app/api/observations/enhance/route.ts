@@ -123,7 +123,7 @@ ${rawNotes}
 """
 
 Task
-Rewrite and enhance the notes. Ground each point in observable evidence from the raw notes where possible.
+Rewrite and enhance the notes. Interpret bullet points and sketched ideas into complete sentences and ground each point in observable evidence from the raw notes where possible.
 
 Tone
 - Professional, supportive, and specific. Prefer verbs like “clarify,” “model,” “check for,” “scaffold.”
