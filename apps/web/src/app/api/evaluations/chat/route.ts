@@ -12,7 +12,7 @@ const requestSchema = z.object({
   teacherId: z.string().min(1),
   evaluationType: z.enum(['FORMATIVE', 'SUMMATIVE']),
   schoolYear: z.string().min(1),
-  currentEvaluation: z.string().min(1),
+  currentEvaluation: z.string().optional().default(''),
 })
 
 export async function POST(request: NextRequest) {

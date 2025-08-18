@@ -220,7 +220,8 @@ INSTRUCTIONS:
 3. Keep the same professional structure and format
 4. Maintain all relevant information while making the requested changes
 5. Provide a brief message explaining what you've updated
-6. Use proper Markdown formatting with headers, bullet points, and emphasis
+6. Use proper Markdown formatting with headers (##), bullets, emphasis, and paragraph spacing
+7. Never truncate content or use placeholder text like "[remaining sections as before]". Always return the full updated evaluation.
 
 IMPORTANT: You must respond in exactly this format:
 

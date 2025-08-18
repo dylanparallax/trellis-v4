@@ -418,15 +418,15 @@ function EvaluationChatContent() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-gray-200 p-6 bg-white">
-            <div className="flex space-x-4">
+          <div className="border-t border-gray-200 p-4 bg-white sticky bottom-0">
+            <div className="flex gap-4">
               <Textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask me to modify the evaluation, add specific examples, or clarify any points..."
-                className="flex-1 min-h-[60px] resize-none"
+                className="flex-1 min-h-[60px] max-h-40 resize-y"
                 disabled={isLoading}
               />
               <Button
@@ -475,18 +475,16 @@ function EvaluationChatContent() {
           )}
           {/* Artifact content */}
           {currentEvaluation ? (
-            <div className="prose prose-sm max-w-none flex-1 min-h-0 overflow-y-auto">
+            <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none flex-1 min-h-0 overflow-y-auto">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {currentEvaluation.content}
               </ReactMarkdown>
               <div className="mt-4 flex gap-2">
-                <Button variant="outline" size="sm" onClick={copyEvaluation}>
+                <Button variant="ghost" size="icon" onClick={copyEvaluation} aria-label="Copy Evaluation">
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  <span className="ml-2">{copied ? 'Copied!' : 'Copy'}</span>
                 </Button>
-                <Button variant="outline" size="sm" onClick={downloadEvaluation}>
+                <Button variant="ghost" size="icon" onClick={downloadEvaluation} aria-label="Download Evaluation">
                   <Download className="h-4 w-4" />
-                  <span className="ml-2">Download</span>
                 </Button>
               </div>
             </div>
