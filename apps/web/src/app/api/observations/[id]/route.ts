@@ -6,14 +6,15 @@ export const runtime = 'nodejs'
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const { id } = await params
     const observation = await prisma.observation.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         teacher: { select: { id: true, name: true, subject: true, gradeLevel: true } },
         observer: { select: { id: true, name: true, email: true } },
