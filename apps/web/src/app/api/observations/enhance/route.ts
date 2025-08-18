@@ -106,7 +106,6 @@ You are an instructional coach enhancing classroom observation notes.
 Constraints:
 - Use objective, evidence-based language; avoid judgmental phrasing.
 - Do not invent facts; only use information provided in the notes and context.
-- Keep total length to 250–400 words.
 - Write in Markdown with short paragraphs and bulleted lists.
 
 Context
@@ -124,21 +123,7 @@ ${rawNotes}
 """
 
 Task
-Rewrite and enhance the notes with the following sections. Ground each point in observable evidence from the raw notes where possible.
-
-Output Format (Markdown)
-### Instructional Strengths Observed
-- 2–4 bullets. Each bullet: concrete practice + brief evidence.
-
-### Areas for Growth
-- 2–4 bullets. Each bullet: opportunity + why it matters (student learning) + brief evidence.
-
-### Next Steps (Actionable)
-- 3 specific, measurable recommendations aligned to the focus areas: ${focus}
-- Each step should include: action, when/frequency, and how to verify impact.
-
-### Connection to Goals (if applicable)
-- Note progress or alignment with the teacher’s stated strengths/growth areas.
+Rewrite and enhance the notes. Ground each point in observable evidence from the raw notes where possible.
 
 Tone
 - Professional, supportive, and specific. Prefer verbs like “clarify,” “model,” “check for,” “scaffold.”

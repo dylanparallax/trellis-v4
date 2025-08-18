@@ -50,6 +50,7 @@ model Teacher {
   email             String?
   subject           String?
   gradeLevel        String?
+  photoUrl          String?  // URL to teacher's photo
   schoolId          String
   school            School   @relation(fields: [schoolId], references: [id])
   

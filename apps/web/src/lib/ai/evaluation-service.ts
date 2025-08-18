@@ -47,8 +47,8 @@ export interface EvaluationResponse {
 }
 
 export class AIEvaluationService {
-  private static readonly ANTHROPIC_MODEL = 'claude-3-5-sonnet-20241022'
-  private static readonly OPENAI_MODEL = 'gpt-4-turbo'
+  private static readonly ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'
+  private static readonly OPENAI_MODEL = 'gpt-5-nano-2025-08-07'
   private hasValidAPIKeys(): boolean {
     const hasAnthropicKey = !!(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_anthropic_key_here')
     const hasOpenAIKey = !!(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_key_here')
@@ -181,16 +181,15 @@ ${evaluations.slice(0, 3).map(evaluation => {
 }).join('')}
 
 INSTRUCTIONS:
-Create a professional, comprehensive teacher evaluation report using Markdown formatting. Include:
+Create a professional, comprehensive teacher evaluation report based on the context you have been given, using Markdown formatting. Include:
 
 1. **Executive Summary** (2-3 paragraphs)
-2. **Strengths** (bullet points with specific examples)
-3. **Areas for Growth** (bullet points with actionable feedback)
-4. **Recommendations** (numbered list of specific next steps)
-5. **Next Steps** (timeline and follow-up actions)
-6. **Overall Rating** (Proficient/Developing/Needs Improvement with numerical score)
+2. **Strengths**
+3. **Areas for Growth**
+4. **Recommendations** 
+5. **Next Steps**
 
-Use specific examples from observations when available. Be constructive and actionable. Focus on evidence-based feedback. Use professional educational language.
+Use specific examples from observations when available. Be constructive and actionable. Focus on evidence-based feedback. Use professional educational language intended to help the teacher grow and thrive.
 
 Format the response using proper Markdown syntax with headers, bullet points, and emphasis where appropriate.`
   }
