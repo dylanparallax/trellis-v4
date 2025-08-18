@@ -300,6 +300,36 @@ function EvaluationChatContent() {
               )}
             </div>
           </div>
+          {currentEvaluation && teacher && (
+            <div className="mt-3 flex justify-end">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const payload = {
+                      teacherId: teacher.id,
+                      evaluationType: (evaluationType as 'FORMATIVE' | 'SUMMATIVE') || 'FORMATIVE',
+                      schoolYear: schoolYear || '2024-2025',
+                      content: { markdown: currentEvaluation.content },
+                      summary: currentEvaluation.content.slice(0, 180),
+                      status: 'SUBMITTED',
+                    }
+                    const res = await fetch('/api/evaluations', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload),
+                    })
+                    if (!res.ok) throw new Error('Failed to save evaluation')
+                  } catch (e) {
+                    console.error(e)
+                  }
+                }}
+              >
+                Submit Evaluation
+              </Button>
+            </div>
+          )}
           
           <div className="flex items-center space-x-2">
             {currentEvaluation && (
@@ -441,26 +471,14 @@ function EvaluationChatContent() {
         </div>
 
         {/* Artifact Viewer (right) */}
-        <div className="col-span-7 min-w-0 flex flex-col bg-white p-6 overflow-hidden">
+        <div className="col-span-7 min-w-0 flex flex-col bg-white p-6 overflow-hidden max-w-none">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900">Generated Evaluation</h3>
-            {currentEvaluation && (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={copyEvaluation}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  <span className="ml-2">{copied ? 'Copied!' : 'Copy'}</span>
-                </Button>
-                <Button variant="outline" size="sm" onClick={downloadEvaluation}>
-                  <Download className="h-4 w-4" />
-                  <span className="ml-2">Download</span>
-                </Button>
-              </div>
-            )}
           </div>
-          {/* Versions strip */}
+          {/* Versions strip (ensure unique and single for first) */}
           {evaluationVersions.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-3 mb-3 border-b">
-              {evaluationVersions.map((v) => (
+              {[...new Map(evaluationVersions.map(v => [v.id, v])).values()].map((v) => (
                 <div
                   key={v.id}
                   className={`px-3 py-2 rounded-md text-sm cursor-pointer whitespace-nowrap ${
@@ -479,7 +497,7 @@ function EvaluationChatContent() {
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {currentEvaluation.content}
               </ReactMarkdown>
-              <div className="mt-4 flex gap-2">
+              <div className="sticky bottom-0 bg-white pt-3 mt-6 flex gap-2 border-t">
                 <Button variant="ghost" size="icon" onClick={copyEvaluation} aria-label="Copy Evaluation">
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>

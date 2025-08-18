@@ -34,4 +34,61 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const body = await request.json()
+    const {
+      teacherId,
+      evaluationType,
+      schoolYear,
+      content,
+      summary,
+      scores,
+      status,
+    } = body as {
+      teacherId: string
+      evaluationType: 'FORMATIVE' | 'SUMMATIVE' | 'MID_YEAR' | 'END_YEAR'
+      schoolYear?: string
+      content: unknown
+      summary?: string
+      scores?: unknown
+      status?: 'DRAFT' | 'SUBMITTED'
+    }
+
+    if (!teacherId || !content) {
+      return NextResponse.json({ error: 'teacherId and content are required' }, { status: 400 })
+    }
+
+    // Ensure teacher is in same school
+    const teacher = await prisma.teacher.findUnique({ where: { id: teacherId } })
+    if (!teacher || teacher.schoolId !== auth.schoolId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const evaluation = await prisma.evaluation.create({
+      data: {
+        teacherId,
+        evaluatorId: auth.userId,
+        schoolId: auth.schoolId,
+        type: evaluationType || 'FORMATIVE',
+        content: typeof content === 'string' ? { markdown: content } : content,
+        summary: summary || null,
+        scores: scores || {},
+        status: status || 'DRAFT',
+      },
+      include: {
+        teacher: { select: { id: true, name: true } },
+        evaluator: { select: { id: true, name: true } },
+      }
+    })
+
+    return NextResponse.json(evaluation, { status: 201 })
+  } catch (error) {
+    console.error('Error creating evaluation:', error)
+    return NextResponse.json({ error: 'Failed to create evaluation' }, { status: 500 })
+  }
+}
+
 
