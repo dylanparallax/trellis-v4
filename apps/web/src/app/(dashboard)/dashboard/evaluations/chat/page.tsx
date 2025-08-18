@@ -170,7 +170,7 @@ function EvaluationChatContent() {
   
 
   const handleSendMessage = async () => {
-    if (!input.trim() || isLoading || !teacher || !currentEvaluation) return
+    if (!input.trim() || isLoading || !teacher) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -194,7 +194,7 @@ function EvaluationChatContent() {
           teacherId: teacher.id,
           evaluationType: (evaluationType as 'FORMATIVE' | 'SUMMATIVE') || 'FORMATIVE',
           schoolYear: schoolYear || '2024-2025',
-          currentEvaluation: currentEvaluation.content
+          currentEvaluation: currentEvaluation?.content ?? ''
         })
       })
 
@@ -208,7 +208,7 @@ function EvaluationChatContent() {
       let newVersion: EvaluationVersion | null = null
       let artifactId: string | undefined = undefined
       
-      if (data.evaluation !== currentEvaluation.content) {
+      if (!currentEvaluation || data.evaluation !== currentEvaluation.content) {
         newVersion = createEvaluationVersion(
           data.evaluation,
           `Updated ${evaluationType} Evaluation`,
@@ -329,11 +329,11 @@ function EvaluationChatContent() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 grid grid-cols-12 overflow-hidden">
         {/* Chat Area (left) */}
-        <div className="basis-[55%] max-w-[55%] flex flex-col border-r border-gray-200">
+        <div className="col-span-5 min-w-0 flex flex-col border-r border-gray-200 overflow-hidden">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <Sparkles className="h-12 w-12 text-gray-400 mb-4" />
@@ -441,7 +441,7 @@ function EvaluationChatContent() {
         </div>
 
         {/* Artifact Viewer (right) */}
-        <div className="flex-1 min-w-0 bg-white p-6">
+        <div className="col-span-7 min-w-0 flex flex-col bg-white p-6 overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-900">Generated Evaluation</h3>
             {currentEvaluation && (
@@ -467,7 +467,6 @@ function EvaluationChatContent() {
                     v.id === currentVersionId ? 'bg-blue-50 border border-blue-300' : 'bg-muted hover:bg-muted/60 border'
                   }`}
                   onClick={() => setCurrentVersionId(v.id)}
-                  title={`${v.title} – ${v.timestamp.toLocaleTimeString()}`}
                 >
                   {v.title} (V{v.version})
                 </div>
@@ -476,7 +475,7 @@ function EvaluationChatContent() {
           )}
           {/* Artifact content */}
           {currentEvaluation ? (
-            <div className="prose prose-sm max-w-none">
+            <div className="prose prose-sm max-w-none flex-1 min-h-0 overflow-y-auto">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {currentEvaluation.content}
               </ReactMarkdown>
