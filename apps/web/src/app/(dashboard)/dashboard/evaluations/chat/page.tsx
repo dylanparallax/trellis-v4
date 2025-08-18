@@ -10,12 +10,11 @@ import {
   Download, 
   Sparkles, 
   User, 
-  Bot, 
   Copy,
   Check,
-  ArrowLeft,
-  Clock
+  ArrowLeft
 } from 'lucide-react'
+import Image from 'next/image'
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
 import remarkGfm from 'remark-gfm'
 
@@ -122,22 +121,21 @@ function EvaluationChatContent() {
       }
 
       const data = await response.json()
-      
-      const initialMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: data.evaluation,
-        timestamp: new Date()
-      }
-      
-      setMessages([initialMessage])
-      
-      // Create initial version
-      createEvaluationVersion(
+      // Create initial version first
+      const version = createEvaluationVersion(
         data.evaluation,
         `${evaluationType || 'Annual'} Evaluation`,
         'Initial AI-generated evaluation'
       )
+      // Add assistant message with summary and thumbnail
+      const initialMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: data.message || `Generated an initial evaluation for ${teacher.name}.`,
+        timestamp: new Date(),
+        artifactId: version.id,
+      }
+      setMessages([initialMessage])
       
     } catch (error) {
       console.error('Error generating initial evaluation:', error)
@@ -224,8 +222,8 @@ function EvaluationChatContent() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: newVersion 
-          ? `${data.message} The evaluation has been updated.`
-          : data.message,
+          ? (data.message || 'Updated the evaluation. Click to view V2.')
+          : (data.message || 'No changes were necessary.'),
         timestamp: new Date(),
         artifactId
       }
@@ -332,8 +330,8 @@ function EvaluationChatContent() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
+        {/* Chat Area (left) */}
+        <div className="basis-[55%] max-w-[55%] flex flex-col border-r border-gray-200">
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 ? (
@@ -371,19 +369,31 @@ function EvaluationChatContent() {
                       {message.role === 'user' ? (
                         <User className="h-4 w-4" />
                       ) : (
-                        <Bot className="h-4 w-4" />
+                        <Image src="/trellis-light.svg" alt="Trellis" width={16} height={16} />
                       )}
                       <span className="text-sm font-medium">
-                        {message.role === 'user' ? 'You' : 'AI Assistant'}
+                        {message.role === 'user' ? 'You' : 'Trellis'}
                       </span>
                       <span className="text-xs opacity-70">
                         {message.timestamp.toLocaleTimeString()}
                       </span>
                     </div>
-                    <div className="prose prose-sm max-w-none">
+                    <div className="prose prose-sm max-w-none space-y-3">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {message.content}
                       </ReactMarkdown>
+                      {message.role === 'assistant' && message.artifactId ? (
+                        <div
+                          className={`p-3 border rounded-md cursor-pointer hover:bg-muted/50`}
+                          onClick={() => setCurrentVersionId(message.artifactId!)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium text-sm">{teacher?.name} – {evaluationType} Evaluation</div>
+                            <span className="text-xs text-muted-foreground">V{evaluationVersions.find(v => v.id === message.artifactId)?.version || ''}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">Click to open the generated evaluation</div>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -393,8 +403,8 @@ function EvaluationChatContent() {
               <div className="flex justify-start">
                 <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
                   <div className="flex items-center space-x-2">
-                    <Bot className="h-4 w-4" />
-                    <span className="text-sm font-medium">AI Assistant</span>
+                    <Image src="/trellis-light.svg" alt="Trellis" width={16} height={16} />
+                    <span className="text-sm font-medium">Trellis</span>
                     <div className="flex space-x-1">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -430,37 +440,60 @@ function EvaluationChatContent() {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="w-80 bg-white border-l border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Evaluation Versions</h3>
-          <div className="space-y-2">
-            {evaluationVersions.map((version) => (
-              <div
-                key={version.id}
-                className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                  version.id === currentVersionId
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setCurrentVersionId(version.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-sm text-gray-900">
-                      {version.title}
-                    </h4>
-                    <p className="text-xs text-gray-500">{version.description}</p>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-3 w-3 text-gray-400" />
-                    <span className="text-xs text-gray-500">
-                      {version.timestamp.toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
+        {/* Artifact Viewer (right) */}
+        <div className="flex-1 min-w-0 bg-white p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Generated Evaluation</h3>
+            {currentEvaluation && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={copyEvaluation}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <span className="ml-2">{copied ? 'Copied!' : 'Copy'}</span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={downloadEvaluation}>
+                  <Download className="h-4 w-4" />
+                  <span className="ml-2">Download</span>
+                </Button>
               </div>
-            ))}
+            )}
           </div>
+          {/* Versions strip */}
+          {evaluationVersions.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-3 mb-3 border-b">
+              {evaluationVersions.map((v) => (
+                <div
+                  key={v.id}
+                  className={`px-3 py-2 rounded-md text-sm cursor-pointer whitespace-nowrap ${
+                    v.id === currentVersionId ? 'bg-blue-50 border border-blue-300' : 'bg-muted hover:bg-muted/60 border'
+                  }`}
+                  onClick={() => setCurrentVersionId(v.id)}
+                  title={`${v.title} – ${v.timestamp.toLocaleTimeString()}`}
+                >
+                  {v.title} (V{v.version})
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Artifact content */}
+          {currentEvaluation ? (
+            <div className="prose prose-sm max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {currentEvaluation.content}
+              </ReactMarkdown>
+              <div className="mt-4 flex gap-2">
+                <Button variant="outline" size="sm" onClick={copyEvaluation}>
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  <span className="ml-2">{copied ? 'Copied!' : 'Copy'}</span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={downloadEvaluation}>
+                  <Download className="h-4 w-4" />
+                  <span className="ml-2">Download</span>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">No evaluation generated yet.</div>
+          )}
         </div>
       </div>
     </div>
