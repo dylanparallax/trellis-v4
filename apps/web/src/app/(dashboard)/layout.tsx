@@ -12,9 +12,8 @@ interface DashboardLayoutProps {
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
   const auth = await getAuthContext()
-  const isDbConfigured = Boolean(process.env.DATABASE_URL)
   let schoolName: string | undefined
-  if (auth?.schoolId && isDbConfigured) {
+  if (auth?.schoolId) {
     try {
       const school = await prisma.school.findUnique({ where: { id: auth.schoolId }, select: { name: true } })
       schoolName = school?.name || undefined

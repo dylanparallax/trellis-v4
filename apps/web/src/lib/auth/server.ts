@@ -49,13 +49,46 @@ export async function getAuthContext(): Promise<AuthContext | null> {
 
   const isDbConfigured = Boolean(process.env.DATABASE_URL)
   const userMetadata = (data.user.user_metadata as { name?: string; full_name?: string; firstName?: string; lastName?: string; schoolName?: string; schoolId?: string }) || {}
+  const composedName =
+    userMetadata?.name ||
+    userMetadata?.full_name ||
+    `${userMetadata?.firstName ?? ''} ${userMetadata?.lastName ?? ''}`.trim() ||
+    null
   if (!isDbConfigured) {
+    // Try to read app user from Supabase DB directly using service role
+    let resolvedName = composedName
+    let resolvedSchoolId = userMetadata?.schoolId ?? ''
+    let resolvedRole: AuthContext['role'] = 'EVALUATOR'
+
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL && serviceKey) {
+        const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceKey)
+        const { data: dbUser } = await admin
+          .from('User')
+          .select('name, role, schoolId')
+          .eq('email', data.user.email)
+          .limit(1)
+          .maybeSingle()
+        if (dbUser) {
+          resolvedName = resolvedName || dbUser.name || null
+          resolvedSchoolId = resolvedSchoolId || dbUser.schoolId || ''
+          if (dbUser.role && ['ADMIN','EVALUATOR','DISTRICT_ADMIN'].includes(dbUser.role)) {
+            resolvedRole = dbUser.role as AuthContext['role']
+          }
+        }
+      }
+    } catch {
+      // ignore and use metadata fallbacks
+    }
+
     return {
       userId: data.user.id,
       email: data.user.email,
-      name: userMetadata?.name ?? null,
-      role: 'EVALUATOR',
-      schoolId: userMetadata?.schoolId ?? '',
+      name: resolvedName,
+      role: resolvedRole,
+      schoolId: resolvedSchoolId,
       schoolName: userMetadata?.schoolName,
     }
   }
@@ -65,16 +98,35 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     const appUser = await prisma.user.findUnique({ where: { email: data.user.email } })
 
     if (!appUser) {
+      // Try to fetch school linkage directly from the DB via Supabase service key
+      let inferredSchoolId = userMetadata?.schoolId ?? ''
+      let inferredName = composedName
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
+        if (process.env.NEXT_PUBLIC_SUPABASE_URL && serviceKey) {
+          const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceKey)
+          const { data: dbUser } = await admin
+            .from('User')
+            .select('name, schoolId')
+            .eq('email', data.user.email)
+            .limit(1)
+            .maybeSingle()
+          if (dbUser) {
+            inferredName = inferredName || dbUser.name || null
+            inferredSchoolId = inferredSchoolId || dbUser.schoolId || ''
+          }
+        }
+      } catch {
+        // ignore and use metadata fallbacks
+      }
+
       return {
         userId: data.user.id,
         email: data.user.email,
-        name:
-          userMetadata?.name ||
-          userMetadata?.full_name ||
-          `${userMetadata?.firstName ?? ''} ${userMetadata?.lastName ?? ''}`.trim() ||
-          null,
+        name: inferredName,
         role: 'EVALUATOR',
-        schoolId: userMetadata?.schoolId ?? '',
+        schoolId: inferredSchoolId,
         schoolName: userMetadata?.schoolName,
       }
     }
