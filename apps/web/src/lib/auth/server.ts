@@ -64,6 +64,21 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     const { prisma } = await import('@trellis/database')
     const appUser = await prisma.user.findUnique({ where: { email: data.user.email } })
 
+    if (!appUser) {
+      return {
+        userId: data.user.id,
+        email: data.user.email,
+        name:
+          userMetadata?.name ||
+          userMetadata?.full_name ||
+          `${userMetadata?.firstName ?? ''} ${userMetadata?.lastName ?? ''}`.trim() ||
+          null,
+        role: 'EVALUATOR',
+        schoolId: userMetadata?.schoolId ?? '',
+        schoolName: userMetadata?.schoolName,
+      }
+    }
+
     return {
       userId: appUser.id,
       email: appUser.email,

@@ -8,6 +8,7 @@ export const mockTeachers: Teacher[] = [
     gradeLevel: '5',
     email: 'sarah.johnson@school.edu',
     schoolId: '1',
+    photoUrl: null,
     performanceHistory: [],
     currentGoals: [],
     strengths: [
@@ -32,6 +33,7 @@ export const mockTeachers: Teacher[] = [
     gradeLevel: '4',
     email: 'michael.chen@school.edu',
     schoolId: '1',
+    photoUrl: null,
     performanceHistory: [],
     currentGoals: [],
     strengths: [
@@ -56,6 +58,7 @@ export const mockTeachers: Teacher[] = [
     gradeLevel: '3',
     email: 'emily.rodriguez@school.edu',
     schoolId: '1',
+    photoUrl: null,
     performanceHistory: [],
     currentGoals: [],
     strengths: [
