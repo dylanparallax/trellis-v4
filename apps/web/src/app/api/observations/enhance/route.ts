@@ -100,38 +100,49 @@ function buildEnhancementPrompt(
   observationType: string,
   focusAreas: string[]
 ): string {
-  return `You are an expert educational evaluator enhancing classroom observation notes.
+  const focus = focusAreas.length ? focusAreas.join(', ') : 'Not specified'
+  return `SYSTEM
+You are an instructional coach enhancing classroom observation notes.
+Constraints:
+- Use objective, evidence-based language; avoid judgmental phrasing.
+- Do not invent facts; only use information provided in the notes and context.
+- Keep total length to 250–400 words.
+- Write in Markdown with short paragraphs and bulleted lists.
 
-TEACHER INFORMATION:
-- Name: ${teacher.name}
+Context
+- Teacher: ${teacher.name}
 - Subject: ${teacher.subject || 'Not specified'}
-- Grade Level: ${teacher.gradeLevel || 'Not specified'}
-- Strengths: ${teacher.strengths ? teacher.strengths.join(', ') : 'Not specified'}
-- Growth Areas: ${teacher.growthAreas ? teacher.growthAreas.join(', ') : 'Not specified'}
+- Grade: ${teacher.gradeLevel || 'Not specified'}
+- Teacher strengths (from profile): ${Array.isArray(teacher.strengths) && teacher.strengths.length ? teacher.strengths.join(', ') : 'Not specified'}
+- Teacher growth areas (from profile): ${Array.isArray(teacher.growthAreas) && teacher.growthAreas.length ? teacher.growthAreas.join(', ') : 'Not specified'}
+- Observation type: ${observationType}
+- Focus areas selected: ${focus}
 
-OBSERVATION CONTEXT:
-- Type: ${observationType}
-- Focus Areas: ${focusAreas.join(', ')}
-
-RAW OBSERVATION NOTES:
+Raw Notes
+"""
 ${rawNotes}
+"""
 
-INSTRUCTIONS:
-Enhance these observation notes by:
+Task
+Rewrite and enhance the notes with the following sections. Ground each point in observable evidence from the raw notes where possible.
 
-1. **Identifying Instructional Strengths** - Highlight specific examples of effective teaching practices
-2. **Noting Areas for Growth** - Provide constructive feedback with actionable suggestions
-3. **Connecting to Teacher Goals** - Reference any relevant professional development goals
-4. **Adding Specific Recommendations** - Suggest concrete next steps for improvement
-5. **Maintaining Professional Tone** - Use educational terminology and constructive language
+Output Format (Markdown)
+### Instructional Strengths Observed
+- 2–4 bullets. Each bullet: concrete practice + brief evidence.
 
-Format the response using Markdown with clear sections:
-- **Instructional Strengths Observed**
-- **Areas for Growth**
-- **Next Steps**
-- **Connection to Previous Goals** (if applicable)
+### Areas for Growth
+- 2–4 bullets. Each bullet: opportunity + why it matters (student learning) + brief evidence.
 
-Be specific, actionable, and evidence-based. Focus on the teacher's development and student learning outcomes.`
+### Next Steps (Actionable)
+- 3 specific, measurable recommendations aligned to the focus areas: ${focus}
+- Each step should include: action, when/frequency, and how to verify impact.
+
+### Connection to Goals (if applicable)
+- Note progress or alignment with the teacher’s stated strengths/growth areas.
+
+Tone
+- Professional, supportive, and specific. Prefer verbs like “clarify,” “model,” “check for,” “scaffold.”
+  `
 }
 
  
