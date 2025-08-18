@@ -1,10 +1,23 @@
 import { ObservationsListClient, type ObservationItem } from '@/components/observations/observations-list-client'
+import { headers } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
+async function getBaseUrl(): Promise<string> {
+  const env = process.env.NEXT_PUBLIC_BASE_URL
+  if (env && env.trim().length > 0) return env.replace(/\/$/, '')
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'
+  const proto = h.get('x-forwarded-proto') ?? 'http'
+  return `${proto}://${host}`
+}
+
 async function getObservations(): Promise<ObservationItem[]> {
-  // Relative-path fetch ensures Next includes auth cookies automatically
-  const res = await fetch('/api/observations', { cache: 'no-store' })
+  const baseUrl = await getBaseUrl()
+  const url = new URL('/api/observations', baseUrl)
+  const h = await headers()
+  const cookieHeader = h.get('cookie') ?? ''
+  const res = await fetch(url.toString(), { cache: 'no-store', headers: { cookie: cookieHeader } })
   if (!res.ok) return []
   const data = await res.json()
   return data.map((o: Record<string, unknown>) => ({
