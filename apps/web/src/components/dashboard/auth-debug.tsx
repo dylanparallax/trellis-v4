@@ -24,8 +24,12 @@ export function AuthDebug() {
       const supabaseCookies = cookies.filter(c => c.startsWith('sb-'))
       
       // Check localStorage and sessionStorage
-      const localStorage = Object.keys(localStorage).filter(k => k.includes('supabase') || k.includes('auth'))
-      const sessionStorage = Object.keys(sessionStorage).filter(k => k.includes('supabase') || k.includes('auth'))
+      const localStorageKeys = Object.keys(window.localStorage).filter(
+        k => k.includes('supabase') || k.includes('auth')
+      )
+      const sessionStorageKeys = Object.keys(window.sessionStorage).filter(
+        k => k.includes('supabase') || k.includes('auth')
+      )
       
       // Try to get session from API
       const response = await fetch('/api/me')
@@ -34,8 +38,8 @@ export function AuthDebug() {
       setAuthState({
         hasSession,
         cookies: supabaseCookies,
-        localStorage,
-        sessionStorage,
+        localStorage: localStorageKeys,
+        sessionStorage: sessionStorageKeys,
       })
     } catch (error) {
       setAuthState({
@@ -61,16 +65,16 @@ export function AuthDebug() {
     })
     
     // Clear localStorage
-    Object.keys(localStorage).forEach(key => {
+    Object.keys(window.localStorage).forEach(key => {
       if (key.includes('supabase') || key.includes('auth')) {
-        localStorage.removeItem(key)
+        window.localStorage.removeItem(key)
       }
     })
     
     // Clear sessionStorage
-    Object.keys(sessionStorage).forEach(key => {
+    Object.keys(window.sessionStorage).forEach(key => {
       if (key.includes('supabase') || key.includes('auth')) {
-        sessionStorage.removeItem(key)
+        window.sessionStorage.removeItem(key)
       }
     })
     
