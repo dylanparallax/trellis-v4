@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -78,7 +79,15 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Link href="/" className="font-semibold">Trellis</Link>
+              <Link href="/" className="flex items-center">
+                <Image 
+                  src="/trellis-light.svg" 
+                  alt="Trellis" 
+                  width={120} 
+                  height={32} 
+                  className="h-8 w-auto"
+                />
+              </Link>
             </div>
             <div className="flex items-center space-x-4">
               <Button asChild variant="ghost" className="hidden sm:inline-flex">
@@ -111,7 +120,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               From scattered observations to comprehensive, continuous feedback that helps teachers thrive.
             </h2>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button size="lg" onClick={onGetStarted} className="text-lg px-8 py-6 rounded-full border border-2 border-primary bg-none">
+              <Button size="lg" onClick={onGetStarted} className="text-lg px-8 py-6 border border-2 border-primary bg-none">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

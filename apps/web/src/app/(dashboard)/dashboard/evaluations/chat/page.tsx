@@ -291,7 +291,7 @@ function EvaluationChatContent() {
             </Button>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
-                Evaluation Chat
+                Generate Evaluation
               </h1>
               {teacher && (
                 <p className="text-sm text-gray-500">
@@ -404,7 +404,7 @@ function EvaluationChatContent() {
                       <span className="text-sm font-medium">
                         {message.role === 'user' ? 'You' : 'Trellis'}
                       </span>
-                      <span className="text-xs opacity-70">
+                      <span className="npm runtext-xs opacity-70">
                         {message.timestamp.toLocaleTimeString()}
                       </span>
                     </div>

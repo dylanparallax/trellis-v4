@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
-import { prisma } from '@trellis/database'
+// Prisma is only needed if teacherId is provided; import dynamically to avoid env issues
 
 // Add proper types
 interface Teacher {
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
         growthAreas: teacherInput.growthAreas,
       }
     } else if (teacherId) {
+      const { prisma } = await import('@trellis/database')
       const t = await prisma.teacher.findUnique({
         where: { id: teacherId },
         select: { name: true, subject: true, gradeLevel: true, strengths: true, growthAreas: true },

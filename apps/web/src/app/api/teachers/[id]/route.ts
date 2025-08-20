@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@trellis/database'
+// Import Prisma dynamically to prevent SSR init errors when DATABASE_URL is missing
 import { z } from 'zod'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 
@@ -27,6 +27,7 @@ export async function GET(
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
+    const { prisma } = await import('@trellis/database')
     const teacher = await prisma.teacher.findUnique({
       where: { id },
       include: {
@@ -54,6 +55,7 @@ export async function PUT(
     const body = await request.json()
     const validated = teacherUpdateSchema.parse(body)
 
+    const { prisma } = await import('@trellis/database')
     const existing = await prisma.teacher.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: 'Teacher not found' }, { status: 404 })
     assertSameSchool(existing, auth.schoolId)

@@ -2,7 +2,6 @@ export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth/server'
-import { prisma } from '@trellis/database'
 import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
 
 export async function GET() {
@@ -14,19 +13,23 @@ export async function GET() {
     let schoolId = auth.schoolId
     let schoolName = auth.schoolName
 
-    try {
-      const user = await prisma.user.findUnique({ where: { email: auth.email }, select: { name: true, role: true, schoolId: true } })
-      if (user) {
-        name = user.name
-        role = user.role as typeof role
-        schoolId = user.schoolId
+    const isDbConfigured = Boolean(process.env.DATABASE_URL)
+    if (isDbConfigured) {
+      try {
+        const { prisma } = await import('@trellis/database')
+        const user = await prisma.user.findUnique({ where: { email: auth.email }, select: { name: true, role: true, schoolId: true } })
+        if (user) {
+          name = user.name
+          role = user.role as typeof role
+          schoolId = user.schoolId
+        }
+        if (schoolId) {
+          const school = await prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } })
+          schoolName = school?.name ?? schoolName
+        }
+      } catch {
+        // ignore and use auth fallbacks
       }
-      if (schoolId) {
-        const school = await prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } })
-        schoolName = school?.name ?? schoolName
-      }
-    } catch {
-      // ignore and use auth fallbacks
     }
 
     // Fallback: query Supabase directly with service role if still missing

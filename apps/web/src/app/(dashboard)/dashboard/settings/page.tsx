@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { AuthDebug } from '@/components/dashboard/auth-debug'
 
 export default function SettingsPage() {
   const [framework, setFramework] = useState('')
@@ -70,6 +71,15 @@ export default function SettingsPage() {
           <div className="flex justify-end">
             <Button onClick={save} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Settings'}</Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Authentication Debug</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AuthDebug />
         </CardContent>
       </Card>
     </div>

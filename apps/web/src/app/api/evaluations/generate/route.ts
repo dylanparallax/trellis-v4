@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@trellis/database'
+// Import Prisma conditionally to avoid SSR errors when DATABASE_URL is not configured
 import { getAuthContext } from '@/lib/auth/server'
 import { AIEvaluationService } from '@/lib/ai/evaluation-service'
 
@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // Fetch core entities from DB (non-demo)
+    const { prisma } = await import('@trellis/database')
     const teacherRecord = await prisma.teacher.findUnique({
       where: { id: teacherId },
     })

@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { prisma } from '@trellis/database'
+// Import Prisma dynamically to avoid failures when DATABASE_URL isn't set
 import { getAuthContext } from '@/lib/auth/server'
 import { AIEvaluationService } from '@/lib/ai/evaluation-service'
 import { getTeacherById, getObservationsByTeacherId, getEvaluationsByTeacherId } from '@/lib/data/mock-data'
@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response)
     }
 
+    const { prisma } = await import('@trellis/database')
     const teacherRecord = await prisma.teacher.findUnique({ where: { id: teacherId } })
     if (!teacherRecord) {
       return NextResponse.json({ error: 'Teacher not found' }, { status: 404 })

@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@trellis/database'
+// Import Prisma dynamically to prevent runtime errors if DATABASE_URL is missing
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/auth/server'
 
@@ -15,6 +15,7 @@ export async function GET() {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const { prisma } = await import('@trellis/database')
     const school = await prisma.school.findUnique({ where: { id: auth.schoolId } })
     if (!school) return NextResponse.json({ error: 'School not found' }, { status: 404 })
 
@@ -37,6 +38,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { evaluationFrameworkText, promptGuidelines } = updateSchema.parse(body)
 
+    const { prisma } = await import('@trellis/database')
     const school = await prisma.school.findUnique({ where: { id: auth.schoolId } })
     if (!school) return NextResponse.json({ error: 'School not found' }, { status: 404 })
 

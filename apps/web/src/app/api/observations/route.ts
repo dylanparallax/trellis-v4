@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@trellis/database'
+// Import Prisma dynamically to avoid crashes when DATABASE_URL isn't configured
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/auth/server'
 
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     if (teacherId) where.teacherId = teacherId
     where.schoolId = auth.schoolId
 
+    const { prisma } = await import('@trellis/database')
     const observations = await prisma.observation.findMany({
       where,
       include: {
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = observationSchema.parse(body)
     
+    const { prisma } = await import('@trellis/database')
     const observation = await prisma.observation.create({
       data: {
         teacherId: validated.teacherId,

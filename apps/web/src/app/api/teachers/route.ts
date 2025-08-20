@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@trellis/database'
+// Import Prisma dynamically to avoid SSR crashes when DATABASE_URL is not set
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/auth/server'
 
@@ -22,6 +22,7 @@ export async function GET() {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const { prisma } = await import('@trellis/database')
     const teachers = await prisma.teacher.findMany({
       where: { schoolId: auth.schoolId },
       include: {
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
     const validated = teacherSchema.parse(body)
     
     // Create teacher without optional columns that may not exist in older Prisma clients
+    const { prisma } = await import('@trellis/database')
     const teacher = await prisma.teacher.create({
       data: {
         name: validated.name,
