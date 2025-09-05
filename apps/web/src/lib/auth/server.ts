@@ -21,10 +21,27 @@ export async function getSupabaseServerClient() {
         return cookieStore.get(name)?.value
       },
       set(name: string, value: string, options: Record<string, unknown>) {
-        cookieStore.set({ name, value, ...options })
+        const cookieOptions = {
+          path: '/',
+          secure: process.env.NODE_ENV === 'production',
+          httpOnly: false,
+          sameSite: 'lax' as const,
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          ...options,
+        }
+        cookieStore.set({ name, value, ...cookieOptions })
       },
       remove(name: string, options: Record<string, unknown>) {
-        cookieStore.set({ name, value: '', ...options })
+        const cookieOptions = {
+          path: '/',
+          secure: process.env.NODE_ENV === 'production',
+          httpOnly: false,
+          sameSite: 'lax' as const,
+          maxAge: 0,
+          expires: new Date(0),
+          ...options,
+        }
+        cookieStore.set({ name, value: '', ...cookieOptions })
       },
     },
   })
@@ -34,6 +51,7 @@ export async function getSupabaseServerClient() {
 
 export async function getAuthContext(): Promise<AuthContext | null> {
   try {
+    // Enable demo mode only when explicitly set
     if (process.env.DEMO_MODE === 'true') {
       return {
         userId: 'demo-user-1',

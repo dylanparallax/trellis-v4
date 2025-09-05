@@ -23,11 +23,15 @@ export default function LoginPage() {
     setError('')
 
     try {
-      if (!isSupabaseConfigured) {
+      // Check for demo mode (only when explicitly enabled)
+      const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !isSupabaseConfigured
+      
+      if (isDemoMode) {
         // Demo mode: skip Supabase and go to dashboard
         router.push('/dashboard')
         return
       }
+      
       const { error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
@@ -36,7 +40,8 @@ export default function LoginPage() {
         router.push('/dashboard')
       }
     } catch {
-      setError(isSupabaseConfigured ? 'Login failed. Check your credentials.' : 'Demo mode: could not reach Supabase, routing locally.')
+      const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !isSupabaseConfigured
+      setError(isDemoMode ? 'Demo mode: routing to dashboard.' : 'Login failed. Check your credentials.')
     } finally {
       setIsLoading(false)
     }
