@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth/server'
-import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
+import { getSupabaseServerClient } from '@/lib/auth/server'
 
 export async function GET() {
   try {
@@ -13,57 +13,62 @@ export async function GET() {
     let schoolId = auth.schoolId
     let schoolName = auth.schoolName
 
+    // Enrich from Prisma whenever DB is configured and not in demo mode
     const isDbConfigured = Boolean(process.env.DATABASE_URL)
-    if (isDbConfigured) {
+    if (isDbConfigured && process.env.DEMO_MODE !== 'true') {
       try {
         const { prisma } = await import('@trellis/database')
-        const user = await prisma.user.findUnique({ where: { email: auth.email }, select: { name: true, role: true, schoolId: true } })
+        const user = await prisma.user.findUnique({
+          where: { email: auth.email },
+          select: { name: true, role: true, schoolId: true, school: { select: { name: true } } },
+        })
         if (user) {
-          name = user.name
-          role = user.role as typeof role
-          schoolId = user.schoolId
-        }
-        if (schoolId) {
-          const school = await prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } })
-          schoolName = school?.name ?? schoolName
+          name = user.name ?? name
+          role = (user.role as typeof role) ?? role
+          schoolId = user.schoolId ?? schoolId
+          schoolName = user.school?.name ?? schoolName
         }
       } catch {
         // ignore and use auth fallbacks
       }
     }
 
-    // Fallback: query Supabase directly with service role if still missing
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
-    if ((!name || !schoolName) && process.env.NEXT_PUBLIC_SUPABASE_URL && serviceKey) {
+    return NextResponse.json({ name, role, email: auth.email, schoolId, schoolName })
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const auth = await getAuthContext()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await request.json() as { name?: string; photoUrl?: string }
+    const name = typeof body.name === 'string' ? body.name.trim() : undefined
+    const photoUrl = typeof body.photoUrl === 'string' ? body.photoUrl.trim() : undefined
+
+    // Update Prisma User name when provided
+    if (name) {
       try {
-        const admin = createSupabaseAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceKey)
-        if (!name || !schoolId) {
-          const { data: dbUser } = await admin
-            .from('User')
-            .select('name, schoolId')
-            .eq('email', auth.email)
-            .limit(1)
-            .maybeSingle()
-          if (dbUser) {
-            name = name || dbUser.name
-            schoolId = schoolId || dbUser.schoolId
-          }
-        }
-        if (!schoolName && schoolId) {
-          const { data: school } = await admin
-            .from('School')
-            .select('name')
-            .eq('id', schoolId)
-            .limit(1)
-            .maybeSingle()
-          if (school) schoolName = school.name
-        }
+        const { prisma } = await import('@trellis/database')
+        await prisma.user.update({ where: { email: auth.email }, data: { name } })
       } catch {
-        // ignore
+        // ignore prisma failure and still update auth metadata
       }
     }
 
-    return NextResponse.json({ name, role, email: auth.email, schoolId, schoolName })
+    // Update Supabase auth user metadata for profile fields
+    const supabase = await getSupabaseServerClient()
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        ...(name ? { name } : {}),
+        ...(photoUrl ? { photo_url: photoUrl } : {}),
+      }
+    })
+    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+    return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

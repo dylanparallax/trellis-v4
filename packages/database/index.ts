@@ -27,4 +27,20 @@ prisma.$use(async (params, next) => {
   return result
 })
 
-export * from '@prisma/client' 
+// Export Prisma types explicitly to avoid CommonJS/ESM conflicts
+export type {
+  School,
+  User,
+  Teacher,
+  Observation,
+  ObservationArtifact,
+  Evaluation,
+  Role,
+  ObservationType,
+  EvaluationType,
+  EvaluationStatus,
+  Prisma,
+} from '@prisma/client'
+
+// Also export the PrismaClient for runtime usage
+export { PrismaClient } from '@prisma/client' 

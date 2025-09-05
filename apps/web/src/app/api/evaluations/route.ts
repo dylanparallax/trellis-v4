@@ -67,10 +67,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Resolve Prisma user id to ensure FK integrity
+    const prismaUser = await prisma.user.findUnique({ where: { email: auth.email } })
+    if (!prismaUser) {
+      return NextResponse.json({ error: 'User not found in database' }, { status: 403 })
+    }
     const evaluation = await prisma.evaluation.create({
       data: {
         teacherId,
-        evaluatorId: auth.userId,
+        evaluatorId: prismaUser.id,
         schoolId: auth.schoolId,
         type: evaluationType || 'FORMATIVE',
         content: typeof content === 'string' ? { markdown: content } : content,

@@ -32,6 +32,7 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
   const [observationType, setObservationType] = useState('FORMAL')
   const [duration, setDuration] = useState('')
   const [focusAreas, setFocusAreas] = useState<string[]>([])
+  const [observationDate, setObservationDate] = useState(new Date().toISOString().split('T')[0])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [isSavingDraft, setIsSavingDraft] = useState(false)
@@ -178,6 +179,7 @@ Excellent progress on the classroom management goal from last month's observatio
         observationType,
         duration: parseInt(duration) || undefined,
         focusAreas,
+        date: observationDate,
         artifacts: artifacts.map(f => ({ 
           fileName: f.name, 
           fileUrl: `demo-url/${f.name}`, // In real app, this would be uploaded
@@ -288,6 +290,21 @@ Excellent progress on the classroom management goal from last month's observatio
                 onChange={(e) => setDuration(e.target.value)}
                 placeholder="45"
                 className="mt-1"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium flex items-center gap-2">
+                Observation Date
+              </label>
+              <Input
+                type="date"
+                value={observationDate}
+                onChange={(e) => setObservationDate(e.target.value)}
+                className="mt-1"
+                required
               />
             </div>
           </div>

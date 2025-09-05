@@ -108,6 +108,26 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
 
   // neutral tag appearance for a cleaner look; clickable to filter
 
+  const strengthColorClasses = [
+    'bg-blue-100 text-blue-700 border-blue-200',
+    'bg-emerald-100 text-emerald-700 border-emerald-200',
+    'bg-amber-100 text-amber-800 border-amber-200',
+    'bg-purple-100 text-purple-700 border-purple-200',
+    'bg-rose-100 text-rose-700 border-rose-200',
+    'bg-cyan-100 text-cyan-700 border-cyan-200',
+    'bg-indigo-100 text-indigo-700 border-indigo-200',
+    'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200',
+    'bg-teal-100 text-teal-700 border-teal-200',
+    'bg-sky-100 text-sky-700 border-sky-200',
+  ] as const
+
+  const getStrengthClasses = (label: string) => {
+    let hash = 0
+    for (let i = 0; i < label.length; i++) hash = (hash * 31 + label.charCodeAt(i)) >>> 0
+    const idx = hash % strengthColorClasses.length
+    return strengthColorClasses[idx]
+  }
+
   const getEvaluationStatus = (teacher: Teacher) => {
     const recentEvaluation = teacher.evaluations[0]
     if (!recentEvaluation) return 'No evaluations'
@@ -260,8 +280,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                   {teacher.strengths.slice(0, 3).map((strength, index) => (
                     <Badge
                       key={index}
-                      variant="secondary"
-                      className="text-xs cursor-pointer"
+                      className={`text-xs cursor-pointer border ${getStrengthClasses(strength)}`}
                       onClick={(e) => {
                         e.preventDefault()
                         setSelectedTag(strength)
@@ -284,20 +303,40 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                   
                   Current Goals
                 </h4>
-                {teacher.currentGoals.slice(0, 2).map((goal, index) => (
-                  <div key={index} className="mb-2">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="truncate">{goal.goal}</span>
-                      <span>{goal.progress}%</span>
+                {teacher.currentGoals.slice(0, 2).map((goal, index) => {
+                  const barClass = goal.progress >= 80
+                    ? 'bg-emerald-400'
+                    : goal.progress >= 50
+                      ? 'bg-amber-400'
+                      : 'bg-rose-400'
+                  const statusBadge = goal.progress >= 80
+                    ? 'On track'
+                    : goal.progress >= 50
+                      ? 'Progressing'
+                      : 'Needs attention'
+                  const statusClass = goal.progress >= 80
+                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                    : goal.progress >= 50
+                      ? 'bg-amber-100 text-amber-800 border-amber-200'
+                      : 'bg-rose-100 text-rose-700 border-rose-200'
+                  return (
+                    <div key={index} className="mb-3">
+                      <div className="flex items-center justify-between text-xs mb-1 gap-2">
+                        <span className="truncate">{goal.goal}</span>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <Badge className={`border ${statusClass}`}>{statusBadge}</Badge>
+                          <span>{goal.progress}%</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className={`${barClass} h-2 rounded-full transition-all`}
+                          style={{ width: `${goal.progress}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-1.5">
-                      <div 
-                        className="bg-green-200 h-2 rounded-full transition-all"
-                        style={{ width: `${goal.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               {/* Recent Activity */}

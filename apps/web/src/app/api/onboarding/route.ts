@@ -13,21 +13,9 @@ export async function POST(request: NextRequest) {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Ensure app user exists (first-time Supabase signup)
-    let existingUser = await prisma.user.findUnique({ where: { email: auth.email } })
-    if (!existingUser) {
-      // Create user without school initially - will be updated after school creation
-      existingUser = await prisma.user.create({
-        data: {
-          email: auth.email,
-          name: auth.name ?? auth.email.split('@')[0],
-          role: 'EVALUATOR',
-          schoolId: '', // Temporary empty string, will be updated
-        },
-      })
-    }
-    // If user already has a school, skip
-    if (existingUser.schoolId && existingUser.schoolId !== '') {
+    // If user already exists and has a school, skip
+    const existingUser = await prisma.user.findUnique({ where: { email: auth.email } })
+    if (existingUser?.schoolId && existingUser.schoolId !== '') {
       return NextResponse.json({ message: 'Already onboarded', schoolId: existingUser.schoolId })
     }
 
@@ -42,10 +30,22 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    await prisma.user.update({
-      where: { id: existingUser.id },
-      data: { schoolId: school.id, role: 'ADMIN' },
-    })
+    // Create or update user with the new school
+    if (!existingUser) {
+      await prisma.user.create({
+        data: {
+          email: auth.email,
+          name: auth.name ?? auth.email.split('@')[0],
+          role: 'ADMIN',
+          schoolId: school.id,
+        },
+      })
+    } else {
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { schoolId: school.id, role: 'ADMIN' },
+      })
+    }
 
     return NextResponse.json({ schoolId: school.id })
   } catch (error) {

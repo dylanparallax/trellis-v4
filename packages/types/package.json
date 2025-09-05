@@ -9,6 +9,9 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
   },
+  "dependencies": {
+    "@trellis/database": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^5.0.0"
   }

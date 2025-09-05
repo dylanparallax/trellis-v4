@@ -5,7 +5,8 @@ import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+// import { Textarea } from '@/components/ui/textarea'
+import { TagInput } from '@/components/ui/tag-input'
 import Link from 'next/link'
 import { ArrowLeft, Upload as UploadIcon } from 'lucide-react'
 
@@ -135,12 +136,16 @@ export default function EditTeacherPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Strengths (comma-separated)</label>
-                <Textarea value={teacher.strengths.join(', ')} onChange={(e) => setTeacher({ ...teacher, strengths: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} />
+                <label className="text-sm font-medium">Strengths</label>
+                <div className="mt-1">
+                  <TagInput value={teacher.strengths} onChange={(next) => setTeacher({ ...teacher, strengths: next })} placeholder="Type and press Enter…" />
+                </div>
               </div>
               <div>
-                <label className="text-sm font-medium">Growth Areas (comma-separated)</label>
-                <Textarea value={teacher.growthAreas.join(', ')} onChange={(e) => setTeacher({ ...teacher, growthAreas: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} />
+                <label className="text-sm font-medium">Growth Areas</label>
+                <div className="mt-1">
+                  <TagInput value={teacher.growthAreas} onChange={(next) => setTeacher({ ...teacher, growthAreas: next })} placeholder="Type and press Enter…" />
+                </div>
               </div>
             </div>
 

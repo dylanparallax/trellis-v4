@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+// import { Textarea } from '@/components/ui/textarea'
+import { TagInput } from '@/components/ui/tag-input'
 import Link from 'next/link'
 import { User, Mail, BookOpen, GraduationCap, Upload as UploadIcon, ArrowLeft } from 'lucide-react'
 
@@ -17,12 +18,12 @@ export default function NewTeacherPage() {
     const [gradeLevel, setGradeLevel] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   
-  const [strengths, setStrengths] = useState('')
-  const [growthAreas, setGrowthAreas] = useState('')
+  const [strengths, setStrengths] = useState<string[]>([])
+  const [growthAreas, setGrowthAreas] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const parseCsv = (value: string) => value.split(',').map(s => s.trim()).filter(Boolean)
+  // legacy parser no longer needed with TagInput
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,8 +54,8 @@ export default function NewTeacherPage() {
         email: email || undefined,
         subject: subject || undefined,
         gradeLevel: gradeLevel || undefined,
-        strengths: parseCsv(strengths),
-        growthAreas: parseCsv(growthAreas),
+        strengths,
+        growthAreas,
         currentGoals: [],
         photoUrl: uploadedUrl,
       }
@@ -136,12 +137,16 @@ export default function NewTeacherPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Strengths (comma-separated)</label>
-                <Textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} placeholder="Classroom Management, Differentiation" className="mt-1" />
+                <label className="text-sm font-medium">Strengths</label>
+                <div className="mt-1">
+                  <TagInput value={strengths} onChange={setStrengths} placeholder="Type and press Enter…" />
+                </div>
               </div>
               <div>
-                <label className="text-sm font-medium">Growth Areas (comma-separated)</label>
-                <Textarea value={growthAreas} onChange={(e) => setGrowthAreas(e.target.value)} placeholder="Technology Integration, Student-led Discussions" className="mt-1" />
+                <label className="text-sm font-medium">Growth Areas</label>
+                <div className="mt-1">
+                  <TagInput value={growthAreas} onChange={setGrowthAreas} placeholder="Type and press Enter…" />
+                </div>
               </div>
             </div>
 

@@ -70,10 +70,15 @@ export async function POST(request: NextRequest) {
     const validated = observationSchema.parse(body)
     
     const { prisma } = await import('@trellis/database')
+    // Resolve Prisma user id to ensure FK integrity
+    const prismaUser = await prisma.user.findUnique({ where: { email: auth.email } })
+    if (!prismaUser) {
+      return NextResponse.json({ error: 'User not found in database' }, { status: 403 })
+    }
     const observation = await prisma.observation.create({
       data: {
         teacherId: validated.teacherId,
-        observerId: auth.userId,
+        observerId: prismaUser.id,
         schoolId: auth.schoolId,
         rawNotes: validated.rawNotes,
         enhancedNotes: validated.enhancedNotes,

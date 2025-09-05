@@ -196,6 +196,10 @@ importers:
         version: 5.9.2
 
   packages/types:
+    dependencies:
+      '@trellis/database':
+        specifier: workspace:*
+        version: link:../database
     devDependencies:
       typescript:
         specifier: ^5.0.0

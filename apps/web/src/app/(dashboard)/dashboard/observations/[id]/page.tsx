@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Calendar, Clock, ArrowLeft } from 'lucide-react'
+import ObservationDetailClient from '@/components/observations/ObservationDetailClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,18 +75,6 @@ export default async function ObservationDetailPage({ params }: PageParams) {
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-medium mb-1">Raw Notes</h3>
-            <pre className="whitespace-pre-wrap text-sm bg-muted p-3 rounded-md">{observation.rawNotes}</pre>
-          </div>
-
-          {observation.enhancedNotes ? (
-            <div>
-              <h3 className="text-sm font-medium mb-1">AI Enhanced Notes</h3>
-              <pre className="whitespace-pre-wrap text-sm bg-muted p-3 rounded-md">{observation.enhancedNotes}</pre>
-            </div>
-          ) : null}
-
           {observation.focusAreas?.length ? (
             <div>
               <h3 className="text-sm font-medium mb-1">Focus Areas</h3>
@@ -96,6 +85,18 @@ export default async function ObservationDetailPage({ params }: PageParams) {
               </div>
             </div>
           ) : null}
+
+          <ObservationDetailClient
+            observation={{
+              id: observation.id,
+              rawNotes: observation.rawNotes,
+              enhancedNotes: observation.enhancedNotes,
+              duration: observation.duration,
+              observationType: observation.observationType,
+              focusAreas: observation.focusAreas || [],
+              date: observation.date,
+            }}
+          />
         </CardContent>
       </Card>
     </div>

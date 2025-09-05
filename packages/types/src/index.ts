@@ -42,14 +42,14 @@ export interface ObservationFormData {
   rawNotes: string
   date: Date
   duration?: number
-  observationType: ObservationType
+  observationType: any // ObservationType
   focusAreas: string[]
   artifacts?: File[]
 }
 
 export interface EvaluationFormData {
   teacherId: string
-  type: EvaluationType
+  type: any // EvaluationType
   content: Record<string, any>
   summary?: string
   recommendations: string[]
@@ -111,14 +111,14 @@ export interface ObservationTrends {
     month: string
     count: number
   }>
-  byType: Record<ObservationType, number>
+  byType: Record<string, number> // Record<ObservationType, number>
 }
 
 export interface PerformanceMetrics {
   averageScores: Record<string, number>
   improvementRates: Record<string, number>
-  topPerformers: Teacher[]
-  needsSupport: Teacher[]
+  topPerformers: any[] // Teacher[]
+  needsSupport: any[] // Teacher[]
 }
 
 export interface FocusAreaAnalysis {
@@ -131,7 +131,7 @@ export interface FocusAreaAnalysis {
 }
 
 export interface TeacherGrowthData {
-  improvedTeachers: Teacher[]
+  improvedTeachers: any[] // Teacher[]
   growthAreas: string[]
   successStories: string[]
 }
@@ -146,10 +146,10 @@ export interface AIInsights {
 
 // Demo types
 export interface DemoData {
-  school: School
-  teachers: Teacher[]
-  observations: Observation[]
-  evaluations: Evaluation[]
+  school: any // School
+  teachers: any[] // Teacher[]
+  observations: any[] // Observation[]
+  evaluations: any[] // Evaluation[]
 }
 
 // File upload types
