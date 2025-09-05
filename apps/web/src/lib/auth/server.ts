@@ -129,7 +129,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
           const { data: dbUser } = await client
             .from('User')
             .select('name, role, schoolId, School(name)')
-            .eq('email', user.email)
+            .eq('email', userEmail)
             .limit(1)
             .maybeSingle()
           if (dbUser) {
@@ -137,13 +137,17 @@ export async function getAuthContext(): Promise<AuthContext | null> {
               (['ADMIN','EVALUATOR','DISTRICT_ADMIN'].includes(dbUser.role)
                 ? dbUser.role
                 : 'EVALUATOR') as AuthContext['role']
+            const relatedSchool = (dbUser as any).School
+            const relatedSchoolName = Array.isArray(relatedSchool)
+              ? relatedSchool[0]?.name
+              : relatedSchool?.name
             return {
               userId: user.id,
               email: userEmail,
               name: dbUser.name ?? composedName,
               role,
               schoolId: dbUser.schoolId ?? '',
-              schoolName: dbUser.School?.name ?? userMetadata?.schoolName,
+              schoolName: relatedSchoolName ?? userMetadata?.schoolName,
             }
           }
         }
