@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "vercel-build": "cd ../../packages/database && npx prisma migrate deploy && cd - >/dev/null && next build",
+    "vercel-build": "next build",
     "start": "next start",
     "lint": "next lint",
     "clean": "rm -rf .next",
