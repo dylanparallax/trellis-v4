@@ -32,7 +32,7 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
   const [nextSteps, setNextSteps] = useState<string[]>(evaluation.nextSteps || [])
   const [showSummary, setShowSummary] = useState(false)
 
-  const toggle = (setter: (v: boolean) => void) => setter(prev => !prev)
+  const toggle = (setter: (v: boolean) => void) => setter((prev: boolean) => !prev)
 
   const handleSave = () => {
     const payload = { summary, type, status, recommendations, nextSteps }
