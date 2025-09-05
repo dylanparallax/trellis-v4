@@ -46,8 +46,13 @@ export const supabase = isBrowser
           if (cookieOptions.secure) cookieString += `; secure`
           if (cookieOptions.httpOnly) cookieString += `; httpOnly`
           if (cookieOptions.sameSite) cookieString += `; samesite=${cookieOptions.sameSite}`
-          if (cookieOptions.maxAge) cookieString += `; max-age=${cookieOptions.maxAge}`
-          if (cookieOptions.expires) cookieString += `; expires=${cookieOptions.expires}`
+          const optsUnknown = cookieOptions as unknown as { maxAge?: number; expires?: string | Date }
+          if (typeof optsUnknown.maxAge === 'number') {
+            cookieString += `; max-age=${optsUnknown.maxAge}`
+          }
+          if (optsUnknown.expires) {
+            cookieString += `; expires=${optsUnknown.expires}`
+          }
           
           document.cookie = cookieString
         },
