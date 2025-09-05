@@ -137,10 +137,10 @@ export async function getAuthContext(): Promise<AuthContext | null> {
               (['ADMIN','EVALUATOR','DISTRICT_ADMIN'].includes(dbUser.role)
                 ? dbUser.role
                 : 'EVALUATOR') as AuthContext['role']
-            const relatedSchool = (dbUser as any).School
-            const relatedSchoolName = Array.isArray(relatedSchool)
-              ? relatedSchool[0]?.name
-              : relatedSchool?.name
+            const schoolRelation = (dbUser as { School?: { name?: string } | { name?: string }[] }).School
+            const relatedSchoolName = Array.isArray(schoolRelation)
+              ? schoolRelation[0]?.name
+              : schoolRelation?.name
             return {
               userId: user.id,
               email: userEmail,
