@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, type Dispatch, type SetStateAction } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
@@ -32,7 +32,7 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
   const [nextSteps, setNextSteps] = useState<string[]>(evaluation.nextSteps || [])
   const [showSummary, setShowSummary] = useState(false)
 
-  const toggle = (setter: (v: boolean) => void) => setter((prev: boolean) => !prev)
+  const toggle = (setter: Dispatch<SetStateAction<boolean>>) => setter(prev => !prev)
 
   const handleSave = () => {
     const payload = { summary, type, status, recommendations, nextSteps }
