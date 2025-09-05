@@ -77,6 +77,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     }
 
     const user = data.user
+    const userEmail = user.email as string
     const isDbConfigured = Boolean(process.env.DATABASE_URL)
     const userMetadata = (user.user_metadata as { name?: string; full_name?: string; firstName?: string; lastName?: string; schoolName?: string; schoolId?: string }) || {}
     const composedName =
@@ -96,7 +97,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
         if (prismaUser && prismaUser.email) {
           return {
             userId: prismaUser.id,
-            email: prismaUser.email,
+            email: prismaUser.email ?? userEmail,
             name: prismaUser.name ?? composedName,
             role: prismaUser.role,
             schoolId: prismaUser.schoolId,
@@ -105,7 +106,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
         } else if (prismaUser) {
           return {
             userId: prismaUser.id,
-            email: user.email!,
+            email: userEmail,
             name: prismaUser.name ?? composedName,
             role: prismaUser.role,
             schoolId: prismaUser.schoolId,
@@ -138,7 +139,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
                 : 'EVALUATOR') as AuthContext['role']
             return {
               userId: user.id,
-              email: user.email,
+              email: userEmail,
               name: dbUser.name ?? composedName,
               role,
               schoolId: dbUser.schoolId ?? '',
@@ -154,7 +155,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     // Final fallback with metadata
     return {
       userId: user.id,
-      email: user.email,
+      email: userEmail,
       name: composedName,
       role: 'EVALUATOR',
       schoolId: userMetadata?.schoolId ?? '',
