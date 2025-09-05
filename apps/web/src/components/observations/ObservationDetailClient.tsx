@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, type Dispatch, type SetStateAction } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -35,7 +35,7 @@ export default function ObservationDetailClient({ observation }: Props) {
   const [showRaw, setShowRaw] = useState(false)
   const [showEnhanced, setShowEnhanced] = useState(false)
 
-  const toggle = (setter: (v: boolean) => void) => setter(prev => !prev)
+  const toggle = (setter: Dispatch<SetStateAction<boolean>>) => setter(prev => !prev)
 
   const handleSave = () => {
     const payload = {
