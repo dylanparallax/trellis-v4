@@ -93,10 +93,19 @@ export async function getAuthContext(): Promise<AuthContext | null> {
           where: { email: user.email },
           include: { school: { select: { name: true } } },
         })
-        if (prismaUser) {
+        if (prismaUser && prismaUser.email) {
           return {
             userId: prismaUser.id,
-            email: user.email,
+            email: prismaUser.email,
+            name: prismaUser.name ?? composedName,
+            role: prismaUser.role,
+            schoolId: prismaUser.schoolId,
+            schoolName: prismaUser.school?.name ?? userMetadata?.schoolName,
+          }
+        } else if (prismaUser) {
+          return {
+            userId: prismaUser.id,
+            email: user.email!,
             name: prismaUser.name ?? composedName,
             role: prismaUser.role,
             schoolId: prismaUser.schoolId,
