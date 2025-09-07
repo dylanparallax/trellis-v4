@@ -39,6 +39,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
   const [selectedSubject, setSelectedSubject] = useState('all')
   const [selectedGrade, setSelectedGrade] = useState('all')
   const [selectedTag, setSelectedTag] = useState<string>('')
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
 
   // Fetch teachers from API
   useEffect(() => {
@@ -95,6 +96,17 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
 
     setFilteredTeachers(filtered)
   }, [teachers, searchTerm, selectedSubject, selectedGrade, selectedTag])
+
+  // Enforce grid view on mobile and hide toggle
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mql = window.matchMedia('(max-width: 767px)')
+    const enforce = (matches: boolean) => { if (matches) setViewMode('grid') }
+    enforce(mql.matches)
+    const listener = (e: MediaQueryListEvent) => enforce(e.matches)
+    mql.addEventListener('change', listener)
+    return () => mql.removeEventListener('change', listener)
+  }, [])
 
   const getUniqueSubjects = () => {
     const subjects = teachers.map(t => t.subject).filter(Boolean) as string[]
@@ -158,7 +170,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold">Teachers</h2>
           <p className="text-muted-foreground">
@@ -184,7 +196,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -196,7 +208,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
               </div>
             </div>
             
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap gap-2 items-center">
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
@@ -218,6 +230,22 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                   <option key={grade} value={grade}>Grade {grade}</option>
                 ))}
               </select>
+              <div className="hidden md:flex rounded-md overflow-hidden border ml-auto">
+                <button
+                  type="button"
+                  className={`px-3 py-2 text-sm ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+                  onClick={() => setViewMode('grid')}
+                >
+                  Grid
+                </button>
+                <button
+                  type="button"
+                  className={`px-3 py-2 text-sm ${viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+                  onClick={() => setViewMode('table')}
+                >
+                  Table
+                </button>
+              </div>
               {selectedTag && (
                 <div className="flex items-center gap-2 ml-2 text-sm">
                   <Badge variant="secondary" className="text-xs">{selectedTag}</Badge>
@@ -235,129 +263,188 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
         </CardContent>
       </Card>
 
-      {/* Teacher Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredTeachers.map((teacher) => (
-          <a href={`/dashboard/teachers/${teacher.id}`} key={teacher.id} className="block">
-            <Card 
-              className="hover:shadow-lg hover:bg-blue-100/10 transition-shadow cursor-pointer"
-            >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-indigo-100/50 rounded-full border-indigo-500 flex items-center justify-center border">
-                    <User className="h-4 w-4 text-indigo-500" />
+      {viewMode === 'grid' ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredTeachers.map((teacher) => (
+            <a href={`/dashboard/teachers/${teacher.id}`} key={teacher.id} className="block">
+              <Card 
+                className="hover:shadow-lg hover:bg-blue-100/10 transition-shadow cursor-pointer"
+              >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-100/50 rounded-full border-indigo-500 flex items-center justify-center border">
+                      <User className="h-4 w-4 text-indigo-500" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{teacher.name}</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {teacher.subject} • Grade {teacher.gradeLevel}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">{teacher.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {teacher.subject} • Grade {teacher.gradeLevel}
-                    </p>
+                  <Button variant="ghost" size="sm">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-8">
+                {teacher.email && (
+                  <div className="flex items-center gap-2 text-sm text-blue-500">
+                    <Mail className="h-3 w-3" />
+                    <span>{teacher.email}</span>
+                  </div>
+                )}
+                <div>
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-1">Strengths</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {teacher.strengths.slice(0, 3).map((strength, index) => (
+                      <Badge
+                        key={index}
+                        className={`text-xs cursor-pointer border ${getStrengthClasses(strength)}`}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setSelectedTag(strength)
+                        }}
+                      >
+                        {strength}
+                      </Badge>
+                    ))}
+                    {teacher.strengths.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{teacher.strengths.length - 3} more
+                      </Badge>
+                    )}
                   </div>
                 </div>
-                <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-8">
-              {/* Contact Info */}
-              {teacher.email && (
-                <div className="flex items-center gap-2 text-sm text-blue-500">
-                  <Mail className="h-3 w-3" />
-                  <span>{teacher.email}</span>
+                <div>
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-1">Growth Areas</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {teacher.growthAreas.slice(0, 3).map((area, index) => (
+                      <Badge
+                        key={index}
+                        className={`text-xs cursor-pointer border ${getStrengthClasses(area)}`}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setSelectedTag(area)
+                        }}
+                      >
+                        {area}
+                      </Badge>
+                    ))}
+                    {teacher.growthAreas.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{teacher.growthAreas.length - 3} more
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              )}
-
-              {/* Strengths */}
-              <div>
-                <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
-                 
-                  Strengths
-                </h4>
-                <div className="flex flex-wrap gap-1">
-                  {teacher.strengths.slice(0, 3).map((strength, index) => (
-                    <Badge
-                      key={index}
-                      className={`text-xs cursor-pointer border ${getStrengthClasses(strength)}`}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setSelectedTag(strength)
-                      }}
-                    >
-                      {strength}
-                    </Badge>
-                  ))}
-                  {teacher.strengths.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{teacher.strengths.length - 3} more
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* Goals Progress */}
-              <div>
-                <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
-                  
-                  Current Goals
-                </h4>
-                {teacher.currentGoals.slice(0, 2).map((goal, index) => {
-                  const barClass = goal.progress >= 80
-                    ? 'bg-emerald-400'
-                    : goal.progress >= 50
-                      ? 'bg-amber-400'
-                      : 'bg-rose-400'
-                  const statusBadge = goal.progress >= 80
-                    ? 'On track'
-                    : goal.progress >= 50
-                      ? 'Progressing'
-                      : 'Needs attention'
-                  const statusClass = goal.progress >= 80
-                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                    : goal.progress >= 50
-                      ? 'bg-amber-100 text-amber-800 border-amber-200'
-                      : 'bg-rose-100 text-rose-700 border-rose-200'
-                  return (
-                    <div key={index} className="mb-3">
-                      <div className="flex items-center justify-between text-xs mb-1 gap-2">
-                        <span className="truncate">{goal.goal}</span>
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <Badge className={`border ${statusClass}`}>{statusBadge}</Badge>
-                          <span>{goal.progress}%</span>
+                <div>
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-1">Current Goals</h4>
+                  {teacher.currentGoals.slice(0, 2).map((goal, index) => {
+                    const barClass = goal.progress >= 80
+                      ? 'bg-emerald-400'
+                      : goal.progress >= 50
+                        ? 'bg-amber-400'
+                        : 'bg-rose-400'
+                    const statusBadge = goal.progress >= 80
+                      ? 'On track'
+                      : goal.progress >= 50
+                        ? 'Progressing'
+                        : 'Needs attention'
+                    const statusClass = goal.progress >= 80
+                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                      : goal.progress >= 50
+                        ? 'bg-amber-100 text-amber-800 border-amber-200'
+                        : 'bg-rose-100 text-rose-700 border-rose-200'
+                    return (
+                      <div key={index} className="mb-3">
+                        <div className="flex items-center justify-between text-xs mb-1 gap-2">
+                          <span className="truncate">{goal.goal}</span>
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <Badge className={`border ${statusClass}`}>{statusBadge}</Badge>
+                            <span>{goal.progress}%</span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div
+                            className={`${barClass} h-2 rounded-full transition-all`}
+                            style={{ width: `${goal.progress}%` }}
+                          />
                         </div>
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div
-                          className={`${barClass} h-2 rounded-full transition-all`}
-                          style={{ width: `${goal.progress}%` }}
-                        />
-                      </div>
+                    )
+                  })}
+                </div>
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>
+                      {teacher.observations.length} observations
+                    </span>
+                    <span>
+                      {teacher.evaluations.length} evaluations
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {getEvaluationStatus(teacher)}
+                  </div>
+                </div>
+              </CardContent>
+              </Card>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-3 py-2">Teacher</th>
+                <th className="text-left px-3 py-2">Subject/Grade</th>
+                <th className="text-left px-3 py-2">Email</th>
+                <th className="text-left px-3 py-2">Strengths</th>
+                <th className="text-left px-3 py-2">Growth Areas</th>
+                <th className="text-left px-3 py-2">Activity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTeachers.map((teacher) => (
+                <tr key={teacher.id} className="border-t">
+                  <td className="px-3 py-2">
+                    <a href={`/dashboard/teachers/${teacher.id}`} className="hover:underline font-medium">{teacher.name}</a>
+                  </td>
+                  <td className="px-3 py-2">{teacher.subject || '—'} • Grade {teacher.gradeLevel || '—'}</td>
+                  <td className="px-3 py-2">{teacher.email || '—'}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex flex-wrap gap-1">
+                      {teacher.strengths.slice(0, 3).map((s, i) => (
+                        <Badge key={`str-${i}`} className={`text-xs border ${getStrengthClasses(s)}`}>{s}</Badge>
+                      ))}
+                      {teacher.strengths.length > 3 && (
+                        <Badge variant="outline" className="text-xs">+{teacher.strengths.length - 3} more</Badge>
+                      )}
                     </div>
-                  )
-                })}
-              </div>
-
-              {/* Recent Activity */}
-              <div className="pt-2 border-t">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>
-                    {teacher.observations.length} observations
-                  </span>
-                  <span>
-                    {teacher.evaluations.length} evaluations
-                  </span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {getEvaluationStatus(teacher)}
-                </div>
-              </div>
-            </CardContent>
-            </Card>
-          </a>
-        ))}
-      </div>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex flex-wrap gap-1">
+                      {teacher.growthAreas.slice(0, 3).map((g, i) => (
+                        <Badge key={`gro-${i}`} className={`text-xs border ${getStrengthClasses(g)}`}>{g}</Badge>
+                      ))}
+                      {teacher.growthAreas.length > 3 && (
+                        <Badge variant="outline" className="text-xs">+{teacher.growthAreas.length - 3} more</Badge>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {teacher.observations.length} obs • {teacher.evaluations.length} evals
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {filteredTeachers.length === 0 && (
         <Card>

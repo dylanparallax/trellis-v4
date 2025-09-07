@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Import Prisma dynamically to avoid crashes when DATABASE_URL isn't configured
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/auth/server'
+import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
 const observationSchema = z.object({
   teacherId: z.string().min(1, 'Teacher ID is required'),
@@ -64,6 +65,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIpFromHeaders(request.headers)
+    const rl = checkRateLimit(ip, 'observations:POST', 60, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await request.json()

@@ -120,9 +120,11 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               From scattered observations to comprehensive, continuous feedback that helps teachers thrive.
             </h2>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button size="lg" onClick={onGetStarted} className="text-lg px-8 py-6 border border-2 border-primary bg-none">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" asChild className="text-lg px-8 py-6 border border-2 border-primary bg-none">
+                <Link href="/login">
+                  Get started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
             </div>
 
@@ -332,9 +334,11 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to transform your teacher evaluation process?</h2>
             <p className="mt-4 text-lg text-muted-foreground">Join hundreds of schools already using Trellis.</p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button size="lg" onClick={onGetStarted} className="text-lg px-8 py-6">
-                Get Started Free
-                <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" asChild className="text-lg px-8 py-6">
+                <Link href="/login">
+                  Get started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 <MessageSquare className="mr-2 h-5 w-5" />

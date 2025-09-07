@@ -6,6 +6,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sparkles, Upload, Award, CheckCircle, AlertCircle } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import remarkGfm from 'remark-gfm'
+
+const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
 
 interface Teacher {
   id: string
@@ -246,7 +250,7 @@ Excellent progress on the classroom management goal from last month's observatio
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium flex items-center gap-2">
     
@@ -294,7 +298,7 @@ Excellent progress on the classroom management goal from last month's observatio
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium flex items-center gap-2">
                 Observation Date
@@ -311,7 +315,7 @@ Excellent progress on the classroom management goal from last month's observatio
 
           <div>
             <label className="text-sm font-medium">Focus Areas</label>
-            <div className="mt-1 grid grid-cols-2 gap-2">
+            <div className="mt-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
               {['Student Engagement', 'Differentiation', 'Assessment', 'Classroom Management', 'Technology Integration', 'Student Collaboration'].map((area) => (
                 <label key={area} className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors">
                   <input
@@ -369,10 +373,10 @@ Excellent progress on the classroom management goal from last month's observatio
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm max-w-none">
-              <pre className="whitespace-pre-wrap text-sm text-foreground bg-muted p-4 rounded-md">
+            <div className="prose prose-sm md:prose-base max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {enhancedNotes}
-              </pre>
+              </ReactMarkdown>
             </div>
           </CardContent>
         </Card>

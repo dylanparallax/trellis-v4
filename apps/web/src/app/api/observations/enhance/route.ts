@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { openai } from '@ai-sdk/openai'
@@ -15,6 +16,11 @@ interface Teacher {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIpFromHeaders(request.headers)
+    const rl = checkRateLimit(ip, 'observations:ENHANCE', 30, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const body = await request.json()
     const rawNotes: string | undefined = body?.rawNotes
     const observationType: string | undefined = body?.observationType

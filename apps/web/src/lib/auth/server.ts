@@ -24,7 +24,7 @@ export async function getSupabaseServerClient() {
         const cookieOptions = {
           path: '/',
           secure: process.env.NODE_ENV === 'production',
-          httpOnly: false,
+          httpOnly: true,
           sameSite: 'lax' as const,
           maxAge: 60 * 60 * 24 * 7, // 7 days
           ...options,
@@ -35,7 +35,7 @@ export async function getSupabaseServerClient() {
         const cookieOptions = {
           path: '/',
           secure: process.env.NODE_ENV === 'production',
-          httpOnly: false,
+          httpOnly: true,
           sameSite: 'lax' as const,
           maxAge: 0,
           expires: new Date(0),

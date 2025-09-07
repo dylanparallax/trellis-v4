@@ -36,6 +36,7 @@ interface Props {
 export function ObservationsListClient({ initial }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState('all')
+  const [selectedObserver, setSelectedObserver] = useState('all')
   const [observations, setObservations] = useState<ObservationItem[]>(initial)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -46,6 +47,16 @@ export function ObservationsListClient({ initial }: Props) {
   useEffect(() => {
     setObservations(initial)
   }, [initial])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mql = window.matchMedia('(max-width: 767px)')
+    const enforce = (matches: boolean) => { if (matches) setViewMode('grid') }
+    enforce(mql.matches)
+    const listener = (e: MediaQueryListEvent) => enforce(e.matches)
+    mql.addEventListener('change', listener)
+    return () => mql.removeEventListener('change', listener)
+  }, [])
 
   const filtered = useMemo(() => {
     let result = observations
@@ -60,8 +71,11 @@ export function ObservationsListClient({ initial }: Props) {
     if (selectedType !== 'all') {
       result = result.filter((o) => o.observationType === selectedType)
     }
+    if (selectedObserver !== 'all') {
+      result = result.filter((o) => o.observer.id === selectedObserver)
+    }
     return result
-  }, [observations, searchTerm, selectedType])
+  }, [observations, searchTerm, selectedType, selectedObserver])
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const getSummary = (o: ObservationItem) => {
@@ -150,14 +164,20 @@ export function ObservationsListClient({ initial }: Props) {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
               <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
                 <option value="all">All Types</option>
                 <option value="FORMAL">Formal</option>
                 <option value="INFORMAL">Informal</option>
                 <option value="WALKTHROUGH">Walkthrough</option>
               </select>
-              <div className="flex rounded-md overflow-hidden border">
+              <select value={selectedObserver} onChange={(e) => setSelectedObserver(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
+                <option value="all">All Observers</option>
+                {[...new Map(observations.map(o => [o.observer.id, o.observer])).values()].map((obs) => (
+                  <option key={obs.id} value={obs.id}>{obs.name}</option>
+                ))}
+              </select>
+              <div className="hidden md:flex rounded-md overflow-hidden border">
                 <button
                   type="button"
                   className={`px-3 py-2 text-sm ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}

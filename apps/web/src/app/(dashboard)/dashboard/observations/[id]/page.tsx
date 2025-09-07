@@ -47,7 +47,7 @@ export default async function ObservationDetailPage({ params }: PageParams) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button asChild variant="ghost">
           <Link href="/dashboard/observations" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" /> Back to Observations

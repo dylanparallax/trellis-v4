@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/auth/server'
+import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
 const schema = z.object({
   schoolName: z.string().min(2),
@@ -10,6 +11,11 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIpFromHeaders(request.headers)
+    const rl = checkRateLimit(ip, 'onboarding:POST', 10, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

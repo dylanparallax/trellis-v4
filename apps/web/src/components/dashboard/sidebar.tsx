@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-const navigation = [
+export const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Gauge },
   { name: 'Teachers', href: '/dashboard/teachers', icon: Apple },
   { name: 'Observations', href: '/dashboard/observations', icon: Binoculars },
@@ -39,6 +39,7 @@ const navigation = [
 function useCurrentUser() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [profileName, setProfileName] = useState<string | null>(null)
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -53,8 +54,9 @@ function useCurrentUser() {
         // Fetch DB-backed name/role
         const res = await fetch('/api/me', { cache: 'no-store' })
         if (res.ok) {
-          const data: { name?: string | null } = await res.json()
+          const data: { name?: string | null; photoUrl?: string | null } = await res.json()
           if (data?.name) setProfileName(data.name)
+          if (data?.photoUrl) setProfilePhotoUrl(data.photoUrl)
         }
       } catch (error) {
         console.error('Error fetching user:', error)
@@ -66,14 +68,14 @@ function useCurrentUser() {
     fetchUser()
   }, [])
 
-  return { user, profileName, loading }
+  return { user, profileName, profilePhotoUrl, loading }
 }
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const { user, profileName, loading } = useCurrentUser()
+  const { user, profileName, profilePhotoUrl, loading } = useCurrentUser()
 
   const handleLogout = async () => {
     try {
@@ -129,7 +131,7 @@ export function Sidebar() {
   }
 
   return (
-    <div className="flex flex-col w-48 border-r bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+    <div className="hidden md:flex flex-col w-56 border-r bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="flex items-center gap-3 p-4 border-b">
         <Image
           src="/trellis-light.svg"
@@ -170,11 +172,15 @@ export function Sidebar() {
               className="w-full justify-between p-2 h-auto hover:bg-accent"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary">
-                    {loading ? '...' : getUserInitials()}
-                  </span>
-                </div>
+                {profilePhotoUrl ? (
+                  <img src={profilePhotoUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-medium text-primary">
+                      {loading ? '...' : getUserInitials()}
+                    </span>
+                  </div>
+                )}
                 <div className="flex-1 min-w-0 text-left">
                   <p className="text-sm font-medium truncate">
                     {loading ? 'Loading...' : getUserDisplayName()}

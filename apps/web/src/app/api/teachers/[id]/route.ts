@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 // Import Prisma dynamically to prevent SSR init errors when DATABASE_URL is missing
 import { z } from 'zod'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
+import { getSignedUrlForStoragePath, isLikelyStoragePath } from '@/lib/storage'
+import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -38,6 +40,12 @@ export async function GET(
     })
     if (!teacher) return NextResponse.json({ error: 'Teacher not found' }, { status: 404 })
     assertSameSchool(teacher, auth.schoolId)
+    // Sign photo URL if it's a storage path
+    const maybePath = (teacher as unknown as { photoUrl?: string | null }).photoUrl
+    if (maybePath && isLikelyStoragePath(maybePath)) {
+      const signed = await getSignedUrlForStoragePath(maybePath)
+      ;(teacher as unknown as { photoUrl?: string | null }).photoUrl = signed
+    }
     return NextResponse.json(teacher)
   } catch {
     return NextResponse.json({ error: 'Failed to fetch teacher' }, { status: 500 })
@@ -49,6 +57,12 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Rate limit per IP for teacher updates
+    const ip = getClientIpFromHeaders(request.headers)
+    const rl = checkRateLimit(ip, 'teachers:PUT', 60, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { id } = await params

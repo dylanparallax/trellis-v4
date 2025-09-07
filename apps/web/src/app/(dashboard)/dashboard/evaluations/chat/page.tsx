@@ -49,8 +49,8 @@ type ApiTeacher = {
 function EvaluationChatContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const teacherId = searchParams.get('teacher')
-  const evaluationType = searchParams.get('type')
+  const teacherId = searchParams.get('teacher') || searchParams.get('teacherId')
+  const evaluationType = searchParams.get('type') || searchParams.get('evaluationType')
   const schoolYear = searchParams.get('year')
   
   const [messages, setMessages] = useState<Message[]>([])
@@ -272,7 +272,7 @@ function EvaluationChatContent() {
   // artifact click is handled via version list onClick
 
   if (teacherError) return <div>{teacherError}</div>
-  if (!teacher) return <div>Loading teacher...</div>
+  if (!teacher) return <div>Loading teacher…</div>
 
   return (
     <div className="flex flex-col h-screen bg-white">

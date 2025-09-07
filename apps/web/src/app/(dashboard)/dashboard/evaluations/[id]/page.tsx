@@ -47,7 +47,7 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button asChild variant="ghost">
           <Link href="/dashboard/evaluations" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" /> Back to Evaluations
@@ -61,7 +61,7 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
           <CardDescription>{evaluation.teacher.name} • {evaluation.teacher.subject} • Grade {evaluation.teacher.gradeLevel}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" /> {dateStr}
             </div>

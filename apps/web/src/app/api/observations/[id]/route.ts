@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 import { z } from 'zod'
+import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -46,6 +47,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIpFromHeaders(req.headers)
+    const rl = checkRateLimit(ip, 'observations:PATCH', 60, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -88,6 +94,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const ip = getClientIpFromHeaders(_req.headers)
+    const rl = checkRateLimit(ip, 'observations:DELETE', 30, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

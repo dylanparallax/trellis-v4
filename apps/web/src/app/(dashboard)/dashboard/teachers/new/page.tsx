@@ -31,6 +31,7 @@ export default function NewTeacherPage() {
     setError('')
     try {
       let uploadedUrl: string | undefined
+      let uploadedPath: string | undefined
       if (photoFile) {
         try {
           const form = new FormData()
@@ -42,6 +43,7 @@ export default function NewTeacherPage() {
           } else {
             const uploaded = await uploadRes.json()
             uploadedUrl = uploaded.url as string
+            uploadedPath = uploaded.path as string
           }
         } catch (uploadError) {
           console.warn('Photo upload error, continuing without photo:', uploadError)
@@ -57,7 +59,7 @@ export default function NewTeacherPage() {
         strengths,
         growthAreas,
         currentGoals: [],
-        photoUrl: uploadedUrl,
+        photoUrl: uploadedPath || uploadedUrl,
       }
       
       console.log('Creating teacher with data:', body)
@@ -85,7 +87,7 @@ export default function NewTeacherPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" asChild>
           <Link href="/dashboard/teachers" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />

@@ -34,7 +34,7 @@ export default function NewEvaluationPage() {
         if (!res.ok) throw new Error('Failed to load teachers')
         const data = await res.json()
         if (isMounted) setTeachers(data)
-      } catch (e) {
+      } catch {
         if (isMounted) setLoadError('Failed to load teachers')
       } finally {
         if (isMounted) setIsLoading(false)
@@ -53,7 +53,7 @@ export default function NewEvaluationPage() {
   return (
     <div className="space-y-6">
       {/* Back Navigation */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button
           variant="ghost"
           onClick={() => router.push('/dashboard/evaluations')}
@@ -71,7 +71,7 @@ export default function NewEvaluationPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2">
         {/* Teacher Selection */}
         <Card>
           <CardHeader>

@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const [password, setPassword] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     const run = async () => {
@@ -64,6 +65,27 @@ export default function SettingsPage() {
     }
   }
 
+  const exportData = async () => {
+    setExporting(true)
+    try {
+      const res = await fetch('/api/export', { method: 'GET' })
+      if (!res.ok) throw new Error('Export failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'trellis-export.json'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (_) {
+      // no-op UI message could be added
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const uploadPhoto = async (file: File) => {
     const form = new FormData()
     form.append('file', file)
@@ -109,7 +131,10 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="flex justify-end">
-            <Button onClick={saveProfile} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Profile'}</Button>
+            <div className="flex gap-2 flex-wrap items-center">
+              <Button variant="outline" onClick={exportData} disabled={exporting}>{exporting ? 'Exporting…' : 'Export data'}</Button>
+              <Button onClick={saveProfile} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Profile'}</Button>
+            </div>
           </div>
         </CardContent>
       </Card>

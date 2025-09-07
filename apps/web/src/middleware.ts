@@ -2,12 +2,33 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+function withSecurityHeaders(response: NextResponse) {
+  const csp = [
+    "default-src 'self'",
+    "img-src 'self' data: https://*.supabase.co",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "connect-src 'self' https://*.supabase.co https://api.openai.com https://api.anthropic.com",
+    "font-src 'self' data:",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
+  response.headers.set('Content-Security-Policy', csp)
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-DNS-Prefetch-Control', 'off')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  return response
+}
+
 export async function middleware(req: NextRequest) {
   try {
     // Enable demo mode only when explicitly set
     const isDemoMode = process.env.DEMO_MODE === 'true'
     if (isDemoMode) {
-      return NextResponse.next({ request: { headers: req.headers } })
+      return withSecurityHeaders(NextResponse.next({ request: { headers: req.headers } }))
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
@@ -26,10 +47,10 @@ export async function middleware(req: NextRequest) {
       // If Supabase is not configured, redirect dashboard routes to login
       // But allow login/signup pages to load normally
       if (req.nextUrl.pathname.startsWith('/dashboard')) {
-        return NextResponse.redirect(new URL('/login', req.url))
+        return withSecurityHeaders(NextResponse.redirect(new URL('/login', req.url)))
       }
       // For login/signup pages, just continue without auth checks
-      return NextResponse.next()
+      return withSecurityHeaders(NextResponse.next())
     }
 
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -41,7 +62,7 @@ export async function middleware(req: NextRequest) {
           const cookieOptions = {
             path: '/',
             secure: req.nextUrl.protocol === 'https:',
-            httpOnly: false,
+            httpOnly: true,
             sameSite: 'lax' as const,
             maxAge: 60 * 60 * 24 * 7, // 7 days
             ...options,
@@ -55,7 +76,7 @@ export async function middleware(req: NextRequest) {
           const cookieOptions = {
             path: '/',
             secure: req.nextUrl.protocol === 'https:',
-            httpOnly: false,
+            httpOnly: true,
             sameSite: 'lax' as const,
             maxAge: 0,
             expires: new Date(0),
@@ -78,7 +99,7 @@ export async function middleware(req: NextRequest) {
         if (error.message.includes('rate limit') || error.message.includes('over_request_rate_limit')) {
           console.warn('Supabase rate limit reached, skipping auth check for this request')
           // Allow the request to proceed without authentication check
-          return NextResponse.next()
+          return withSecurityHeaders(NextResponse.next())
         }
         console.warn('Auth session error in middleware:', error.message)
         // Only redirect to login if we're not already on login/signup pages
@@ -86,13 +107,13 @@ export async function middleware(req: NextRequest) {
           const response = NextResponse.redirect(new URL('/login', req.url))
           response.cookies.delete('sb-access-token')
           response.cookies.delete('sb-refresh-token')
-          return response
+          return withSecurityHeaders(response)
         }
         // If we're already on login/signup, just clear cookies and continue
         const response = NextResponse.next()
         response.cookies.delete('sb-access-token')
         response.cookies.delete('sb-refresh-token')
-        return response
+        return withSecurityHeaders(response)
       }
       session = sessionData
     } catch (error) {
@@ -102,24 +123,24 @@ export async function middleware(req: NextRequest) {
         const response = NextResponse.redirect(new URL('/login', req.url))
         response.cookies.delete('sb-access-token')
         response.cookies.delete('sb-refresh-token')
-        return response
+        return withSecurityHeaders(response)
       }
       // If we're already on login/signup, just clear cookies and continue
       const response = NextResponse.next()
       response.cookies.delete('sb-access-token')
       response.cookies.delete('sb-refresh-token')
-      return response
+      return withSecurityHeaders(response)
     }
 
     if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
-      return NextResponse.redirect(new URL('/login', req.url))
+      return withSecurityHeaders(NextResponse.redirect(new URL('/login', req.url)))
     }
 
     if (session && (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup'))) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      return withSecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)))
     }
 
-    return NextResponse.next()
+    return withSecurityHeaders(NextResponse.next())
   } catch (error) {
     console.error('Critical middleware error:', error)
     // If there's a critical error, redirect to login to be safe
@@ -129,16 +150,16 @@ export async function middleware(req: NextRequest) {
       // Clear any potentially corrupted cookies
       response.cookies.delete('sb-access-token')
       response.cookies.delete('sb-refresh-token')
-      return response
+      return withSecurityHeaders(response)
     }
     // For login/signup pages, just clear cookies and continue
     if (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup')) {
       const response = NextResponse.next()
       response.cookies.delete('sb-access-token')
       response.cookies.delete('sb-refresh-token')
-      return response
+      return withSecurityHeaders(response)
     }
-    return NextResponse.next()
+    return withSecurityHeaders(NextResponse.next())
   }
 }
 

@@ -2,9 +2,16 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { extractPathFromSignedUrl, getSignedUrlForStoragePath } from '@/lib/storage'
+import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIpFromHeaders(req.headers)
+    const rl = checkRateLimit(ip, 'upload:POST', 20, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY
     if (!supabaseUrl || !serviceKey) {
@@ -27,8 +34,13 @@ export async function POST(req: NextRequest) {
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(filePath)
-    return NextResponse.json({ url: publicUrl.publicUrl })
+    // Generate signed URL for client display and return the storage path so APIs can persist path
+    const signedUrl = await getSignedUrlForStoragePath(filePath, 60 * 60) // 1 hour
+    return NextResponse.json({
+      path: filePath,
+      url: signedUrl,
+      expiresIn: 3600,
+    })
   } catch {
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }

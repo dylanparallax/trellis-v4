@@ -3,6 +3,8 @@ export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth/server'
 import { getSupabaseServerClient } from '@/lib/auth/server'
+import { extractPathFromSignedUrl, getSignedUrlForStoragePath } from '@/lib/storage'
+import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
 export async function GET() {
   try {
@@ -12,6 +14,7 @@ export async function GET() {
     let role = auth.role
     let schoolId = auth.schoolId
     let schoolName = auth.schoolName
+    let photoUrl: string | undefined
 
     // Enrich from Prisma whenever DB is configured and not in demo mode
     const isDbConfigured = Boolean(process.env.DATABASE_URL)
@@ -33,7 +36,29 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ name, role, email: auth.email, schoolId, schoolName })
+    // Try to resolve photo from Supabase auth metadata and sign when path is present
+    try {
+      const supabase = await getSupabaseServerClient()
+      const { data } = await supabase.auth.getUser()
+      const meta = (data.user?.user_metadata as { photo_url?: string; photo_path?: string } | undefined)
+      const path = meta?.photo_path
+      const metaUrl = meta?.photo_url
+      if (path) {
+        const signed = await getSignedUrlForStoragePath(path, 3600)
+        photoUrl = signed ?? undefined
+      } else if (typeof metaUrl === 'string' && metaUrl.length > 0) {
+        // If a signed URL was previously stored, try to extract path to re-sign
+        const fromUrl = extractPathFromSignedUrl(metaUrl)
+        if (fromUrl) {
+          const signed = await getSignedUrlForStoragePath(fromUrl, 3600)
+          photoUrl = signed ?? metaUrl
+        } else {
+          photoUrl = metaUrl
+        }
+      }
+    } catch {}
+
+    return NextResponse.json({ name, role, email: auth.email, schoolId, schoolName, photoUrl })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -41,6 +66,12 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
+    // Request has no Headers type; cast from any to extract headers
+    const ip = getClientIpFromHeaders((request as unknown as { headers: Headers }).headers)
+    const rl = checkRateLimit(ip, 'me:PATCH', 30, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -60,10 +91,17 @@ export async function PATCH(request: Request) {
 
     // Update Supabase auth user metadata for profile fields
     const supabase = await getSupabaseServerClient()
+    let photo_path: string | undefined
+    if (photoUrl) {
+      // Prefer storing path when possible
+      const path = extractPathFromSignedUrl(photoUrl) || (photoUrl.startsWith('http') ? undefined : photoUrl)
+      if (path) photo_path = path
+    }
     const { error } = await supabase.auth.updateUser({
       data: {
         ...(name ? { name } : {}),
         ...(photoUrl ? { photo_url: photoUrl } : {}),
+        ...(photo_path ? { photo_path } : {}),
       }
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })

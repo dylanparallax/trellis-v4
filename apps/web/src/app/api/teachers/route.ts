@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 // Import Prisma dynamically to avoid SSR crashes when DATABASE_URL is not set
 import { z } from 'zod'
 import { getAuthContext } from '@/lib/auth/server'
+import { getSignedUrlForStoragePath, isLikelyStoragePath } from '@/lib/storage'
+import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
 const teacherSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -38,7 +40,20 @@ export async function GET() {
       orderBy: { name: 'asc' }
     })
 
-    return NextResponse.json(teachers)
+    // Sign any stored storage paths for client consumption
+    const result = await Promise.all(
+      teachers.map(async (t) => {
+        let photoUrl = (t as unknown as { photoUrl?: string | null }).photoUrl ?? null
+        if (photoUrl && isLikelyStoragePath(photoUrl)) {
+          const signed = await getSignedUrlForStoragePath(photoUrl)
+          photoUrl = signed ?? null
+          ;(t as unknown as { photoUrl?: string | null }).photoUrl = photoUrl
+        }
+        return t
+      })
+    )
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error fetching teachers:', error)
     return NextResponse.json(
@@ -50,6 +65,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit per IP for teacher creation
+    const ip = getClientIpFromHeaders(request.headers)
+    const rl = checkRateLimit(ip, 'teachers:POST', 20, 60_000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
+    }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await request.json()
@@ -74,13 +95,14 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Best-effort: if photoUrl provided and the column exists, persist it with a raw query.
+    // If client passed a signed URL, store only the storage path instead
     if (validated.photoUrl) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const { prisma } = await import('@trellis/database')
+        const path = validated.photoUrl
         await prisma.$executeRawUnsafe(
           'UPDATE "Teacher" SET "photoUrl" = $1 WHERE "id" = $2',
-          validated.photoUrl,
+          path,
           teacher.id,
         )
       } catch (e) {

@@ -41,6 +41,7 @@ export function EvaluationsListClient({ initial }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState('all')
   const [selectedStatus, setSelectedStatus] = useState('all')
+  const [selectedEvaluator, setSelectedEvaluator] = useState('all')
   const [evaluations, setEvaluations] = useState<EvaluationItem[]>(initial)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -51,6 +52,16 @@ export function EvaluationsListClient({ initial }: Props) {
   useEffect(() => {
     setEvaluations(initial)
   }, [initial])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mql = window.matchMedia('(max-width: 767px)')
+    const enforce = (matches: boolean) => { if (matches) setViewMode('grid') }
+    enforce(mql.matches)
+    const listener = (e: MediaQueryListEvent) => enforce(e.matches)
+    mql.addEventListener('change', listener)
+    return () => mql.removeEventListener('change', listener)
+  }, [])
 
   const filtered = useMemo(() => {
     let result = evaluations
@@ -68,8 +79,11 @@ export function EvaluationsListClient({ initial }: Props) {
     if (selectedStatus !== 'all') {
       result = result.filter((e) => e.status === selectedStatus)
     }
+    if (selectedEvaluator !== 'all') {
+      result = result.filter((e) => e.evaluator.id === selectedEvaluator)
+    }
     return result
-  }, [evaluations, searchTerm, selectedType, selectedStatus])
+  }, [evaluations, searchTerm, selectedType, selectedStatus, selectedEvaluator])
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const getSummary = (e: EvaluationItem) => {
@@ -157,7 +171,7 @@ export function EvaluationsListClient({ initial }: Props) {
                 <Award className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
               <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
                 <option value="all">All Types</option>
                 <option value="FORMATIVE">Formative</option>
@@ -171,7 +185,13 @@ export function EvaluationsListClient({ initial }: Props) {
                 <option value="SUBMITTED">Submitted</option>
                 <option value="ACKNOWLEDGED">Acknowledged</option>
               </select>
-              <div className="flex rounded-md overflow-hidden border">
+              <select value={selectedEvaluator} onChange={(e) => setSelectedEvaluator(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
+                <option value="all">All Evaluators</option>
+                {[...new Map(evaluations.map(ev => [ev.evaluator.id, ev.evaluator])).values()].map((evr) => (
+                  <option key={evr.id} value={evr.id}>{evr.name}</option>
+                ))}
+              </select>
+              <div className="hidden md:flex rounded-md overflow-hidden border">
                 <button
                   type="button"
                   className={`px-3 py-2 text-sm ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
@@ -290,7 +310,7 @@ export function EvaluationsListClient({ initial }: Props) {
                 </CardContent>
                 <div className="mt-auto flex items-center justify-between px-6 pb-5">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/evaluations/chat?teacherId=${evaluation.teacher.id}&evaluationType=${evaluation.type}`}>
+                    <Link href={`/dashboard/evaluations/chat?teacher=${evaluation.teacher.id}&type=${evaluation.type}`}>
                       <MessageSquare className="mr-2 h-4 w-4" />
                       View Chat
                     </Link>
@@ -360,7 +380,7 @@ export function EvaluationsListClient({ initial }: Props) {
                   <td className="px-3 py-2">
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/evaluations/chat?teacherId=${evaluation.teacher.id}&evaluationType=${evaluation.type}`}>View</Link>
+                        <Link href={`/dashboard/evaluations/chat?teacher=${evaluation.teacher.id}&type=${evaluation.type}`}>View</Link>
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => handleEdit(evaluation)}>Edit</Button>
                       <Button variant="outline" size="sm" className="text-destructive" onClick={() => setDeleteConfirmId(evaluation.id)}>Delete</Button>

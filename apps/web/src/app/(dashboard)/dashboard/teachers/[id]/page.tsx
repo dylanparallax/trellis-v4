@@ -51,6 +51,7 @@ export default function EditTeacherPage() {
     e.preventDefault()
     setError('')
     let photoUrl: string | undefined
+    let storagePath: string | undefined
     if (photoFile) {
       try {
         const form = new FormData()
@@ -59,6 +60,7 @@ export default function EditTeacherPage() {
         if (up.ok) {
           const data = await up.json()
           photoUrl = data.url
+          storagePath = data.path
         }
       } catch {}
     }
@@ -74,7 +76,7 @@ export default function EditTeacherPage() {
           strengths: teacher?.strengths,
           growthAreas: teacher?.growthAreas,
           currentGoals: teacher?.currentGoals,
-          photoUrl,
+          photoUrl: storagePath || photoUrl,
         }),
       })
       if (!res.ok) throw new Error('Failed to save teacher')
@@ -89,7 +91,7 @@ export default function EditTeacherPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" asChild>
           <Link href="/dashboard/teachers" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />
