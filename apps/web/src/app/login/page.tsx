@@ -32,11 +32,16 @@ export default function LoginPage() {
         return
       }
       
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         setError(error.message)
-      } else {
+      } else if (data.session) {
+        // Ensure server httpOnly cookies are set via callback
+        await fetch('/api/auth/callback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } })
+        }).catch(() => {})
         router.push('/dashboard')
       }
     } catch {
