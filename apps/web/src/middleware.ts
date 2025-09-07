@@ -53,6 +53,9 @@ export async function middleware(req: NextRequest) {
       return withSecurityHeaders(NextResponse.next())
     }
 
+    // Base response where any refreshed cookies will be attached
+    const baseResponse = NextResponse.next({ request: { headers: req.headers } })
+
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         get(name: string) {
@@ -67,10 +70,8 @@ export async function middleware(req: NextRequest) {
             maxAge: 60 * 60 * 24 * 7, // 7 days
             ...options,
           }
-          
-          req.cookies.set({ name, value, ...cookieOptions })
-          const response = NextResponse.next({ request: { headers: req.headers } })
-          response.cookies.set({ name, value, ...cookieOptions })
+          // Attach to base response so we return the same response object
+          baseResponse.cookies.set({ name, value, ...cookieOptions })
         },
         remove(name: string, options: Record<string, unknown>) {
           const cookieOptions = {
@@ -82,10 +83,7 @@ export async function middleware(req: NextRequest) {
             expires: new Date(0),
             ...options,
           }
-          
-          req.cookies.set({ name, value: '', ...cookieOptions })
-          const response = NextResponse.next({ request: { headers: req.headers } })
-          response.cookies.set({ name, value: '', ...cookieOptions })
+          baseResponse.cookies.set({ name, value: '', ...cookieOptions })
         },
       },
     })
@@ -99,7 +97,7 @@ export async function middleware(req: NextRequest) {
         if (error.message.includes('rate limit') || error.message.includes('over_request_rate_limit')) {
           console.warn('Supabase rate limit reached, skipping auth check for this request')
           // Allow the request to proceed without authentication check
-          return withSecurityHeaders(NextResponse.next())
+          return withSecurityHeaders(baseResponse)
         }
         console.warn('Auth session error in middleware:', error.message)
         // Only redirect to login if we're not already on login/signup pages
@@ -140,7 +138,7 @@ export async function middleware(req: NextRequest) {
       return withSecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)))
     }
 
-    return withSecurityHeaders(NextResponse.next())
+    return withSecurityHeaders(baseResponse)
   } catch (error) {
     console.error('Critical middleware error:', error)
     // If there's a critical error, redirect to login to be safe
