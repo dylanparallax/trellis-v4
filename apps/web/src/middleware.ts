@@ -5,14 +5,18 @@ import type { NextRequest } from 'next/server'
 function withSecurityHeaders(response: NextResponse) {
   const csp = [
     "default-src 'self'",
-    "img-src 'self' data: https://*.supabase.co",
+    "img-src 'self' data: https://*.supabase.co https://*.gravatar.com",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
-    "connect-src 'self' https://*.supabase.co https://api.openai.com https://api.anthropic.com",
+    "connect-src 'self' https://*.supabase.co https://*.supabase.in https://*.supabase.com https://api.openai.com https://api.anthropic.com",
+    "connect-src 'self' wss://*.supabase.co wss://*.supabase.in",
     "font-src 'self' data:",
     "frame-ancestors 'none'",
+    "frame-src 'self' https://*.supabase.co https://*.supabase.com",
     "base-uri 'self'",
     "form-action 'self'",
+    "worker-src 'self' blob:",
+    "media-src 'self' blob: data:",
   ].join('; ')
   response.headers.set('Content-Security-Policy', csp)
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
