@@ -1,39 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 
 export async function POST(req: NextRequest) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    if (!supabaseUrl || !supabaseAnonKey) return NextResponse.json({ ok: false })
-
     const body = await req.json().catch(() => ({})) as { session?: { access_token?: string; refresh_token?: string } }
     const access_token = body?.session?.access_token
     const refresh_token = body?.session?.refresh_token
     if (!access_token || !refresh_token) return NextResponse.json({ ok: false })
 
     const response = NextResponse.json({ ok: true })
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        get: (name: string) => req.cookies.get(name)?.value,
-        set: (name: string, value: string, options: Record<string, unknown>) => {
-          response.cookies.set({
-            name,
-            value,
-            path: '/',
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: req.nextUrl.protocol === 'https:',
-            ...options,
-          })
-        },
-        remove: (name: string, options: Record<string, unknown>) => {
-          response.cookies.set({ name, value: '', path: '/', maxAge: 0, ...options })
-        },
-      },
-    })
-
-    await supabase.auth.setSession({ access_token, refresh_token })
+    const secure = req.nextUrl.protocol === 'https:'
+    const cookieBase = { path: '/', httpOnly: true, sameSite: 'lax' as const, secure }
+    // Explicitly set Supabase cookies expected by SSR/middleware
+    response.cookies.set({ name: 'sb-access-token', value: access_token, ...cookieBase })
+    response.cookies.set({ name: 'sb-refresh-token', value: refresh_token, ...cookieBase })
     return response
   } catch (e) {
     return NextResponse.json({ ok: false })
