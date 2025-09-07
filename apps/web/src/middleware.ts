@@ -44,12 +44,7 @@ export async function middleware(req: NextRequest) {
     )
 
     if (!isSupabaseConfigured) {
-      // If Supabase is not configured, redirect dashboard routes to login
-      // But allow login/signup pages to load normally
-      if (req.nextUrl.pathname.startsWith('/dashboard')) {
-        return withSecurityHeaders(NextResponse.redirect(new URL('/login', req.url)))
-      }
-      // For login/signup pages, just continue without auth checks
+      // If Supabase is not configured, allow all routes (demo/dev mode)
       return withSecurityHeaders(NextResponse.next())
     }
 
