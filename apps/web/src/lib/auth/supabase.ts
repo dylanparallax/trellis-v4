@@ -33,7 +33,7 @@ export const supabase = isBrowser
           
           const cookieOptions = {
             path: '/',
-            domain: window.location.hostname === 'localhost' ? undefined : `.${window.location.hostname}`,
+            // Let the browser decide the domain to avoid invalid cookie domains on hosts
             secure: window.location.protocol === 'https:',
             httpOnly: false,
             sameSite: 'lax' as const,
@@ -42,7 +42,7 @@ export const supabase = isBrowser
           
           let cookieString = `${name}=${value}`
           if (cookieOptions.path) cookieString += `; path=${cookieOptions.path}`
-          if (cookieOptions.domain) cookieString += `; domain=${cookieOptions.domain}`
+          // do not set domain explicitly
           if (cookieOptions.secure) cookieString += `; secure`
           if (cookieOptions.httpOnly) cookieString += `; httpOnly`
           if (cookieOptions.sameSite) cookieString += `; samesite=${cookieOptions.sameSite}`
@@ -61,7 +61,6 @@ export const supabase = isBrowser
           
           const cookieOptions = {
             path: '/',
-            domain: window.location.hostname === 'localhost' ? undefined : `.${window.location.hostname}`,
             secure: window.location.protocol === 'https:',
             httpOnly: false,
             sameSite: 'lax' as const,
@@ -70,7 +69,7 @@ export const supabase = isBrowser
           
           let cookieString = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`
           if (cookieOptions.path) cookieString += `; path=${cookieOptions.path}`
-          if (cookieOptions.domain) cookieString += `; domain=${cookieOptions.domain}`
+          // do not set domain explicitly
           
           document.cookie = cookieString
         },
