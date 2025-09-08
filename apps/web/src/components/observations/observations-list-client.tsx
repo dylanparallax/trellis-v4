@@ -70,23 +70,31 @@ export function ObservationsListClient({ initial }: Props) {
       const draftsRaw = typeof window !== 'undefined' ? localStorage.getItem('observationDrafts') : null
       const parsed = draftsRaw ? JSON.parse(draftsRaw) as unknown : undefined
       const drafts: LocalDraft[] = Array.isArray(parsed) ? (parsed as LocalDraft[]) : []
-      const normalizedDrafts: ObservationItem[] = drafts.map((d: LocalDraft) => ({
-        id: `draft-${d.id}`,
-        teacher: d.teacher ?? {
-          id: d.teacher?.id ?? (d.teacherId ?? `draft-teacher-${d.id}`),
-          name: 'Unknown Teacher',
-          subject: '',
-          gradeLevel: '',
-        },
-        observer: d.observer ?? { id: 'me', name: 'You' },
-        date: typeof d.date === 'string' ? d.date : new Date().toISOString(),
-        duration: typeof d.duration === 'number' ? d.duration : null,
-        observationType: d.observationType ?? 'INFORMAL',
-        focusAreas: Array.isArray(d.focusAreas) ? d.focusAreas : [],
-        rawNotes: d.rawNotes ?? '',
-        enhancedNotes: d.enhancedNotes ?? null,
-        isDraft: true,
-      }))
+      const normalizedDrafts: ObservationItem[] = drafts.map((d: LocalDraft) => {
+        const teacherId = typeof d.teacher?.id === 'string' && d.teacher.id.length > 0
+          ? d.teacher.id
+          : (typeof d.teacherId === 'string' && d.teacherId.length > 0
+            ? d.teacherId
+            : `draft-teacher-${d.id}`)
+        const teacherName = typeof d.teacher?.name === 'string' && d.teacher.name.length > 0
+          ? d.teacher.name
+          : 'Unknown Teacher'
+        const teacherSubject = typeof d.teacher?.subject === 'string' ? d.teacher.subject : ''
+        const teacherGrade = typeof d.teacher?.gradeLevel === 'string' ? d.teacher.gradeLevel : ''
+
+        return {
+          id: `draft-${d.id}`,
+          teacher: { id: teacherId, name: teacherName, subject: teacherSubject, gradeLevel: teacherGrade },
+          observer: d.observer ?? { id: 'me', name: 'You' },
+          date: typeof d.date === 'string' ? d.date : new Date().toISOString(),
+          duration: typeof d.duration === 'number' ? d.duration : null,
+          observationType: d.observationType ?? 'INFORMAL',
+          focusAreas: Array.isArray(d.focusAreas) ? d.focusAreas : [],
+          rawNotes: d.rawNotes ?? '',
+          enhancedNotes: d.enhancedNotes ?? null,
+          isDraft: true,
+        }
+      })
       const merged = [...normalizedDrafts, ...initial]
       // Sort by date desc, drafts first when same date
       merged.sort((a, b) => {
