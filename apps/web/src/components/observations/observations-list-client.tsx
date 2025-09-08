@@ -31,6 +31,24 @@ export interface ObservationItem {
   isDraft?: boolean
 }
 
+type LocalDraft = {
+  id: string | number
+  teacherId?: string
+  teacher?: {
+    id: string
+    name: string
+    subject: string
+    gradeLevel: string
+  }
+  observer?: { id: string; name: string }
+  date?: string
+  duration?: number
+  observationType?: string
+  focusAreas?: string[]
+  rawNotes?: string
+  enhancedNotes?: string | null
+}
+
 interface Props {
   initial: ObservationItem[]
 }
@@ -50,8 +68,9 @@ export function ObservationsListClient({ initial }: Props) {
     // Merge server observations with local drafts from localStorage
     try {
       const draftsRaw = typeof window !== 'undefined' ? localStorage.getItem('observationDrafts') : null
-      const drafts = draftsRaw ? JSON.parse(draftsRaw) : []
-      const normalizedDrafts: ObservationItem[] = drafts.map((d: any) => ({
+      const parsed = draftsRaw ? JSON.parse(draftsRaw) as unknown : undefined
+      const drafts: LocalDraft[] = Array.isArray(parsed) ? (parsed as LocalDraft[]) : []
+      const normalizedDrafts: ObservationItem[] = drafts.map((d: LocalDraft) => ({
         id: `draft-${d.id}`,
         teacher: d.teacher ?? { id: d.teacherId, name: 'Unknown Teacher', subject: '', gradeLevel: '' },
         observer: d.observer ?? { id: 'me', name: 'You' },
@@ -126,8 +145,9 @@ export function ObservationsListClient({ initial }: Props) {
         const id = observationId.replace('draft-', '')
         try {
           const draftsRaw = localStorage.getItem('observationDrafts')
-          const drafts = draftsRaw ? JSON.parse(draftsRaw) : []
-          const nextDrafts = drafts.map((d: any) => String(d.id) === id ? { ...d, rawNotes: editNotes } : d)
+          const parsed = draftsRaw ? JSON.parse(draftsRaw) as unknown : undefined
+          const drafts: LocalDraft[] = Array.isArray(parsed) ? (parsed as LocalDraft[]) : []
+          const nextDrafts = drafts.map((d: LocalDraft) => String(d.id) === id ? { ...d, rawNotes: editNotes } : d)
           localStorage.setItem('observationDrafts', JSON.stringify(nextDrafts))
         } catch {}
         setObservations(prev => prev.map(obs => obs.id === observationId ? { ...obs, rawNotes: editNotes } : obs))
@@ -176,9 +196,10 @@ export function ObservationsListClient({ initial }: Props) {
     if (observationId.startsWith('draft-')) {
       try {
         const draftsRaw = localStorage.getItem('observationDrafts')
-        const drafts = draftsRaw ? JSON.parse(draftsRaw) : []
+        const parsed = draftsRaw ? JSON.parse(draftsRaw) as unknown : undefined
+        const drafts: LocalDraft[] = Array.isArray(parsed) ? (parsed as LocalDraft[]) : []
         const id = observationId.replace('draft-', '')
-        const nextDrafts = drafts.filter((d: any) => String(d.id) !== id)
+        const nextDrafts = drafts.filter((d: LocalDraft) => String(d.id) !== id)
         localStorage.setItem('observationDrafts', JSON.stringify(nextDrafts))
         setObservations(prev => prev.filter(obs => obs.id !== observationId))
         setDeleteConfirmId(null)
