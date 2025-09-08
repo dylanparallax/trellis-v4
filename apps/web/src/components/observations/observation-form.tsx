@@ -126,13 +126,22 @@ Excellent progress on the classroom management goal from last month's observatio
     setDraftStatus('idle')
     
     try {
+      const selectedTeacher = teachers.find(t => t.id === selectedTeacherId)
       const draftData = {
         teacherId: selectedTeacherId,
+        teacher: selectedTeacher ? {
+          id: selectedTeacher.id,
+          name: selectedTeacher.name,
+          subject: selectedTeacher.subject,
+          gradeLevel: selectedTeacher.gradeLevel,
+        } : undefined,
+        observer: { id: 'me', name: 'You' },
         rawNotes: notes,
         enhancedNotes,
         observationType,
         duration: parseInt(duration) || undefined,
         focusAreas,
+        date: observationDate,
         artifacts: artifacts.map(f => ({ name: f.name, size: f.size })),
         savedAt: new Date().toISOString(),
         isDraft: true

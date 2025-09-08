@@ -27,6 +27,8 @@ export interface ObservationItem {
   focusAreas: string[]
   rawNotes: string
   enhancedNotes?: string | null
+  // Local-only flag used to mark drafts saved on this device
+  isDraft?: boolean
 }
 
 interface Props {
@@ -45,7 +47,35 @@ export function ObservationsListClient({ initial }: Props) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   useEffect(() => {
-    setObservations(initial)
+    // Merge server observations with local drafts from localStorage
+    try {
+      const draftsRaw = typeof window !== 'undefined' ? localStorage.getItem('observationDrafts') : null
+      const drafts = draftsRaw ? JSON.parse(draftsRaw) : []
+      const normalizedDrafts: ObservationItem[] = drafts.map((d: any) => ({
+        id: `draft-${d.id}`,
+        teacher: d.teacher ?? { id: d.teacherId, name: 'Unknown Teacher', subject: '', gradeLevel: '' },
+        observer: d.observer ?? { id: 'me', name: 'You' },
+        date: typeof d.date === 'string' ? d.date : new Date().toISOString(),
+        duration: typeof d.duration === 'number' ? d.duration : null,
+        observationType: d.observationType ?? 'INFORMAL',
+        focusAreas: Array.isArray(d.focusAreas) ? d.focusAreas : [],
+        rawNotes: d.rawNotes ?? '',
+        enhancedNotes: d.enhancedNotes ?? null,
+        isDraft: true,
+      }))
+      const merged = [...normalizedDrafts, ...initial]
+      // Sort by date desc, drafts first when same date
+      merged.sort((a, b) => {
+        const da = new Date(a.date).getTime()
+        const db = new Date(b.date).getTime()
+        if (db !== da) return db - da
+        if ((a.isDraft ? 1 : 0) !== (b.isDraft ? 1 : 0)) return (b.isDraft ? 1 : 0) - (a.isDraft ? 1 : 0)
+        return 0
+      })
+      setObservations(merged)
+    } catch {
+      setObservations(initial)
+    }
   }, [initial])
 
   useEffect(() => {
@@ -91,6 +121,21 @@ export function ObservationsListClient({ initial }: Props) {
   const handleSaveEdit = async (observationId: string) => {
     setIsSaving(true)
     try {
+      // Edit local draft without hitting API
+      if (observationId.startsWith('draft-')) {
+        const id = observationId.replace('draft-', '')
+        try {
+          const draftsRaw = localStorage.getItem('observationDrafts')
+          const drafts = draftsRaw ? JSON.parse(draftsRaw) : []
+          const nextDrafts = drafts.map((d: any) => String(d.id) === id ? { ...d, rawNotes: editNotes } : d)
+          localStorage.setItem('observationDrafts', JSON.stringify(nextDrafts))
+        } catch {}
+        setObservations(prev => prev.map(obs => obs.id === observationId ? { ...obs, rawNotes: editNotes } : obs))
+        setEditingId(null)
+        setEditNotes('')
+        return
+      }
+
       const response = await fetch(`/api/observations/${observationId}`, {
         method: 'PATCH',
         headers: {
@@ -127,6 +172,22 @@ export function ObservationsListClient({ initial }: Props) {
   }
 
   const handleDelete = async (observationId: string) => {
+    // Handle local drafts vs server observations
+    if (observationId.startsWith('draft-')) {
+      try {
+        const draftsRaw = localStorage.getItem('observationDrafts')
+        const drafts = draftsRaw ? JSON.parse(draftsRaw) : []
+        const id = observationId.replace('draft-', '')
+        const nextDrafts = drafts.filter((d: any) => String(d.id) !== id)
+        localStorage.setItem('observationDrafts', JSON.stringify(nextDrafts))
+        setObservations(prev => prev.filter(obs => obs.id !== observationId))
+        setDeleteConfirmId(null)
+      } catch (e) {
+        console.error('Failed to delete local draft', e)
+      }
+      return
+    }
+
     try {
       const response = await fetch(`/api/observations/${observationId}`, {
         method: 'DELETE',
@@ -218,6 +279,9 @@ export function ObservationsListClient({ initial }: Props) {
                     </div>
                     <div className="text-right space-y-1">
                       <div>
+                        {observation.isDraft && (
+                          <Badge className="bg-slate-100 text-slate-700 border-slate-200 mr-1">Saved</Badge>
+                        )}
                         {observation.observationType === 'FORMAL' && (
                           <Badge className="bg-blue-100 text-blue-700 border-blue-200">Formal</Badge>
                         )}
@@ -324,6 +388,9 @@ export function ObservationsListClient({ initial }: Props) {
                     <div className="text-muted-foreground">{observation.teacher.subject} • Grade {observation.teacher.gradeLevel}</div>
                   </td>
                   <td className="px-3 py-2">
+                    {observation.isDraft && (
+                      <Badge className="bg-slate-100 text-slate-700 border-slate-200 mr-1">Saved</Badge>
+                    )}
                     {observation.observationType === 'FORMAL' && (
                       <Badge className="bg-blue-100 text-blue-700 border-blue-200">Formal</Badge>
                     )}

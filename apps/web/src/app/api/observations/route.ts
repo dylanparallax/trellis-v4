@@ -11,7 +11,8 @@ const observationSchema = z.object({
   observationType: z.enum(['FORMAL', 'INFORMAL', 'WALKTHROUGH']),
   duration: z.number().min(1, 'Duration must be at least 1 minute').optional(),
   focusAreas: z.array(z.string()).default([]),
-  date: z.string().datetime().optional(),
+  // Accept either full ISO datetime or simple YYYY-MM-DD date strings
+  date: z.string().optional(),
   artifacts: z.array(z.object({
     fileName: z.string(),
     fileUrl: z.string(),
@@ -81,6 +82,22 @@ export async function POST(request: NextRequest) {
     if (!prismaUser) {
       return NextResponse.json({ error: 'User not found in database' }, { status: 403 })
     }
+    // Normalize provided date, accepting both ISO and YYYY-MM-DD
+    const dateInput = validated.date
+    let parsedDate: Date
+    if (dateInput && typeof dateInput === 'string') {
+      // YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+        // Interpret as start of day in UTC to avoid TZ drift
+        parsedDate = new Date(`${dateInput}T00:00:00.000Z`)
+      } else {
+        const d = new Date(dateInput)
+        parsedDate = isNaN(d.getTime()) ? new Date() : d
+      }
+    } else {
+      parsedDate = new Date()
+    }
+
     const observation = await prisma.observation.create({
       data: {
         teacherId: validated.teacherId,
@@ -91,7 +108,7 @@ export async function POST(request: NextRequest) {
         observationType: validated.observationType,
         duration: validated.duration,
         focusAreas: validated.focusAreas,
-        date: validated.date ? new Date(validated.date) : new Date(),
+        date: parsedDate,
         artifacts: {
           create: validated.artifacts
         }
