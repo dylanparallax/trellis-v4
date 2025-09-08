@@ -72,7 +72,12 @@ export function ObservationsListClient({ initial }: Props) {
       const drafts: LocalDraft[] = Array.isArray(parsed) ? (parsed as LocalDraft[]) : []
       const normalizedDrafts: ObservationItem[] = drafts.map((d: LocalDraft) => ({
         id: `draft-${d.id}`,
-        teacher: d.teacher ?? { id: d.teacherId, name: 'Unknown Teacher', subject: '', gradeLevel: '' },
+        teacher: d.teacher ?? {
+          id: d.teacher?.id ?? (d.teacherId ?? `draft-teacher-${d.id}`),
+          name: 'Unknown Teacher',
+          subject: '',
+          gradeLevel: '',
+        },
         observer: d.observer ?? { id: 'me', name: 'You' },
         date: typeof d.date === 'string' ? d.date : new Date().toISOString(),
         duration: typeof d.duration === 'number' ? d.duration : null,
