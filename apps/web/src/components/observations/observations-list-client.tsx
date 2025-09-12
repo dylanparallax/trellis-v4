@@ -529,8 +529,8 @@ export function ObservationsListClient({ initial }: Props) {
                       // Refresh list
                       const refreshed = await fetch('/api/observations', { cache: 'no-store' })
                       if (refreshed.ok) {
-                        const json = await refreshed.json()
-                        setObservations(json.map((o: any) => ({ ...o, date: typeof o.date === 'string' ? o.date : new Date(o.date).toISOString() })))
+                        const json = await refreshed.json() as Array<ObservationItem>
+                        setObservations(json.map((o) => ({ ...o, date: typeof o.date === 'string' ? o.date : new Date(o.date as unknown as string).toISOString() })))
                       }
                     } catch {
                       setImportResult({ createdCount: 0, errors: [{ row: 0, error: 'Network error' }] })

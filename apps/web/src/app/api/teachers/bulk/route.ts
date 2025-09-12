@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const contentType = request.headers.get('content-type') || ''
-    let records: Array<z.infer<typeof rowSchema>> = []
+    let records: Array<Record<string, string>> = []
 
     if (contentType.includes('multipart/form-data')) {
       const form = await request.formData()
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     // Validate row shape and normalize
     const rows: Array<z.infer<typeof rowSchema>> = []
     const errors: Array<{ row: number; error: string }> = []
-    records.forEach((rec, idx) => {
+    records.forEach((rec: Record<string, string>, idx) => {
       try {
         const normalized = rowSchema.parse({
           name: rec.name ?? rec.Name ?? '',
@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
         rows.push(normalized)
       } catch (e) {
         let message = 'Invalid row'
-        if (e && typeof e === 'object' && 'issues' in (e as any)) {
-          const issues = (e as any).issues as Array<{ path: (string | number)[]; message: string }>
+        if (e && typeof e === 'object' && 'issues' in (e as { issues?: Array<{ path: (string | number)[]; message: string }> })) {
+          const issues = (e as { issues?: Array<{ path: (string | number)[]; message: string }> }).issues || []
           message = issues
             .map((i) => {
               const path = Array.isArray(i.path) && i.path.length > 0 ? i.path.join('.') : 'field'

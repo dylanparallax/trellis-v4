@@ -44,22 +44,22 @@ export async function POST(request: NextRequest) {
 
     const rows: Array<z.infer<typeof rowSchema>> = []
     const errors: Array<{ row: number; error: string }> = []
-    records.forEach((rec, idx) => {
+    records.forEach((rec: Record<string, unknown>, idx) => {
       try {
         const normalized = rowSchema.parse({
-          teacherEmail: rec.teacherEmail ?? rec.TeacherEmail ?? rec.email ?? rec.Email ?? '',
-          teacherName: rec.teacherName ?? rec.TeacherName ?? rec.name ?? rec.Name ?? '',
-          date: rec.date ?? rec.Date ?? '',
-          observationType: (rec.observationType ?? rec.ObservationType ?? 'INFORMAL').toUpperCase(),
-          duration: rec.duration ?? rec.Duration ?? '',
-          focusAreas: rec.focusAreas ?? rec['Focus Areas'] ?? rec.FocusAreas ?? '',
-          rawNotes: rec.rawNotes ?? rec.RawNotes ?? rec.notes ?? rec.Notes ?? '',
+          teacherEmail: (rec as Record<string, string>).teacherEmail ?? (rec as Record<string, string>).TeacherEmail ?? (rec as Record<string, string>).email ?? (rec as Record<string, string>).Email ?? '',
+          teacherName: (rec as Record<string, string>).teacherName ?? (rec as Record<string, string>).TeacherName ?? (rec as Record<string, string>).name ?? (rec as Record<string, string>).Name ?? '',
+          date: (rec as Record<string, string>).date ?? (rec as Record<string, string>).Date ?? '',
+          observationType: (((rec as Record<string, string>).observationType ?? (rec as Record<string, string>).ObservationType ?? 'INFORMAL') as string).toUpperCase(),
+          duration: (rec as Record<string, string>).duration ?? (rec as Record<string, string>).Duration ?? '',
+          focusAreas: (rec as Record<string, string>).focusAreas ?? (rec as Record<string, string>)['Focus Areas'] ?? (rec as Record<string, string>).FocusAreas ?? '',
+          rawNotes: (rec as Record<string, string>).rawNotes ?? (rec as Record<string, string>).RawNotes ?? (rec as Record<string, string>).notes ?? (rec as Record<string, string>).Notes ?? '',
         })
         rows.push(normalized)
       } catch (e) {
         let message = 'Invalid row'
-        if (e && typeof e === 'object' && 'issues' in (e as any)) {
-          const issues = (e as any).issues as Array<{ path: (string | number)[]; message: string }>
+        if (e && typeof e === 'object' && 'issues' in (e as { issues?: Array<{ path: (string | number)[]; message: string }> })) {
+          const issues = (e as { issues?: Array<{ path: (string | number)[]; message: string }> }).issues || []
           message = issues.map(i => `${(i.path?.[0] as string) || 'field'}: ${i.message}`).join('; ')
         } else if (e instanceof Error) {
           message = e.message
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
           schoolId: auth.schoolId,
           rawNotes: row.rawNotes,
           enhancedNotes: null,
-          observationType: row.observationType as any,
+          observationType: row.observationType,
           duration: duration ?? undefined,
           focusAreas: parseList(row.focusAreas),
           date: parsedDate,
