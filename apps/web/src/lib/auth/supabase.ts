@@ -33,7 +33,7 @@ export const supabase = isBrowser
           
           const cookieOptions = {
             path: '/',
-            // Let the browser decide the domain to avoid invalid cookie domains on hosts
+                      // Let the browser decide the domain to avoid invalid cookie domains on hosts
             secure: window.location.protocol === 'https:',
             httpOnly: false,
             sameSite: 'lax' as const,

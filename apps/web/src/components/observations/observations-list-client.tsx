@@ -57,6 +57,7 @@ export function ObservationsListClient({ initial }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState('all')
   const [selectedObserver, setSelectedObserver] = useState('all')
+  const [selectedTeacher, setSelectedTeacher] = useState('all')
   const [observations, setObservations] = useState<ObservationItem[]>(initial)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -128,11 +129,12 @@ export function ObservationsListClient({ initial }: Props) {
     let result = observations
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
-      result = result.filter((o) =>
-        o.teacher.name.toLowerCase().includes(term) ||
-        o.teacher.subject.toLowerCase().includes(term) ||
-        o.rawNotes.toLowerCase().includes(term)
-      )
+      result = result.filter((o) => {
+        const teacherName = (o.teacher?.name ?? '').toLowerCase()
+        const teacherSubject = (o.teacher?.subject ?? '').toLowerCase()
+        const notes = (o.rawNotes ?? '').toLowerCase()
+        return teacherName.includes(term) || teacherSubject.includes(term) || notes.includes(term)
+      })
     }
     if (selectedType !== 'all') {
       result = result.filter((o) => o.observationType === selectedType)
@@ -140,8 +142,11 @@ export function ObservationsListClient({ initial }: Props) {
     if (selectedObserver !== 'all') {
       result = result.filter((o) => o.observer.id === selectedObserver)
     }
+    if (selectedTeacher !== 'all') {
+      result = result.filter((o) => o.teacher?.id === selectedTeacher)
+    }
     return result
-  }, [observations, searchTerm, selectedType, selectedObserver])
+  }, [observations, searchTerm, selectedType, selectedObserver, selectedTeacher])
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const getSummary = (o: ObservationItem) => {
@@ -275,6 +280,14 @@ export function ObservationsListClient({ initial }: Props) {
                 <option value="FORMAL">Formal</option>
                 <option value="INFORMAL">Informal</option>
                 <option value="WALKTHROUGH">Walkthrough</option>
+              </select>
+              <select value={selectedTeacher} onChange={(e) => setSelectedTeacher(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
+                <option value="all">All Teachers</option>
+                {[...new Map(observations.map(o => [o.teacher.id, o.teacher])).values()]
+                  .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
               </select>
               <select value={selectedObserver} onChange={(e) => setSelectedObserver(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
                 <option value="all">All Observers</option>
@@ -472,7 +485,7 @@ export function ObservationsListClient({ initial }: Props) {
             <h3 className="text-lg font-semibold mb-2">No observations found</h3>
             <p className="text-muted-foreground mb-4">Try adjusting your search or filters.</p>
             <div className="flex gap-2 justify-center">
-              <Button variant="outline" onClick={() => { setSearchTerm(''); setSelectedType('all') }}>Clear filters</Button>
+              <Button variant="outline" onClick={() => { setSearchTerm(''); setSelectedType('all'); setSelectedObserver('all'); setSelectedTeacher('all') }}>Clear filters</Button>
             </div>
           </CardContent>
         </Card>

@@ -60,6 +60,8 @@ export default function SettingsPage() {
         body: JSON.stringify({ name: displayName, photoUrl: photoUrl || undefined })
       })
       if (!res.ok) throw new Error('Save failed')
+      // Notify other tabs/components (e.g., sidebar) to refresh user profile
+      window.dispatchEvent(new Event('profile-updated'))
     } finally {
       setIsSaving(false)
     }
@@ -93,6 +95,15 @@ export default function SettingsPage() {
     if (res.ok) {
       const data = await res.json()
       setPhotoUrl(data.url)
+      // Persist to profile right after upload for immediate sidebar reflection
+      try {
+        await fetch('/api/me', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoUrl: data.url })
+        })
+        window.dispatchEvent(new Event('profile-updated'))
+      } catch {}
     }
   }
 

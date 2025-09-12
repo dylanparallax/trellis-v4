@@ -50,6 +50,10 @@ function useCurrentUser() {
           console.error('Error fetching user:', error)
         } else {
           setUser(user)
+          // optimistic photo from auth metadata (falls back to /api/me below)
+          const meta = (user?.user_metadata as { photo_url?: string; avatar_url?: string; picture?: string } | undefined)
+          const metaPhoto = meta?.photo_url || meta?.avatar_url || meta?.picture
+          if (metaPhoto) setProfilePhotoUrl(metaPhoto)
         }
         // Fetch DB-backed name/role
         const res = await fetch('/api/me', { cache: 'no-store' })
@@ -66,6 +70,22 @@ function useCurrentUser() {
     }
 
     fetchUser()
+    const handleProfileUpdated = async () => {
+      try {
+        const res = await fetch('/api/me', { cache: 'no-store' })
+        if (res.ok) {
+          const data: { name?: string | null; photoUrl?: string | null } = await res.json()
+          if (data?.name) setProfileName(data.name)
+          if (data?.photoUrl) setProfilePhotoUrl(data.photoUrl)
+        }
+      } catch {}
+    }
+    window.addEventListener('profile-updated', handleProfileUpdated as EventListener)
+    window.addEventListener('focus', handleProfileUpdated)
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdated as EventListener)
+      window.removeEventListener('focus', handleProfileUpdated)
+    }
   }, [])
 
   return { user, profileName, profilePhotoUrl, loading }
