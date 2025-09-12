@@ -408,7 +408,7 @@ function EvaluationChatContent() {
                         {message.timestamp.toLocaleTimeString()}
                       </span>
                     </div>
-                    <div className="prose prose-sm max-w-none space-y-3">
+                    <div className="prose prose-sm max-w-none space-y-3 prose-p:leading-relaxed prose-p:mb-4 prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-5 prose-ol:pl-5 prose-li:my-1">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {message.content}
                       </ReactMarkdown>
@@ -493,7 +493,7 @@ function EvaluationChatContent() {
           )}
           {/* Artifact content */}
           {currentEvaluation ? (
-            <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none flex-1 min-h-0 overflow-y-auto">
+            <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none flex-1 min-h-0 overflow-y-auto prose-p:leading-relaxed prose-p:mb-5 prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6 prose-li:my-1">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {currentEvaluation.content}
               </ReactMarkdown>
