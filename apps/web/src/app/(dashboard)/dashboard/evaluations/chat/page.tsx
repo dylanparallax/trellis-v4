@@ -59,6 +59,9 @@ function EvaluationChatContent() {
   const [evaluationVersions, setEvaluationVersions] = useState<EvaluationVersion[]>([])
   const [currentVersionId, setCurrentVersionId] = useState<string>('')
   const [copied, setCopied] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [showToast, setShowToast] = useState(false)
+  const [isSubmittingEval, setIsSubmittingEval] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -315,8 +318,38 @@ function EvaluationChatContent() {
               <Button
                 variant="default"
                 size="sm"
-                onClick={async () => {
+                disabled={isSubmittingEval || submitSuccess}
+                onClick={async (e) => {
+                  if (!currentEvaluation || !teacher) return
+                  setIsSubmittingEval(true)
                   try {
+                    // Sparkles micro-interaction
+                    const btn = (e.currentTarget as HTMLButtonElement)
+                    const rect = btn.getBoundingClientRect()
+                    const container = document.createElement('div')
+                    container.style.position = 'fixed'
+                    container.style.left = `${rect.left + rect.width / 2}px`
+                    container.style.top = `${rect.top + rect.height / 2}px`
+                    container.style.pointerEvents = 'none'
+                    container.style.zIndex = '50'
+                    document.body.appendChild(container)
+                    for (let i = 0; i < 12; i++) {
+                      const s = document.createElement('div')
+                      s.style.position = 'absolute'
+                      s.style.width = '6px'
+                      s.style.height = '6px'
+                      s.style.borderRadius = '9999px'
+                      s.style.background = i % 2 === 0 ? '#60a5fa' : '#f59e0b'
+                      container.appendChild(s)
+                      const angle = (Math.PI * 2 * i) / 12
+                      const distance = 24 + Math.random() * 12
+                      s.animate([
+                        { transform: 'translate(0,0)', opacity: 1 },
+                        { transform: `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`, opacity: 0 }
+                      ], { duration: 600, easing: 'ease-out' })
+                    }
+                    setTimeout(() => container.remove(), 650)
+
                     const payload = {
                       teacherId: teacher.id,
                       evaluationType: (evaluationType as 'FORMATIVE' | 'SUMMATIVE') || 'FORMATIVE',
@@ -331,12 +364,17 @@ function EvaluationChatContent() {
                       body: JSON.stringify(payload),
                     })
                     if (!res.ok) throw new Error('Failed to save evaluation')
-                  } catch (e) {
-                    console.error(e)
+                    setSubmitSuccess(true)
+                    setShowToast(true)
+                    setTimeout(() => setShowToast(false), 2500)
+                  } catch (er) {
+                    console.error(er)
+                  } finally {
+                    setIsSubmittingEval(false)
                   }
                 }}
               >
-                Submit Evaluation
+                {submitSuccess ? 'Submitted' : (isSubmittingEval ? 'Submitting…' : 'Submit Evaluation')}
               </Button>
             </div>
           )}
@@ -370,6 +408,13 @@ function EvaluationChatContent() {
 
       {/* Main Content */}
       <div className="flex-1 min-h-0 grid grid-cols-12 overflow-hidden">
+        {showToast && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+            <div className="px-4 py-2 rounded-md bg-emerald-600 text-white shadow">
+              Evaluation submitted successfully
+            </div>
+          </div>
+        )}
         {/* Chat Area (left) */}
         <div className="col-span-5 min-w-0 flex flex-col border-r border-gray-200 overflow-hidden">
           {/* Messages */}
