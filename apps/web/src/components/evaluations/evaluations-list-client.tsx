@@ -289,23 +289,7 @@ export function EvaluationsListClient({ initial }: Props) {
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <div className="text-sm mb-3">
-                        <p className="line-clamp-3 text-muted-foreground">{getSummary(evaluation)}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {evaluation.recommendations.slice(0, 3).map((rec) => (
-                          <span key={rec} className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
-                            {rec}
-                          </span>
-                        ))}
-                        {evaluation.recommendations.length > 3 && (
-                          <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full">
-                            +{evaluation.recommendations.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    </>
+                    null
                   )}
                 </CardContent>
                 <div className="mt-auto flex items-center justify-between px-6 pb-5">
