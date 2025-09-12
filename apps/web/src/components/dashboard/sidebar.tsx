@@ -30,7 +30,7 @@ export const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Gauge },
   { name: 'Teachers', href: '/dashboard/teachers', icon: Apple },
   { name: 'Observations', href: '/dashboard/observations', icon: Binoculars },
-  { name: 'Evaluations', href: '/dashboard/evaluations', icon: Award },
+  { name: 'Feedback', href: '/dashboard/evaluations', icon: Award },
   // { name: 'Analytics', href: '/dashboard/analytics', icon: ChartSpline },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
 ]

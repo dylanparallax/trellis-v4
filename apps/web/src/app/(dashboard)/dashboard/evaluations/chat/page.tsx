@@ -304,7 +304,7 @@ function EvaluationChatContent() {
             </Button>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
-                Generate Evaluation
+                Generate Feedback
               </h1>
               {teacher && (
                 <p className="text-sm text-gray-500">
@@ -423,18 +423,18 @@ function EvaluationChatContent() {
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <Sparkles className="h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Start Your Evaluation
+                  Start Your Feedback
                 </h3>
                 <p className="text-gray-500 max-w-md">
-                   I&apos;ll help you create a comprehensive evaluation for {teacher?.name || 'this teacher'}. 
-                   Let me know what you&apos;d like to focus on or ask me to generate an initial evaluation.
+                   I&apos;ll help you create comprehensive feedback for {teacher?.name || 'this teacher'}. 
+                   Let me know what you&apos;d like to focus on or ask me to generate an initial version.
                 </p>
                 <Button
                   onClick={generateInitialEvaluation}
                   disabled={isLoading || !teacher}
                   className="mt-4"
                 >
-                  {isLoading ? 'Generating...' : 'Generate Initial Evaluation'}
+                  {isLoading ? 'Generating...' : 'Generate Initial Feedback'}
                 </Button>
               </div>
             ) : (
@@ -473,7 +473,7 @@ function EvaluationChatContent() {
                           onClick={() => setCurrentVersionId(message.artifactId!)}
                         >
                           <div className="flex items-center justify-between">
-                            <div className="font-medium text-sm">{teacher?.name} – {evaluationType} Evaluation</div>
+                            <div className="font-medium text-sm">{teacher?.name} – {evaluationType} Feedback</div>
                             <span className="text-xs text-muted-foreground">V{evaluationVersions.find(v => v.id === message.artifactId)?.version || ''}</span>
                           </div>
                           <div className="text-xs text-muted-foreground">Click to open the generated evaluation</div>
@@ -528,7 +528,7 @@ function EvaluationChatContent() {
         {/* Artifact Viewer (right) */}
         <div className="col-span-7 min-w-0 flex flex-col bg-white p-6 overflow-hidden max-w-none">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Generated Evaluation</h3>
+            <h3 className="font-semibold text-gray-900">Generated Feedback</h3>
           </div>
           {/* Versions strip (ensure unique and single for first) */}
           {evaluationVersions.length > 0 && (
@@ -553,16 +553,16 @@ function EvaluationChatContent() {
                 {currentEvaluation.content}
               </ReactMarkdown>
               <div className="sticky bottom-0 bg-white pt-3 mt-6 flex gap-2 border-t">
-                <Button variant="ghost" size="icon" onClick={copyEvaluation} aria-label="Copy Evaluation">
+                <Button variant="ghost" size="icon" onClick={copyEvaluation} aria-label="Copy Feedback">
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={downloadEvaluation} aria-label="Download Evaluation">
+                <Button variant="ghost" size="icon" onClick={downloadEvaluation} aria-label="Download Feedback">
                   <Download className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">No evaluation generated yet.</div>
+            <div className="text-sm text-muted-foreground">No feedback generated yet.</div>
           )}
         </div>
       </div>

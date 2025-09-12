@@ -154,11 +154,11 @@ export function EvaluationsListClient({ initial }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Teacher Evaluations</h1>
-          <p className="text-muted-foreground">View and manage AI-powered teacher evaluations.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Teacher Feedback</h1>
+          <p className="text-muted-foreground">View and manage AI-powered teacher feedback.</p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/evaluations/new">New Evaluation</Link>
+          <Link href="/dashboard/evaluations/new">New Feedback</Link>
         </Button>
       </div>
 
@@ -167,7 +167,7 @@ export function EvaluationsListClient({ initial }: Props) {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Input placeholder="Search evaluations..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+                <Input placeholder="Search feedback..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
                 <Award className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
             </div>
@@ -294,9 +294,9 @@ export function EvaluationsListClient({ initial }: Props) {
                 </CardContent>
                 <div className="mt-auto flex items-center justify-between px-6 pb-5">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/evaluations/chat?teacher=${evaluation.teacher.id}&type=${evaluation.type}`}>
+                    <Link href={`/dashboard/evaluations/${evaluation.id}`}>
                       <MessageSquare className="mr-2 h-4 w-4" />
-                      View Chat
+                      View Details
                     </Link>
                   </Button>
                   <div className="flex gap-2">
@@ -383,7 +383,7 @@ export function EvaluationsListClient({ initial }: Props) {
             <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
               <Award className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No evaluations found</h3>
+            <h3 className="text-lg font-semibold mb-2">No feedback found</h3>
             <p className="text-muted-foreground mb-4">Try adjusting your search or filters.</p>
             <div className="flex gap-2 justify-center">
               <Button variant="outline" onClick={() => { setSearchTerm(''); setSelectedType('all'); setSelectedStatus('all') }}>Clear filters</Button>

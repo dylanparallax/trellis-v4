@@ -4,6 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Calendar, ArrowLeft, Award } from 'lucide-react'
 import EvaluationDetailClient from '@/components/evaluations/EvaluationDetailClient'
+import dynamic from 'next/dynamic'
+import remarkGfm from 'remark-gfm'
+
+const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
 
 export const dynamic = 'force-dynamic'
 
@@ -35,7 +39,7 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
       <div className="p-6">
         <Button asChild variant="ghost">
           <Link href="/dashboard/evaluations" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> Back to Evaluations
+            <ArrowLeft className="h-4 w-4" /> Back to Feedback
           </Link>
         </Button>
         <p className="mt-4 text-muted-foreground">Evaluation not found.</p>
@@ -44,6 +48,9 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
   }
 
   const dateStr = new Date(evaluation.submittedAt || evaluation.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const markdown: string | null = evaluation?.content && typeof evaluation.content === 'object' && 'markdown' in evaluation.content
+    ? (evaluation.content as { markdown?: string }).markdown ?? null
+    : null
 
   return (
     <div className="space-y-6">
@@ -57,7 +64,7 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Evaluation Details</CardTitle>
+          <CardTitle>Feedback Details</CardTitle>
           <CardDescription>{evaluation.teacher.name} • {evaluation.teacher.subject} • Grade {evaluation.teacher.gradeLevel}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -73,6 +80,16 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
             </div>
           </div>
 
+          {/* Generated Feedback Content */}
+          {markdown ? (
+            <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none prose-p:leading-relaxed prose-p:mb-5 prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6 prose-li:my-1">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">No generated feedback content.</div>
+          )}
+
+          {/* Editable metadata (type/status/summary/recs/next) */}
           <EvaluationDetailClient evaluation={evaluation} />
         </CardContent>
       </Card>
