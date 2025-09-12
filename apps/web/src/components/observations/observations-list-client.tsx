@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Calendar, Clock, Binoculars, User, Edit, Trash2 } from 'lucide-react'
+import { Calendar, Clock, Binoculars, User, Edit, Trash2, Upload } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export interface ObservationItem {
@@ -63,6 +63,10 @@ export function ObservationsListClient({ initial }: Props) {
   const [editNotes, setEditNotes] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
+  const [importResult, setImportResult] = useState<null | { createdCount: number; errors?: Array<{ row: number; error: string }> }>(null)
+  const [selectedFileName, setSelectedFileName] = useState('')
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     // Merge server observations with local drafts from localStorage
@@ -245,9 +249,15 @@ export function ObservationsListClient({ initial }: Props) {
           <h1 className="text-3xl font-bold tracking-tight">Observations</h1>
           <p className="text-muted-foreground">View and manage classroom observations with AI-enhanced feedback.</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/observations/new">New Observation</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsImporting(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import CSV
+          </Button>
+          <Button asChild>
+            <Link href="/dashboard/observations/new">New Observation</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -466,6 +476,97 @@ export function ObservationsListClient({ initial }: Props) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Import Modal */}
+      {isImporting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-lg">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Import Observations from CSV</CardTitle>
+                  <CardDescription>Columns: teacherEmail (or teacherName), date, observationType, duration, focusAreas, rawNotes. Use semicolons for multiple focus areas.</CardDescription>
+                </div>
+                <button className="text-sm underline" onClick={() => { setIsImporting(false); setImportResult(null); setSelectedFileName('') }}>Close</button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    setSelectedFileName(file.name)
+                    const form = new FormData()
+                    form.append('file', file)
+                    setImportResult(null)
+                    try {
+                      const res = await fetch('/api/observations/bulk', { method: 'POST', body: form })
+                      const data = await res.json()
+                      if (!res.ok) {
+                        setImportResult({ createdCount: 0, errors: [{ row: 0, error: data?.error || 'Import failed' }] })
+                        return
+                      }
+                      setImportResult(data)
+                      // Refresh list
+                      const refreshed = await fetch('/api/observations', { cache: 'no-store' })
+                      if (refreshed.ok) {
+                        const json = await refreshed.json()
+                        setObservations(json.map((o: any) => ({ ...o, date: typeof o.date === 'string' ? o.date : new Date(o.date).toISOString() })))
+                      }
+                    } catch {
+                      setImportResult({ createdCount: 0, errors: [{ row: 0, error: 'Network error' }] })
+                    }
+                  }}
+                />
+                <Button variant="ghost" type="button" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Choose CSV
+                </Button>
+                {selectedFileName && (
+                  <span className="text-sm text-muted-foreground truncate max-w-[220px]" title={selectedFileName}>
+                    {selectedFileName}
+                  </span>
+                )}
+                <a
+                  href={`data:text/csv;charset=utf-8,${encodeURIComponent('teacherEmail,teacherName,date,observationType,duration,focusAreas,rawNotes\njane@example.com,Jane Doe,2025-09-01,FORMAL,45,Classroom Management;SEL,Observed whole-group lesson with strong routines.\n,,2025-09-05,INFORMAL,20,Technology,Informal check-in during centers; noted effective tablet use.')}`}
+                  download="observations-template.csv"
+                  className="text-sm underline"
+                >
+                  Download template
+                </a>
+              </div>
+              {importResult && (
+                <div className="mt-3 text-sm">
+                  <div className="flex items-center gap-3">
+                    <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">Created: {importResult.createdCount}</span>
+                    {importResult.errors && importResult.errors.length > 0 && (
+                      <span className="px-2 py-1 rounded bg-amber-50 text-amber-900 border border-amber-200">{importResult.errors.length} row(s) had issues</span>
+                    )}
+                  </div>
+                  {importResult.errors && importResult.errors.length > 0 && (
+                    <div className="mt-2 max-h-40 overflow-auto rounded border p-2 bg-amber-50/60 border-amber-200">
+                      {importResult.errors.slice(0, 50).map((e, i) => (
+                        <div key={i} className="text-amber-900">Row {e.row}: {e.error}</div>
+                      ))}
+                      {importResult.errors.length > 50 && (
+                        <div className="text-muted-foreground">…and {importResult.errors.length - 50} more</div>
+                      )}
+                    </div>
+                  )}
+                  {importResult.createdCount === 0 && importResult.errors && importResult.errors.length > 0 && (
+                    <div className="mt-2 text-rose-700">No rows were imported due to errors.</div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Delete Confirmation Modal */}
