@@ -65,6 +65,7 @@ function EvaluationChatContent() {
 
   const [teacher, setTeacher] = useState<ApiTeacher | null>(null)
   const [teacherError, setTeacherError] = useState<string | null>(null)
+  const hasInitializedRef = useRef(false)
 
   useEffect(() => {
     const run = async () => {
@@ -84,6 +85,12 @@ function EvaluationChatContent() {
   }, [teacherId])
 
   const createEvaluationVersion = useCallback((content: string, title: string, description: string): EvaluationVersion => {
+    // Avoid duplicate versions with identical content back-to-back
+    const last = evaluationVersions?.[evaluationVersions.length - 1]
+    if (last && last.content === content) {
+      setCurrentVersionId(last.id)
+      return last
+    }
     const newVersion: EvaluationVersion = {
       id: Date.now().toString(),
       version: (evaluationVersions?.length || 0) + 1,
@@ -153,11 +160,14 @@ function EvaluationChatContent() {
   }, [teacher, evaluationType, schoolYear, createEvaluationVersion])
 
   useEffect(() => {
-    if (teacher && messages.length === 0) {
-      // Generate initial evaluation
-      generateInitialEvaluation()
-    }
-  }, [teacher, messages.length, generateInitialEvaluation])
+    if (!teacher) return
+    if (hasInitializedRef.current) return
+    if (messages.length !== 0) return
+    if (evaluationVersions.length > 0) return
+    hasInitializedRef.current = true
+    // Generate initial evaluation once
+    generateInitialEvaluation()
+  }, [teacher, messages.length, evaluationVersions.length, generateInitialEvaluation])
 
   useEffect(() => {
     scrollToBottom()
