@@ -1,167 +1,152 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-// import { Textarea } from '@/components/ui/textarea'
-import { TagInput } from '@/components/ui/tag-input'
+import { headers } from 'next/headers'
 import Link from 'next/link'
-import { ArrowLeft, Upload as UploadIcon } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { MessageSquare, Binoculars, ArrowLeft } from 'lucide-react'
 
-type Teacher = {
-  id: string
-  name: string
-  email?: string | null
-  subject?: string | null
-  gradeLevel?: string | null
-  strengths: string[]
-  growthAreas: string[]
-  currentGoals: Array<{ goal: string; progress: number }>
-  photoUrl?: string | null
+async function getBaseUrl(): Promise<string> {
+  const env = process.env.NEXT_PUBLIC_BASE_URL
+  if (env && env.trim().length > 0) return env.replace(/\/$/, '')
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000'
+  const proto = h.get('x-forwarded-proto') ?? 'http'
+  return `${proto}://${host}`
 }
 
-export default function EditTeacherPage() {
-  const router = useRouter()
-  const params = useParams<{ id: string }>()
-  const teacherId = params.id
-  const [teacher, setTeacher] = useState<Teacher | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
+async function getTeacherData(id: string) {
+  const base = await getBaseUrl()
+  const h = await headers()
+  const cookie = h.get('cookie') ?? ''
+  const res = await fetch(`${base}/api/teachers/${id}`, { cache: 'no-store', headers: { cookie } })
+  if (!res.ok) return null
+  return res.json()
+}
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(`/api/teachers/${teacherId}`, { cache: 'no-store' })
-        if (!res.ok) throw new Error('Failed to load teacher')
-        const t = await res.json()
-        setTeacher(t)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load teacher')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    if (teacherId) void load()
-  }, [teacherId])
+type PageParams = { params: Promise<{ id: string }> }
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    let photoUrl: string | undefined
-    let storagePath: string | undefined
-    if (photoFile) {
-      try {
-        const form = new FormData()
-        form.append('file', photoFile)
-        const up = await fetch('/api/upload', { method: 'POST', body: form })
-        if (up.ok) {
-          const data = await up.json()
-          photoUrl = data.url
-          storagePath = data.path
-        }
-      } catch {}
-    }
-    try {
-      const res = await fetch(`/api/teachers/${teacherId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: teacher?.name,
-          email: teacher?.email || '',
-          subject: teacher?.subject || '',
-          gradeLevel: teacher?.gradeLevel || '',
-          strengths: teacher?.strengths,
-          growthAreas: teacher?.growthAreas,
-          currentGoals: teacher?.currentGoals,
-          photoUrl: storagePath || photoUrl,
-        }),
-      })
-      if (!res.ok) throw new Error('Failed to save teacher')
-      router.push('/dashboard/teachers')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save teacher')
-    }
+const strengthColorClasses = [
+  'bg-blue-100 text-blue-700 border-blue-200',
+  'bg-emerald-100 text-emerald-700 border-emerald-200',
+  'bg-amber-100 text-amber-800 border-amber-200',
+  'bg-purple-100 text-purple-700 border-purple-200',
+  'bg-rose-100 text-rose-700 border-rose-200',
+  'bg-cyan-100 text-cyan-700 border-cyan-200',
+  'bg-indigo-100 text-indigo-700 border-indigo-200',
+  'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200',
+  'bg-teal-100 text-teal-700 border-teal-200',
+  'bg-sky-100 text-sky-700 border-sky-200',
+]
+
+function getStrengthClasses(label: string) {
+  let hash = 0
+  for (let i = 0; i < label.length; i++) hash = (hash * 31 + label.charCodeAt(i)) >>> 0
+  const idx = hash % strengthColorClasses.length
+  return strengthColorClasses[idx]
+}
+
+export default async function TeacherDashboardPage({ params }: PageParams) {
+  const { id } = await params
+  const teacher = await getTeacherData(id)
+  if (!teacher) {
+    return (
+      <div className="p-6">
+        <Button asChild variant="ghost">
+          <Link href="/dashboard/teachers" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> Back to Teachers
+          </Link>
+        </Button>
+        <p className="mt-4 text-muted-foreground">Teacher not found.</p>
+      </div>
+    )
   }
 
-  if (isLoading) return <div className="p-6">Loading…</div>
-  if (!teacher) return <div className="p-6">{error || 'Not found'}</div>
+  const observations = Array.isArray(teacher.observations) ? teacher.observations : []
+  const evaluations = Array.isArray(teacher.evaluations) ? teacher.evaluations : []
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" asChild>
+        <Button asChild variant="ghost">
           <Link href="/dashboard/teachers" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Teachers
+            <ArrowLeft className="h-4 w-4" /> Back to Teachers
           </Link>
+        </Button>
+        <Button asChild>
+          <Link href={`/dashboard/teachers/${id}/edit`}>Edit Teacher</Link>
         </Button>
       </div>
 
-      <h1 className="text-3xl font-bold tracking-tight">Edit Teacher</h1>
-
       <Card>
         <CardHeader>
-          <CardTitle>Teacher Details</CardTitle>
+          <CardTitle>{teacher.name}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSave} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <Input value={teacher.name} onChange={(e) => setTeacher({ ...teacher, name: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <Input type="email" value={teacher.email ?? ''} onChange={(e) => setTeacher({ ...teacher, email: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Subject</label>
-                <Input value={teacher.subject ?? ''} onChange={(e) => setTeacher({ ...teacher, subject: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Grade Level</label>
-                <Input value={teacher.gradeLevel ?? ''} onChange={(e) => setTeacher({ ...teacher, gradeLevel: e.target.value })} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <UploadIcon className="h-4 w-4" /> New Photo (optional)
-                </label>
-                <input type="file" accept="image/*" className="mt-1" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} />
-                {teacher.photoUrl ? (
-                  <p className="text-xs text-muted-foreground mt-1 truncate">Current: {teacher.photoUrl}</p>
-                ) : null}
+        <CardContent className="space-y-4">
+          <div className="text-sm text-muted-foreground">{teacher.subject || '—'} • Grade {teacher.gradeLevel || '—'}</div>
+          {teacher.email && <div className="text-sm">{teacher.email}</div>}
+          {teacher.strengths?.length ? (
+            <div>
+              <h4 className="text-sm font-medium mb-1">Strengths</h4>
+              <div className="flex flex-wrap gap-1">
+                {teacher.strengths.map((s: string, i: number) => (
+                  <Badge key={i} className={`text-xs border ${getStrengthClasses(s)}`}>{s}</Badge>
+                ))}
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Strengths</label>
-                <div className="mt-1">
-                  <TagInput value={teacher.strengths} onChange={(next) => setTeacher({ ...teacher, strengths: next })} placeholder="Type and press Enter…" />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Growth Areas</label>
-                <div className="mt-1">
-                  <TagInput value={teacher.growthAreas} onChange={(next) => setTeacher({ ...teacher, growthAreas: next })} placeholder="Type and press Enter…" />
-                </div>
+          ) : null}
+          {teacher.growthAreas?.length ? (
+            <div>
+              <h4 className="text-sm font-medium mb-1">Growth Areas</h4>
+              <div className="flex flex-wrap gap-1">
+                {teacher.growthAreas.map((g: string, i: number) => (
+                  <Badge key={i} className={`text-xs border ${getStrengthClasses(g)}`}>{g}</Badge>
+                ))}
               </div>
             </div>
-
-            {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>}
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" asChild>
-                <Link href="/dashboard/teachers">Cancel</Link>
-              </Button>
-              <Button type="submit">Save Changes</Button>
-            </div>
-          </form>
+          ) : null}
         </CardContent>
       </Card>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><Binoculars className="h-4 w-4" /> Observations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {observations.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No observations.</div>
+            ) : (
+              <ul className="text-sm space-y-2">
+                {observations.slice(0, 10).map((o: { id: string; date: string; type: string }) => (
+                  <li key={o.id} className="flex items-center justify-between">
+                    <span>{new Date(o.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <Link className="underline" href={`/dashboard/observations/${o.id}`}>View</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><MessageSquare className="h-4 w-4" /> Feedback</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {evaluations.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No feedback.</div>
+            ) : (
+              <ul className="text-sm space-y-2">
+                {evaluations.slice(0, 10).map((e: { id: string; createdAt: string }) => (
+                  <li key={e.id} className="flex items-center justify-between">
+                    <span>{new Date(e.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <Link className="underline" href={`/dashboard/evaluations/${e.id}`}>View</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

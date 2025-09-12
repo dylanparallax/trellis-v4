@@ -15,7 +15,7 @@ export default async function TeachersPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <StatCard title="Total Teachers" value="—" icon={<Apple className="h-4 w-4 text-muted-foreground" />} subtitle="No data" />
           <StatCard title="Active Teachers (30d)" value="—" icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} subtitle="No data" />
-          <StatCard title="Avg Performance" value="—" icon={<Target className="h-4 w-4 text-muted-foreground" />} subtitle="No evaluations" />
+          <StatCard title="Avg Performance" value="—" icon={<Target className="h-4 w-4 text-muted-foreground" />} subtitle="No feedback" />
           <StatCard title="Observations (month)" value="—" icon={<Plus className="h-4 w-4 text-muted-foreground" />} subtitle="No data" />
         </div>
         <TeacherList />
@@ -65,7 +65,7 @@ export default async function TeachersPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard title="Total Teachers" value={String(totalTeachers)} icon={<Apple className="h-4 w-4 text-muted-foreground" />} subtitle={totalTeachers === 0 ? 'No teachers yet' : undefined} />
         <StatCard title="Active Teachers (30d)" value={String(recentObservationTeachers || 0)} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} subtitle={recentObservationTeachers === 0 ? 'No recent activity' : undefined} />
-        <StatCard title="Avg Performance" value={avgPerformance} icon={<Target className="h-4 w-4 text-muted-foreground" />} subtitle={avgPerformance === '—' ? 'No evaluations yet' : undefined} />
+        <StatCard title="Avg Performance" value={avgPerformance} icon={<Target className="h-4 w-4 text-muted-foreground" />} subtitle={avgPerformance === '—' ? 'No feedback yet' : undefined} />
         <StatCard title="Observations (month)" value={String(observationsThisMonth || 0)} icon={<Plus className="h-4 w-4 text-muted-foreground" />} subtitle={observationsThisMonth === 0 ? 'No observations this month' : undefined} />
       </div>
 

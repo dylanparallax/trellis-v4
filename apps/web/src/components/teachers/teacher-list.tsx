@@ -147,17 +147,17 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
 
   const getEvaluationStatus = (teacher: Teacher) => {
     const recentEvaluation = teacher.evaluations[0]
-    if (!recentEvaluation) return 'No evaluations'
+    if (!recentEvaluation) return 'No feedback'
     
     switch (recentEvaluation.status) {
       case 'SUBMITTED':
-        return 'Evaluation submitted'
+        return 'Feedback submitted'
       case 'DRAFT':
-        return 'Draft evaluation'
+        return 'Draft feedback'
       case 'ACKNOWLEDGED':
-        return 'Evaluation acknowledged'
+        return 'Feedback acknowledged'
       default:
-        return 'Evaluation pending'
+        return 'Feedback pending'
     }
   }
 
@@ -427,7 +427,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                   <td className="px-3 py-2">{teacher.subject || '—'} • Grade {teacher.gradeLevel || '—'}</td>
                   <td className="px-3 py-2">{teacher.email || '—'}</td>
                   <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 max-h-6 overflow-hidden">
                       {teacher.strengths.slice(0, 3).map((s, i) => (
                         <Badge key={`str-${i}`} className={`text-xs border ${getStrengthClasses(s)}`}>{s}</Badge>
                       ))}
@@ -437,7 +437,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                     </div>
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1 max-h-6 overflow-hidden">
                       {teacher.growthAreas.slice(0, 3).map((g, i) => (
                         <Badge key={`gro-${i}`} className={`text-xs border ${getStrengthClasses(g)}`}>{g}</Badge>
                       ))}
