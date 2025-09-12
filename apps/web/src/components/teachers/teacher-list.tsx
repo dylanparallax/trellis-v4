@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,8 @@ import {
   Mail, 
   Plus,
   Search,
-  MoreHorizontal
+  MoreHorizontal,
+  Upload
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -40,6 +41,10 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
   const [selectedGrade, setSelectedGrade] = useState('all')
   const [selectedTag, setSelectedTag] = useState<string>('')
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
+  const [isImporting, setIsImporting] = useState(false)
+  const [importResult, setImportResult] = useState<null | { createdCount: number; updatedCount: number; errors?: Array<{ row: number; error: string }> }>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [selectedFileName, setSelectedFileName] = useState<string>('')
 
   // Fetch teachers from API
   useEffect(() => {
@@ -177,19 +182,24 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
             {filteredTeachers.length} of {teachers.length} teachers
           </p>
         </div>
-        {onAddTeacher ? (
-          <Button onClick={onAddTeacher}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Teacher
-          </Button>
-        ) : (
-          <Button asChild>
-            <Link href="/dashboard/teachers/new">
+        <div className="flex items-center gap-2">
+          {onAddTeacher ? (
+            <Button onClick={onAddTeacher}>
               <Plus className="mr-2 h-4 w-4" />
               Add Teacher
-            </Link>
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link href="/dashboard/teachers/new">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Teacher
+              </Link>
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => setIsImporting(true)} disabled={isImporting}>
+            Import CSV
           </Button>
-        )}
+        </div>
       </div>
 
       {/* Filters */}
@@ -443,6 +453,94 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {/* Import modal (simple inline) */}
+      {isImporting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-lg border bg-background p-4 shadow-xl">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Import Teachers from CSV</h3>
+              <button className="text-sm underline" onClick={() => { setIsImporting(false); setImportResult(null) }}>Close</button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">Columns: name, email, subject, gradeLevel, strengths, growthAreas. Header row required. Use semicolons for multiple values, e.g., &quot;Classroom Management;Technology&quot;.</p>
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  setSelectedFileName(file.name)
+                  const form = new FormData()
+                  form.append('file', file)
+                  setImportResult(null)
+                  try {
+                    const res = await fetch('/api/teachers/bulk', { method: 'POST', body: form })
+                    const data = await res.json()
+                    if (!res.ok) {
+                      setImportResult({ createdCount: 0, updatedCount: 0, errors: [{ row: 0, error: data?.error || 'Import failed' }] })
+                      return
+                    }
+                    setImportResult(data)
+                    // Refresh list
+                    const refreshed = await fetch('/api/teachers')
+                    if (refreshed.ok) {
+                      const json = await refreshed.json()
+                      setTeachers(json)
+                      setFilteredTeachers(json)
+                    }
+                  } catch {
+                    setImportResult({ createdCount: 0, updatedCount: 0, errors: [{ row: 0, error: 'Network error' }] })
+                  }
+                }}
+              />
+              <Button variant="ghost" type="button" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="mr-2 h-4 w-4" />
+                Choose CSV
+              </Button>
+              {selectedFileName && (
+                <span className="text-sm text-muted-foreground truncate max-w-[220px]" title={selectedFileName}>
+                  {selectedFileName}
+                </span>
+              )}
+              <a
+                href={`data:text/csv;charset=utf-8,${encodeURIComponent('name,email,subject,gradeLevel,strengths,growthAreas\nJane Doe,jane@example.com,Math,6,Classroom Management;Differentiation,Technology;Assessment\nJohn Smith,john@example.com,Science,7,Collaboration,Behavior Management;SEL')}`}
+                download="teachers-template.csv"
+                className="text-sm underline"
+              >
+                Download template
+              </a>
+            </div>
+            {importResult && (
+              <div className="mt-3 text-sm">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">Created: {importResult.createdCount}</span>
+                  <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 border border-amber-200">Updated: {importResult.updatedCount}</span>
+                  {importResult.errors && importResult.errors.length > 0 && (
+                    <span className="px-2 py-1 rounded bg-amber-50 text-amber-900 border border-amber-200">
+                      {importResult.errors.length} row(s) had issues
+                    </span>
+                  )}
+                </div>
+                {importResult.errors && importResult.errors.length > 0 && (
+                  <div className="mt-2 max-h-40 overflow-auto rounded border p-2 bg-amber-50/60 border-amber-200">
+                    {importResult.errors.slice(0, 50).map((e, i) => (
+                      <div key={i} className="text-amber-900">Row {e.row}: {e.error}</div>
+                    ))}
+                    {importResult.errors.length > 50 && (
+                      <div className="text-muted-foreground">…and {importResult.errors.length - 50} more</div>
+                    )}
+                  </div>
+                )}
+                {importResult.createdCount === 0 && importResult.updatedCount === 0 && importResult.errors && importResult.errors.length > 0 && (
+                  <div className="mt-2 text-rose-700">No rows were imported due to errors.</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
