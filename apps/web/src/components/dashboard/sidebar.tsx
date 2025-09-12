@@ -12,6 +12,7 @@ import {
   Apple,
   Binoculars,
   Award,
+  BookOpen,
   User,
   LogOut,
   ChevronDown
@@ -31,6 +32,7 @@ export const navigation = [
   { name: 'Teachers', href: '/dashboard/teachers', icon: Apple },
   { name: 'Observations', href: '/dashboard/observations', icon: Binoculars },
   { name: 'Feedback', href: '/dashboard/evaluations', icon: Award },
+  { name: 'Guide', href: '/dashboard/guide', icon: BookOpen },
   // { name: 'Analytics', href: '/dashboard/analytics', icon: ChartSpline },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
 ]
