@@ -27,6 +27,7 @@
   "packageManager": "pnpm@10.14.0",
   "dependencies": {
     "@faker-js/faker": "^9.9.0",
+    "papaparse": "^5.5.3",
     "tsx": "^4.20.3",
     "zod": "^4.0.14"
   }
