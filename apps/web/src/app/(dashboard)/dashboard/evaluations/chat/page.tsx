@@ -17,6 +17,7 @@ import {
 import Image from 'next/image'
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
 import remarkGfm from 'remark-gfm'
+import { formatMarkdownForSpacing } from '@/lib/utils'
 
 
 interface ChatMessage {
@@ -543,7 +544,7 @@ function EvaluationChatContent() {
           {currentEvaluation ? (
             <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none flex-1 min-h-0 overflow-y-auto prose-p:leading-relaxed prose-p:mb-5 prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6 prose-li:my-1">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {currentEvaluation.content}
+                {formatMarkdownForSpacing(currentEvaluation.content)}
               </ReactMarkdown>
               <div className="sticky bottom-0 bg-white pt-3 mt-6 flex gap-2 border-t">
                 <Button variant="ghost" size="icon" onClick={copyEvaluation} aria-label="Copy Feedback">
