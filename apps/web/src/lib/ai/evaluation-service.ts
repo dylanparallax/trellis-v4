@@ -214,16 +214,21 @@ TEACHER CONTEXT:
 - Evaluation Type: ${context.evaluationType}
 
 INSTRUCTIONS:
-1. Understand what the user wants to change or add to the evaluation
-2. Provide an updated version of the evaluation that incorporates their feedback
-3. Keep the same professional structure and format
-4. Maintain all relevant information while making the requested changes
-5. Provide a brief message explaining what you've updated
-6. Use proper Markdown formatting with headers (##), bullets, emphasis, and paragraph spacing
-7. Never truncate content or use placeholder text like "[remaining sections as before]". Always return the full updated evaluation.
+1. First decide if the user's request REQUIRES changes to the evaluation text. If it is a question, clarification, acknowledgement, or small-talk, it does NOT require changes.
+2. If changes are required, provide a fully updated evaluation that incorporates the feedback while keeping professional structure and formatting.
+3. If changes are NOT required, reply with a brief message only and DO NOT modify the evaluation.
+4. Always use proper Markdown formatting with headings (##), bullets, and clear spacing when you include an evaluation.
+5. Never truncate content or use placeholder text.
 
-IMPORTANT: You must respond in exactly this format:
+IMPORTANT: Respond in EXACTLY ONE of the following formats.
 
+CASE A (no changes required):
+RESPONSE_TYPE: MESSAGE_ONLY
+MESSAGE:
+[Your concise message]
+
+CASE B (changes required):
+RESPONSE_TYPE: UPDATED
 UPDATED EVALUATION:
 [The complete updated evaluation with proper Markdown formatting]
 
@@ -236,10 +241,18 @@ Do not include any other text before or after these sections.`
   private parseChatResponse(response: string, currentEvaluation: string): { updatedEvaluation: string; message: string } {
     console.log('Parsing AI response:', response.substring(0, 200) + '...')
     
-    // Try to find the sections with more flexible matching
+    // Support explicit response type protocol
+    const responseTypeMatch = response.match(/RESPONSE_TYPE:\s*(UPDATED|MESSAGE_ONLY)/i)
     const evaluationMatch = response.match(/UPDATED EVALUATION:\s*([\s\S]*?)(?=MESSAGE:|$)/i)
     const messageMatch = response.match(/MESSAGE:\s*([\s\S]*?)$/i)
     
+    if (responseTypeMatch && responseTypeMatch[1].toUpperCase() === 'MESSAGE_ONLY' && messageMatch) {
+      return {
+        updatedEvaluation: currentEvaluation,
+        message: messageMatch[1].trim()
+      }
+    }
+
     if (evaluationMatch && messageMatch) {
       console.log('Successfully parsed structured response')
       return {
