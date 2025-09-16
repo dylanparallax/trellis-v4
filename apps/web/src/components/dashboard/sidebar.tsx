@@ -12,7 +12,6 @@ import {
   Apple,
   Binoculars,
   Award,
-  BookOpen,
   User,
   LogOut,
   ChevronDown
@@ -32,7 +31,7 @@ export const navigation = [
   { name: 'Teachers', href: '/dashboard/teachers', icon: Apple },
   { name: 'Observations', href: '/dashboard/observations', icon: Binoculars },
   { name: 'Feedback', href: '/dashboard/evaluations', icon: Award },
-  { name: 'Guide', href: '/dashboard/guide', icon: BookOpen },
+  // { name: 'Guide', href: '/dashboard/guide', icon: BookOpen }, // Temporarily hidden
   // { name: 'Analytics', href: '/dashboard/analytics', icon: ChartSpline },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
 ]
@@ -157,12 +156,12 @@ export function Sidebar() {
       <div className="flex items-center gap-3 p-4 border-b">
         <Image
           src="/trellis-light.svg"
-          alt="Trellis AI Logo"
+          alt="Trellis"
           width={32}
           height={32}
           className="h-8 w-auto"
+          priority
         />
-        
       </div>
       
       <nav className="flex-1 p-4 space-y-2">

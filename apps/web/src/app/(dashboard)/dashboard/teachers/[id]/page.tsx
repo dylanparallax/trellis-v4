@@ -73,7 +73,7 @@ export default async function TeacherDashboardPage({ params }: PageParams) {
           </Link>
         </Button>
         <Button asChild>
-          <Link href={`/dashboard/teachers/${id}/edit`}>Edit Teacher</Link>
+          <Link href={`/dashboard/teachers/${id}/edit`}>Edit</Link>
         </Button>
       </div>
 

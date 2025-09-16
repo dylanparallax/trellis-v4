@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, Menu, X } from 'lucide-react'
+import { Bell, Search, Menu, X, Loader2, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEffect, useState } from 'react'
@@ -15,6 +15,10 @@ type DashboardNavProps = {
 export function DashboardNav({ schoolName }: DashboardNavProps) {
   const [clientSchoolName, setClientSchoolName] = useState<string | undefined>(undefined)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [results, setResults] = useState<Array<{ id: string; type: 'observation' | 'evaluation' | 'teacher'; title: string; subtitle?: string; href: string }>>([])
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -54,7 +58,56 @@ export function DashboardNav({ schoolName }: DashboardNavProps) {
               type="search"
               placeholder="Search..."
               className="pl-10"
+              value={query}
+              onChange={async (e) => {
+                const q = e.target.value
+                setQuery(q)
+                if (q.trim().length < 2) {
+                  setResults([])
+                  setOpen(false)
+                  return
+                }
+                setIsLoading(true)
+                try {
+                  const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { cache: 'no-store' })
+                  if (res.ok) {
+                    const data = await res.json() as { results: typeof results }
+                    setResults(data.results)
+                    setOpen(true)
+                  } else {
+                    setResults([])
+                    setOpen(false)
+                  }
+                } finally {
+                  setIsLoading(false)
+                }
+              }}
+              onFocus={() => { if (results.length > 0) setOpen(true) }}
+              onBlur={() => setTimeout(() => setOpen(false), 150)}
             />
+            {open && (
+              <div className="absolute mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md overflow-hidden z-50">
+                <div className="max-h-72 overflow-auto">
+                  {isLoading ? (
+                    <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Searching…</div>
+                  ) : results.length === 0 ? (
+                    <div className="p-3 text-sm text-muted-foreground">No results</div>
+                  ) : (
+                    results.map((r) => (
+                      <Link key={`${r.type}:${r.id}`} href={r.href} className="block p-3 hover:bg-accent">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm font-medium">{r.title}</div>
+                            {r.subtitle ? <div className="text-xs text-muted-foreground line-clamp-1">{r.subtitle}</div> : null}
+                          </div>
+                          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                      </Link>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         

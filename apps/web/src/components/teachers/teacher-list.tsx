@@ -219,27 +219,37 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
             </div>
             
             <div className="flex flex-wrap gap-2 items-center">
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="px-3 py-2 border rounded-md bg-background"
-              >
-                <option value="all">All Subjects</option>
-                {getUniqueSubjects().map(subject => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
+              <div className="relative inline-flex items-center">
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className="px-3 py-2 pr-10 border rounded-md bg-background appearance-none"
+                >
+                  <option value="all">All Subjects</option>
+                  {getUniqueSubjects().map(subject => (
+                    <option key={subject} value={subject}>{subject}</option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-3 text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+              </div>
               
-              <select
-                value={selectedGrade}
-                onChange={(e) => setSelectedGrade(e.target.value)}
-                className="px-3 py-2 border rounded-md bg-background"
-              >
-                <option value="all">All Grades</option>
-                {getUniqueGrades().map(grade => (
-                  <option key={grade} value={grade}>Grade {grade}</option>
-                ))}
-              </select>
+              <div className="relative inline-flex items-center">
+                <select
+                  value={selectedGrade}
+                  onChange={(e) => setSelectedGrade(e.target.value)}
+                  className="px-3 py-2 pr-10 border rounded-md bg-background appearance-none"
+                >
+                  <option value="all">All Grades</option>
+                  {getUniqueGrades().map(grade => (
+                    <option key={grade} value={grade}>Grade {grade}</option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-3 text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+              </div>
               <div className="hidden md:flex rounded-md overflow-hidden border ml-auto">
                 <button
                   type="button"

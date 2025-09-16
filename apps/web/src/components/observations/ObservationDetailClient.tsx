@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useTransition, type Dispatch, type SetStateAction } from 'react'
+import { useState, useTransition, useEffect, type Dispatch, type SetStateAction } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent } from '@/components/ui/card'
-import { ChevronDown, ChevronUp, Save, Trash2, Edit3, X } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Trash2, Edit3, X, Sparkles, Save as SaveIcon } from 'lucide-react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { formatMarkdownForSpacing } from '@/lib/utils'
 
 type Observation = {
   id: string
@@ -35,10 +36,7 @@ export default function ObservationDetailClient({ observation }: Props) {
   const [observationType, setObservationType] = useState<Observation['observationType']>(observation.observationType)
   const [focusAreas, setFocusAreas] = useState<string[]>(observation.focusAreas || [])
 
-  const [showRaw, setShowRaw] = useState(false)
-  const [showEnhanced, setShowEnhanced] = useState(false)
-
-  const toggle = (setter: Dispatch<SetStateAction<boolean>>) => setter(prev => !prev)
+  // Side-by-side layout replaces collapsible sections
 
   const handleSave = () => {
     const payload: Record<string, unknown> = {
@@ -80,14 +78,27 @@ export default function ObservationDetailClient({ observation }: Props) {
         const data = await res.json() as { enhancedNotes?: string }
         if (typeof data.enhancedNotes === 'string') {
           setEnhancedNotes(data.enhancedNotes)
-          // auto-reveal enhanced panel if hidden
-          setShowEnhanced(true)
         }
       }
     })
   }
 
   const hasEnhancedChange = (enhancedNotes || '').trim() !== (originalEnhancedNotes || '').trim()
+
+  // Listen for header action events dispatched by header actions component
+  useEffect(() => {
+    const onEdit = () => setIsEditing(true)
+    const onSave = () => handleSave()
+    const onDelete = () => handleDelete()
+    window.addEventListener('observation-edit', onEdit)
+    window.addEventListener('observation-save', onSave)
+    window.addEventListener('observation-delete', onDelete)
+    return () => {
+      window.removeEventListener('observation-edit', onEdit)
+      window.removeEventListener('observation-save', onSave)
+      window.removeEventListener('observation-delete', onDelete)
+    }
+  }, [])
 
   const handleDelete = () => {
     startTransition(async () => {
@@ -96,61 +107,7 @@ export default function ObservationDetailClient({ observation }: Props) {
     })
   }
 
-  // Formatting helpers (mirrors evaluation page)
-  function formatMarkdownForSpacing(input: string): string {
-    const lines = input.split('\n')
-    const listItemRegex = /^(\s*[-*+]\s+|\s*\d+\.\s+)/
-    const headingRegex = /^(\s*#{1,6}\s+)/
-    const knownSections = new Set([
-      'Executive Summary',
-      'Summary',
-      'Strengths',
-      'Areas for Growth',
-      'Recommendations',
-      'Next Steps',
-      'Instructional Clarity and Structure',
-      'Student Engagement and Classroom Culture',
-      'Content Knowledge and Artistic Expertise',
-      'Assessment and Feedback Culture',
-      'Differentiated Learning Opportunities',
-      'Learning Objectives',
-      'Teaching Strategies',
-      'Key Evidence',
-    ])
-    const output: string[] = []
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]
-      const isEmpty = line.trim().length === 0
-      const isList = listItemRegex.test(line)
-      const isHeading = headingRegex.test(line)
-      const trimmed = line.trim()
-      const looksLikeHeading =
-        !isHeading && !isList && !isEmpty &&
-        (
-          knownSections.has(trimmed.replace(/:$/, '')) ||
-          /^(?:[A-Z][A-Za-z]+\s+){1,6}[A-Za-z]+:?$/.test(trimmed) && trimmed.length <= 80
-        )
-      if (looksLikeHeading) {
-        const title = trimmed.replace(/:$/, '')
-        if (output.length > 0 && output[output.length - 1].trim().length > 0) output.push('')
-        output.push(`## ${title}`)
-        output.push('')
-        continue
-      } else {
-        output.push(line)
-      }
-      if (!isEmpty && !isList && !isHeading) {
-        const next = lines[i + 1] ?? ''
-        const nextIsEmpty = next.trim().length === 0
-        const nextIsList = listItemRegex.test(next)
-        const nextIsHeading = headingRegex.test(next)
-        if (!nextIsEmpty && !nextIsList && !nextIsHeading) {
-          output.push('')
-        }
-      }
-    }
-    return output.join('\n')
-  }
+  // Use shared markdown spacing formatter
 
   const mdComponents: Components = {
     h1: (props) => (<h1 className="font-plex-mono text-3xl md:text-4xl font-semibold tracking-tight" {...props} />),
@@ -172,35 +129,6 @@ export default function ObservationDetailClient({ observation }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 justify-end">
-        {isEditing ? (
-          <>
-            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
-              <X className="h-4 w-4 mr-2" /> Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={isSubmitting || !rawNotes.trim()}>
-              <Save className="h-4 w-4 mr-2" /> Save
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="outline" onClick={() => setIsEditing(true)}>
-              <Edit3 className="h-4 w-4 mr-2" /> Edit
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
-            </Button>
-            <Button onClick={enhanceWithAI} disabled={isSubmitting} variant="ai">
-              Enhance Notes with AI
-            </Button>
-            {hasEnhancedChange && (
-              <Button onClick={handleSave} disabled={isSubmitting}>
-                <Save className="h-4 w-4 mr-2" /> Save
-              </Button>
-            )}
-          </>
-        )}
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
@@ -250,53 +178,50 @@ export default function ObservationDetailClient({ observation }: Props) {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <button
-            type="button"
-            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/60"
-            onClick={() => toggle(setShowRaw)}
-          >
-            <span className="text-sm font-medium">Raw Notes</span>
-            {showRaw ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </button>
-          {showRaw && (
-            <div className="p-4 pt-0">
-              {isEditing ? (
-                <Textarea value={rawNotes} onChange={(e) => setRawNotes(e.target.value)} className="min-h-[180px]" />
-              ) : (
-                <pre className="whitespace-pre-wrap text-sm bg-muted p-3 rounded-md">{rawNotes}</pre>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Raw Notes</CardTitle>
+            <CardDescription>Edit on the left; enhance or format on the right</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isEditing ? (
+              <Textarea value={rawNotes} onChange={(e) => setRawNotes(e.target.value)} className="min-h-[240px]" />
+            ) : (
+              <pre className="whitespace-pre-wrap text-sm bg-muted p-3 rounded-md">{rawNotes}</pre>
+            )}
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardContent className="p-0">
-          <button
-            type="button"
-            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/60"
-            onClick={() => toggle(setShowEnhanced)}
-          >
-            <span className="text-sm font-medium">AI Enhanced Notes</span>
-            {showEnhanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </button>
-          {showEnhanced && (
-            <div className="p-4 pt-0">
-              {isEditing ? (
-                <Textarea value={enhancedNotes} onChange={(e) => setEnhancedNotes(e.target.value)} className="min-h-[160px]" />
-              ) : (
-                <div className="prose prose-neutral dark:prose-invert max-w-none md:prose-base lg:prose-lg leading-relaxed [--tw-prose-body:theme(colors.foreground/0.9)] prose-headings:mt-6 prose-headings:mb-4 prose-headings:font-semibold prose-p:my-4 prose-li:my-1.5">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                    {formatMarkdownForSpacing(enhancedNotes || '')}
-                  </ReactMarkdown>
-                </div>
-              )}
+        <Card>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm">AI Enhanced Notes</CardTitle>
+              <CardDescription>Readable, shareable summary</CardDescription>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            {!enhancedNotes && !isEditing && (
+              <Button size="sm" variant="ai" onClick={enhanceWithAI}>
+                <Sparkles className="h-4 w-4 mr-1" /> Enhance
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            {isEditing ? (
+              <Textarea value={enhancedNotes} onChange={(e) => setEnhancedNotes(e.target.value)} className="min-h-[240px]" />
+            ) : enhancedNotes ? (
+              <div className="prose prose-neutral dark:prose-invert max-w-none md:prose-base lg:prose-lg leading-relaxed [--tw-prose-body:theme(colors.foreground/0.9)] prose-headings:mt-6 prose-headings:mb-4 prose-headings:font-semibold prose-p:my-4 prose-li:my-1.5">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                  {formatMarkdownForSpacing(enhancedNotes || '')}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No AI enhanced notes yet. Click Enhance to generate a summary from raw notes.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

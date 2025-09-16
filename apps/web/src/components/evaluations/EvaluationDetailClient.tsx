@@ -83,7 +83,7 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
           <select
             value={type}
             onChange={(e) => setType(e.target.value as Evaluation['type'])}
-            className="w-full mt-1 p-2 pr-8 border rounded-md bg-background"
+            className="w-full mt-1 p-2 pr-10 border rounded-md bg-background appearance-none"
             disabled={!isEditing}
           >
             <option value="FORMATIVE">Formative</option>
@@ -97,7 +97,7 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as Evaluation['status'])}
-            className="w-full mt-1 p-2 pr-8 border rounded-md bg-background"
+            className="w-full mt-1 p-2 pr-10 border rounded-md bg-background appearance-none"
             disabled={!isEditing}
           >
             <option value="DRAFT">Draft</option>

@@ -39,7 +39,8 @@ const updateSchema = z.object({
   duration: z.number().int().min(1).optional(),
   observationType: z.enum(['FORMAL', 'INFORMAL', 'WALKTHROUGH']).optional(),
   focusAreas: z.array(z.string()).optional(),
-  date: z.string().datetime().optional(),
+  // Accept either full ISO datetime or simple YYYY-MM-DD date strings
+  date: z.string().optional(),
 })
 
 export async function PATCH(
@@ -63,6 +64,19 @@ export async function PATCH(
     const body = await req.json()
     const parsed = updateSchema.parse(body)
 
+    // Normalize provided date, accepting both ISO and YYYY-MM-DD (match create API behavior)
+    const dateInput = parsed.date
+    let normalizedDate: Date | undefined
+    if (typeof dateInput === 'string') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+        // Interpret as start of day in UTC to avoid TZ drift
+        normalizedDate = new Date(`${dateInput}T00:00:00.000Z`)
+      } else {
+        const d = new Date(dateInput)
+        normalizedDate = isNaN(d.getTime()) ? undefined : d
+      }
+    }
+
     const updated = await prisma.observation.update({
       where: { id },
       data: {
@@ -71,7 +85,7 @@ export async function PATCH(
         duration: parsed.duration ?? undefined,
         observationType: parsed.observationType ?? undefined,
         focusAreas: parsed.focusAreas ?? undefined,
-        date: parsed.date ? new Date(parsed.date) : undefined,
+        date: normalizedDate ?? undefined,
       },
       include: {
         teacher: { select: { id: true, name: true, subject: true, gradeLevel: true } },

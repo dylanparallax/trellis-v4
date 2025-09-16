@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sparkles, Upload, Award, CheckCircle, AlertCircle } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import remarkGfm from 'remark-gfm'
+import { formatMarkdownForSpacing } from '@/lib/utils'
 
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
 
@@ -268,7 +269,7 @@ Excellent progress on the classroom management goal from last month's observatio
               <select
                 value={selectedTeacherId}
                 onChange={(e) => setSelectedTeacherId(e.target.value)}
-                className="w-full mt-1 p-2 pr-8 border rounded-md bg-background"
+                className="w-full mt-1 p-2 pr-10 border rounded-md bg-background appearance-none"
                 required
               >
                 <option value="">Select a teacher...</option>
@@ -285,7 +286,7 @@ Excellent progress on the classroom management goal from last month's observatio
               <select
                 value={observationType}
                 onChange={(e) => setObservationType(e.target.value)}
-                className="w-full mt-1 p-2 pr-8 border rounded-md bg-background"
+                className="w-full mt-1 p-2 pr-10 border rounded-md bg-background appearance-none"
               >
                 <option value="FORMAL">Formal</option>
                 <option value="INFORMAL">Informal</option>
@@ -384,7 +385,7 @@ Excellent progress on the classroom management goal from last month's observatio
           <CardContent>
             <div className="prose prose-sm md:prose-base max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {enhancedNotes}
+                {formatMarkdownForSpacing(enhancedNotes)}
               </ReactMarkdown>
             </div>
           </CardContent>

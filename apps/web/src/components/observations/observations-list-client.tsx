@@ -133,7 +133,15 @@ export function ObservationsListClient({ initial }: Props) {
         const teacherName = (o.teacher?.name ?? '').toLowerCase()
         const teacherSubject = (o.teacher?.subject ?? '').toLowerCase()
         const notes = (o.rawNotes ?? '').toLowerCase()
-        return teacherName.includes(term) || teacherSubject.includes(term) || notes.includes(term)
+        const enhanced = (o.enhancedNotes ?? '').toLowerCase()
+        const observerName = (o.observer?.name ?? '').toLowerCase()
+        return (
+          teacherName.includes(term) ||
+          teacherSubject.includes(term) ||
+          observerName.includes(term) ||
+          notes.includes(term) ||
+          enhanced.includes(term)
+        )
       })
     }
     if (selectedType !== 'all') {
@@ -149,10 +157,7 @@ export function ObservationsListClient({ initial }: Props) {
   }, [observations, searchTerm, selectedType, selectedObserver, selectedTeacher])
 
   const formatDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  const getSummary = (o: ObservationItem) => {
-    if (o.enhancedNotes) return o.enhancedNotes.split('\n\n')[0].replace(/\*\*/g, '').slice(0, 150) + '...'
-    return o.rawNotes.slice(0, 150) + '...'
-  }
+  // Removed text preview in grid view; keep only focus area chips
 
   const handleEdit = (observation: ObservationItem) => {
     setEditingId(observation.id)
@@ -275,26 +280,42 @@ export function ObservationsListClient({ initial }: Props) {
               </div>
             </div>
             <div className="flex gap-2 items-center flex-wrap">
-              <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
-                <option value="all">All Types</option>
-                <option value="FORMAL">Formal</option>
-                <option value="INFORMAL">Informal</option>
-                <option value="WALKTHROUGH">Walkthrough</option>
-              </select>
-              <select value={selectedTeacher} onChange={(e) => setSelectedTeacher(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
-                <option value="all">All Teachers</option>
-                {[...new Map(observations.map(o => [o.teacher.id, o.teacher])).values()]
-                  .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
-                  .map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}</option>
+              <div className="relative inline-flex items-center">
+                <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="px-3 py-2 pr-10 border rounded-md bg-background appearance-none">
+                  <option value="all">All Types</option>
+                  <option value="FORMAL">Formal</option>
+                  <option value="INFORMAL">Informal</option>
+                  <option value="WALKTHROUGH">Walkthrough</option>
+                </select>
+                <span className="pointer-events-none absolute right-3 text-muted-foreground">
+                  {/* simple chevron svg to avoid importing */}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+              </div>
+              <div className="relative inline-flex items-center">
+                <select value={selectedTeacher} onChange={(e) => setSelectedTeacher(e.target.value)} className="px-3 py-2 pr-10 border rounded-md bg-background appearance-none">
+                  <option value="all">All Teachers</option>
+                  {[...new Map(observations.map(o => [o.teacher.id, o.teacher])).values()]
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+                    .map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                </select>
+                <span className="pointer-events-none absolute right-3 text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+              </div>
+              <div className="relative inline-flex items-center">
+                <select value={selectedObserver} onChange={(e) => setSelectedObserver(e.target.value)} className="px-3 py-2 pr-10 border rounded-md bg-background appearance-none">
+                  <option value="all">All Observers</option>
+                  {[...new Map(observations.map(o => [o.observer.id, o.observer])).values()].map((obs) => (
+                    <option key={obs.id} value={obs.id}>{obs.name}</option>
                   ))}
-              </select>
-              <select value={selectedObserver} onChange={(e) => setSelectedObserver(e.target.value)} className="px-3 py-2 border rounded-md bg-background">
-                <option value="all">All Observers</option>
-                {[...new Map(observations.map(o => [o.observer.id, o.observer])).values()].map((obs) => (
-                  <option key={obs.id} value={obs.id}>{obs.name}</option>
-                ))}
-              </select>
+                </select>
+                <span className="pointer-events-none absolute right-3 text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </span>
+              </div>
               <div className="hidden md:flex rounded-md overflow-hidden border">
                 <button
                   type="button"
@@ -388,18 +409,17 @@ export function ObservationsListClient({ initial }: Props) {
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <div className="text-sm mb-3">
-                        <p className="line-clamp-3 text-muted-foreground">{getSummary(observation)}</p>
-                      </div>
+                    (Array.isArray(observation.focusAreas) && observation.focusAreas.filter(a => typeof a === 'string' && a.trim() && a.trim() !== '[]').length > 0) ? (
                       <div className="flex flex-wrap gap-1 mb-3">
-                        {observation.focusAreas.map((area) => (
+                        {observation.focusAreas
+                          .filter((area) => typeof area === 'string' && area.trim() && area.trim() !== '[]')
+                          .map((area) => (
                           <span key={area} className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
                             {area}
                           </span>
                         ))}
                       </div>
-                    </>
+                    ) : null
                   )}
                 </CardContent>
                 <div className="mt-auto flex items-center justify-between px-6 pb-5">
@@ -409,14 +429,25 @@ export function ObservationsListClient({ initial }: Props) {
                       View Details
                     </Link>
                   </Button>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(observation)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
+                  <div className="flex gap-1.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(observation)}
+                      aria-label="Edit observation"
+                      title="Edit observation"
+                    >
+                      <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => setDeleteConfirmId(observation.id)}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive"
+                      onClick={() => setDeleteConfirmId(observation.id)}
+                      aria-label="Delete observation"
+                      title="Delete observation"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Calendar, Clock, ArrowLeft } from 'lucide-react'
 import ObservationDetailClient from '@/components/observations/ObservationDetailClient'
+import ObservationHeaderActions from '@/components/observations/ObservationHeaderActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,8 +58,13 @@ export default async function ObservationDetailPage({ params }: PageParams) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Observation Details</CardTitle>
-          <CardDescription>{observation.teacher.name} • {observation.teacher.subject} • Grade {observation.teacher.gradeLevel}</CardDescription>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>Observation Details</CardTitle>
+              <CardDescription>{observation.teacher.name} • {observation.teacher.subject} • Grade {observation.teacher.gradeLevel}</CardDescription>
+            </div>
+            <ObservationHeaderActions />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
