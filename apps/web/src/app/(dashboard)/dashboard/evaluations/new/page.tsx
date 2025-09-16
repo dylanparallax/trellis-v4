@@ -11,7 +11,7 @@ export default function NewEvaluationPage() {
   const router = useRouter()
   const [selectedTeacher, setSelectedTeacher] = useState('')
   const [evaluationType, setEvaluationType] = useState('FORMATIVE')
-  const [schoolYear, setSchoolYear] = useState('2024-2025')
+  const [schoolYear, setSchoolYear] = useState('2025-2026')
   const [searchQuery, setSearchQuery] = useState('')
   const [teachers, setTeachers] = useState<Array<{ id: string; name: string; subject?: string | null; gradeLevel?: string | null }>>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -184,8 +184,9 @@ export default function NewEvaluationPage() {
               <select
                 value={schoolYear}
                 onChange={(e) => setSchoolYear(e.target.value)}
-                className="w-full mt-1 p-2 pr-8 border rounded-md"
+                className="w-full mt-1 p-2 pr-10 border rounded-md appearance-none"
               >
+                <option value="2025-2026">2025-2026</option>
                 <option value="2024-2025">2024-2025</option>
                 <option value="2023-2024">2023-2024</option>
                 <option value="2022-2023">2022-2023</option>

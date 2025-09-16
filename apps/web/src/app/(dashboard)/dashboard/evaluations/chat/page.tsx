@@ -284,8 +284,13 @@ function EvaluationChatContent() {
 
   // artifact click is handled via version list onClick
 
-  if (teacherError) return <div>{teacherError}</div>
-  if (!teacher) return <div>Loading teacher…</div>
+  if (teacherError) return <div className="p-6 text-sm text-destructive">{teacherError}</div>
+  if (!teacher) return (
+    <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-2">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2" />
+      <div className="text-sm text-muted-foreground">Loading teacher…</div>
+    </div>
+  )
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -421,21 +426,9 @@ function EvaluationChatContent() {
           <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <Sparkles className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Start Your Feedback
-                </h3>
-                <p className="text-gray-500 max-w-md">
-                   I&apos;ll help you create comprehensive feedback for {teacher?.name || 'this teacher'}. 
-                   Let me know what you&apos;d like to focus on or ask me to generate an initial version.
-                </p>
-                <Button
-                  onClick={generateInitialEvaluation}
-                  disabled={isLoading || !teacher}
-                  className="mt-4"
-                >
-                  {isLoading ? 'Generating...' : 'Generate Initial Feedback'}
-                </Button>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">Generating feedback…</h3>
+                <p className="text-gray-500 max-w-md">Feedback can take up to one minute.</p>
               </div>
             ) : (
               messages.map((message) => (
