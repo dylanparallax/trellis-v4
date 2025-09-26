@@ -1,46 +1,28 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AnimatedTagline } from "@/components/marketing/animated-tagline"
-import { ArrowRight, CheckCircle, FileText, Shield, TrendingUp, Users, Wand2, Zap, Star, MessageSquare } from "lucide-react"
+import { ArrowRight, TrendingUp, Star, MessageSquare, Heart, Plus } from "lucide-react"
+import StakeholderToggle from "@/components/marketing/stakeholder-toggle"
+import RoiCalculator from "@/components/marketing/roi-calculator"
 
-export interface LandingPageProps {
-  onGetStarted?: () => void
-}
-
-export function LandingPage({ onGetStarted }: LandingPageProps) {
+export function LandingPage() {
   const features = [
     {
-      icon: <Wand2 className="w-6 h-6" />,
-      title: "AI-Powered Note Enhancement",
-      description: "Transform rough observation notes into professional, structured reports with intelligent AI processing.",
-    },
-    {
-      icon: <FileText className="w-6 h-6" />,
-      title: "Comprehensive Evaluations",
-      description: "Generate detailed 8-12 page evaluation reports that combine all available data and observations.",
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Teacher Management",
-      description: "Track teacher profiles, goals, and professional development history in one centralized system.",
-    },
-    {
       icon: <TrendingUp className="w-6 h-6" />,
-      title: "Growth Tracking",
-      description: "Monitor progress over time with institutional memory that maintains context across evaluations.",
+      title: "Perfect Recall",
+      description: "See every teacher’s growth story over time—not scattered notes across apps. Trellis links observations, goals, and evidence so context is never lost between cycles.",
     },
     {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Secure & Private",
-      description: "Enterprise-grade security ensuring your data stays protected.",
+      icon: <Heart className="w-6 h-6" />,
+      title: "Positive-First",
+      description: "Start with strengths to build trust and openness. Trellis elevates effective practices first, then frames areas for growth with specific, supportive language.",
     },
     {
-      icon: <Zap className="w-6 h-6" />,
-      title: "Lightning Fast",
-      description: "Built with modern Next.js for instant loading and smooth experience.",
+      icon: <Plus className="w-6 h-6" />,
+      title: "Framework-Aligned",
+      description: "Works out-of-the-box with Danielson, Marzano, CSTPs, UDL, or your local rubric. Inject district- or school-specific goals into every feedback report with one click.",
     },
   ]
 
@@ -50,26 +32,26 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
     {
       quote:
         "Trellis has revolutionized how we approach teacher evaluations. The AI enhancement feature alone saves us hours of work every week.",
-      author: "Dr. Sarah Johnson",
+      author: "Sarah Johnson",
       role: "Principal, Lincoln High School",
       rating: 5,
-      avatar: "👩‍🏫",
+      avatar: "/alex-suprun-mynsNaNwVDc-unsplash.jpg",
     },
     {
       quote:
         "The comprehensive evaluation reports are incredibly detailed and professional. Our teachers appreciate the growth-focused approach.",
-      author: "Michael Chen",
-      role: "Assistant Superintendent, Metro School District",
+      author: "Terrence Underwood",
+      role: " Superintendent, Brighton School District",
       rating: 5,
-      avatar: "👨‍💼",
+      avatar: "/dr-terrence-underwood-Io0eEAfSMjY-unsplash.jpg",
     },
     {
       quote:
-        "Finally, a platform that understands the complexity of teacher evaluation while making it simple and efficient.",
+        "Finally, a platform that understands the complexity of teacher evaluation while making it simple and efficient. I love Trellis so much.",
       author: "Lisa Rodriguez",
       role: "Director of Curriculum & Instruction",
       rating: 5,
-      avatar: "👩‍🎓",
+      avatar: "/thisisengineering-TXxiFuQLBKQ-unsplash.jpg",
     },
   ]
 
@@ -130,43 +112,46 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
             <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">80%</div>
-                <div className="text-sm text-muted-foreground">Time Saved</div>
+                <div className="text-3xl font-bold text-primary">10+</div>
+                <div className="text-sm text-muted-foreground">Hours saved per teacher</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">500+</div>
-                <div className="text-sm text-muted-foreground">Schools Using</div>
+                <div className="text-3xl font-bold text-primary">4x</div>
+                <div className="text-sm text-muted-foreground">More observations</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">10k+</div>
-                <div className="text-sm text-muted-foreground">Evaluations Generated</div>
+                <div className="text-3xl font-bold text-primary">1000+</div>
+                <div className="text-sm text-muted-foreground">Feedback Generated</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary">95%</div>
-                <div className="text-sm text-muted-foreground">Satisfaction Rate</div>
+                <div className="text-sm text-muted-foreground">5-star ratings</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20 sm:py-32 bg-muted/30">
+      
+
+      <section className="py-20 sm:py-32 bg-muted/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything you need for modern teacher evaluation</h2>
-            <p className="mt-4 text-lg text-muted-foreground">From AI-powered note enhancement to comprehensive evaluation reports, Trellis provides the complete solution.</p>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Trellis is a teacher-first feedback tool that saves time and empowers teacher growth</h2>
+            
+            
           </div>
           <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, index) => (
               <Card key={index} className="relative overflow-hidden border-0 shadow-lg">
                 <CardHeader>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg text-primary">
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-2xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <p className="text-muted-foreground text-lg">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -177,31 +162,31 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       <section className="py-20 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">How Trellis Works</h2>
-            <p className="mt-4 text-lg text-muted-foreground">Our AI-powered platform transforms the teacher evaluation process in three simple steps</p>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">How it works</h2>
+            <p className="mt-4 text-lg text-muted-foreground">Trellis transforms teacher feedback cycles in three simple steps</p>
           </div>
           <div className="mt-16 grid grid-cols-1 gap-12 lg:grid-cols-3">
             {[1, 2, 3].map((step) => (
               <div key={step} className="text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-6">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-2 border-primary text-primary mb-6">
                   <span className="text-2xl font-bold">{step}</span>
                 </div>
                 {step === 1 && (
                   <>
                     <h3 className="text-xl font-semibold mb-4">Record Observations</h3>
-                    <p className="text-muted-foreground">Jot down quick notes during classroom observations using our intuitive interface.</p>
+                    <p className="text-muted-foreground">Jot down notes during observations and upload to the app.</p>
                   </>
                 )}
                 {step === 2 && (
                   <>
                     <h3 className="text-xl font-semibold mb-4">AI Enhancement</h3>
-                    <p className="text-muted-foreground">Our AI transforms your rough notes into professional, structured observations.</p>
+                    <p className="text-muted-foreground">Our AI transforms rough notes into professional, structured observations.</p>
                   </>
                 )}
                 {step === 3 && (
                   <>
-                    <h3 className="text-xl font-semibold mb-4">Generate Evaluations</h3>
-                    <p className="text-muted-foreground">Create comprehensive 8-12 page evaluation reports combining all observations.</p>
+                    <h3 className="text-xl font-semibold mb-4">Generate Feedback</h3>
+                    <p className="text-muted-foreground">Create comprehensive feedback combining observations, goals, frameworks, and more.</p>
                   </>
                 )}
               </div>
@@ -210,10 +195,25 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
+      <section className="py-20 sm:py-32 bg-muted/20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Built for every stakeholder</h2>
+            <p className="mt-4 text-lg text-muted-foreground">Tailored benefits for teachers, leaders, and districts.</p>
+          </div>
+          <div className="mt-12">
+            <StakeholderToggle />
+          </div>
+          <div className="mt-12 max-w-3xl mx-auto px-6 sm:px-8 text-center">
+            <p className="text-primary text-3xl">Trellis closes the gap between what research says about feedback and <strong>what actually happens in schools.</strong></p>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 sm:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Trusted by educational leaders nationwide</h2>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Trusted by educational leaders</h2>
           </div>
           <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {testimonials.map((t, index) => (
@@ -226,7 +226,15 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                   </div>
                   <blockquote className="text-base italic mb-4">“{t.quote}”</blockquote>
                   <div className="flex items-center space-x-3">
-                    <div className="text-2xl">{t.avatar}</div>
+                    <Image
+                      src={t.avatar}
+                      alt={`${t.author} avatar`}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 rounded-full object-cover ring-1 ring-primary/20 ring-offset-2 ring-offset-background shadow-sm"
+                      loading="lazy"
+                      decoding="async"
+                    />
                     <div>
                       <div className="font-semibold">{t.author}</div>
                       <div className="text-sm text-muted-foreground">{t.role}</div>
@@ -239,91 +247,11 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
-      <section className="py-20 sm:py-32 bg-muted/30">
+      <section className="py-20 sm:py-32 bg-muted/80">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Simple, Transparent Pricing</h2>
-            <p className="mt-4 text-lg text-muted-foreground">Start free and scale as your needs grow</p>
-          </div>
-          <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-3 max-w-5xl mx-auto">
-            <Card className="relative p-8">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl">Starter</CardTitle>
-                <div className="text-4xl font-bold">Free</div>
-                <CardDescription>Perfect for small schools getting started</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
-                  {[
-                    "Up to 10 teachers",
-                    "AI note enhancement",
-                    "Basic evaluation reports",
-                    "Email support",
-                  ].map((item) => (
-                    <li key={item} className="flex items-center space-x-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button className="w-auto" variant="outline">Get Started Free</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="relative p-8 border-2 border-primary">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
-              </div>
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl">Professional</CardTitle>
-                <div className="text-4xl font-bold">
-                  $99<span className="text-lg text-muted-foreground">/month</span>
-                </div>
-                <CardDescription>For growing school districts</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
-                  {[
-                    "Unlimited teachers",
-                    "Advanced AI features",
-                    "Comprehensive reports",
-                    "Priority support",
-                    "Custom frameworks",
-                  ].map((item) => (
-                    <li key={item} className="flex items-center space-x-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button className="w-auto">Start Free Trial</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="relative p-8">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl">Enterprise</CardTitle>
-                <div className="text-4xl font-bold">Custom</div>
-                <CardDescription>For large districts and organizations</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
-                  {[
-                    "Everything in Professional",
-                    "Custom integrations",
-                    "Dedicated support",
-                    "On-premise options",
-                    "Custom training",
-                  ].map((item) => (
-                    <li key={item} className="flex items-center space-x-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button className="w-auto" variant="outline">Contact Sales</Button>
-              </CardContent>
-            </Card>
+            <h2 className="text-6xl font-bold tracking-tight sm:text-4xl">$100 per teacher per year</h2>
+            <p className="mt-4 text-lg text-muted-foreground">Simple, transparent pricing. All features included.</p>
           </div>
         </div>
       </section>
@@ -331,8 +259,20 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       <section className="py-20 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to transform your teacher evaluation process?</h2>
-            <p className="mt-4 text-lg text-muted-foreground">Join hundreds of schools already using Trellis.</p>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Trellis is an investment in your teachers and in your productivity</h2>
+            <p className="mt-4 text-lg text-muted-foreground">Calculate ROI for your school or district.</p>
+          </div>
+          <div className="mt-12">
+            <RoiCalculator />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 sm:py-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to transform your teacher feedback?</h2>
+            <p className="mt-4 text-lg text-muted-foreground">Join the innovative schools and districts already using Trellis.</p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button size="lg" asChild className="text-lg px-8 py-6">
                 <Link href="/login">
@@ -340,9 +280,11 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6">
-                <MessageSquare className="mr-2 h-5 w-5" />
-                Contact Sales
+              <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6">
+                <Link href="mailto:josh@gettrellis.app?subject=Trellis%20Sales%20Inquiry">
+                  <MessageSquare className="mr-2 h-5 w-5" />
+                  Contact Sales
+                </Link>
               </Button>
             </div>
           </div>
@@ -356,7 +298,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               <div className="flex items-center space-x-2">
                 <span className="font-semibold">Trellis</span>
               </div>
-              <p className="text-sm text-muted-foreground">AI-powered teacher evaluation platform.</p>
+              <p className="text-sm text-muted-foreground">AI-powered teacher feedback platform.</p>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
@@ -364,7 +306,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 <li><a href="#" className="hover:text-foreground">Features</a></li>
                 <li><a href="#" className="hover:text-foreground">Pricing</a></li>
                 <li><a href="#" className="hover:text-foreground">Demo</a></li>
-                <li><a href="#" className="hover:text-foreground">API</a></li>
+                
               </ul>
             </div>
             <div>
