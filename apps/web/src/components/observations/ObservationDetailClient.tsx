@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Trash2, Edit3, X, Sparkles, Save as SaveIcon } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { formatMarkdownForSpacing } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 
 type Observation = {
   id: string
@@ -27,18 +28,39 @@ type Props = {
 export default function ObservationDetailClient({ observation }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, startTransition] = useTransition()
+  const router = useRouter()
 
   const [rawNotes, setRawNotes] = useState(observation.rawNotes)
   const [enhancedNotes, setEnhancedNotes] = useState(observation.enhancedNotes || '')
-  const [originalEnhancedNotes, setOriginalEnhancedNotes] = useState(observation.enhancedNotes || '')
   const [duration, setDuration] = useState(observation.duration?.toString() || '')
   const [date, setDate] = useState(observation.date.slice(0, 10))
   const [observationType, setObservationType] = useState<Observation['observationType']>(observation.observationType)
   const [focusAreas, setFocusAreas] = useState<string[]>(observation.focusAreas || [])
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Side-by-side layout replaces collapsible sections
 
+  useEffect(() => {
+    setRawNotes(observation.rawNotes)
+    setEnhancedNotes(observation.enhancedNotes || '')
+    setDuration(observation.duration?.toString() || '')
+    setDate(observation.date.slice(0, 10))
+    setObservationType(observation.observationType)
+    setFocusAreas(observation.focusAreas || [])
+  }, [observation])
+
+  const resetForm = () => {
+    setRawNotes(observation.rawNotes)
+    setEnhancedNotes(observation.enhancedNotes || '')
+    setDuration(observation.duration?.toString() || '')
+    setDate(observation.date.slice(0, 10))
+    setObservationType(observation.observationType)
+    setFocusAreas(observation.focusAreas || [])
+  }
+
   const handleSave = () => {
+    if (!isEditing || isSubmitting) return
     const payload: Record<string, unknown> = {
       enhancedNotes: enhancedNotes || null,
       duration: duration ? parseInt(duration) : undefined,
@@ -48,16 +70,38 @@ export default function ObservationDetailClient({ observation }: Props) {
     }
     if (rawNotes.trim().length > 0) payload.rawNotes = rawNotes
 
+    setSaveStatus('idle')
+    setErrorMessage(null)
     startTransition(async () => {
-      const res = await fetch(`/api/observations/${observation.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (res.ok) {
-        await res.json()
+      try {
+        const res = await fetch(`/api/observations/${observation.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        if (!res.ok) {
+          throw new Error('Failed to save observation changes')
+        }
+        const updated = await res.json() as Observation
+        setRawNotes(updated.rawNotes)
+        setEnhancedNotes(updated.enhancedNotes || '')
+        setDuration(updated.duration?.toString() || '')
+        setDate(updated.date.slice(0, 10))
+        setObservationType(updated.observationType)
+        setFocusAreas(updated.focusAreas || [])
         setIsEditing(false)
-        setOriginalEnhancedNotes(enhancedNotes)
+        setSaveStatus('success')
+        router.refresh()
+        setTimeout(() => {
+          setSaveStatus('idle')
+        }, 3000)
+      } catch (error) {
+        console.error(error)
+        setSaveStatus('error')
+        setErrorMessage(error instanceof Error ? error.message : 'Something went wrong while saving')
+        setTimeout(() => {
+          setSaveStatus('idle')
+        }, 4000)
       }
     })
   }
@@ -82,8 +126,6 @@ export default function ObservationDetailClient({ observation }: Props) {
       }
     })
   }
-
-  const hasEnhancedChange = (enhancedNotes || '').trim() !== (originalEnhancedNotes || '').trim()
 
   // Listen for header action events dispatched by header actions component
   useEffect(() => {
@@ -129,6 +171,21 @@ export default function ObservationDetailClient({ observation }: Props) {
 
   return (
     <div className="space-y-4">
+
+      {saveStatus === 'success' && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-3 text-sm text-green-800">
+            Observation saved.
+          </CardContent>
+        </Card>
+      )}
+      {saveStatus === 'error' && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-3 text-sm text-red-700">
+            {errorMessage ?? 'Failed to save observation changes.'}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
@@ -222,8 +279,24 @@ export default function ObservationDetailClient({ observation }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {isEditing && (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              resetForm()
+              setIsEditing(false)
+            }}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
-
-

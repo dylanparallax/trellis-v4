@@ -12,10 +12,15 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [photoUrl, setPhotoUrl] = useState('')
-  const [password, setPassword] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [passwordStatus, setPasswordStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const run = async () => {
@@ -64,6 +69,61 @@ export default function SettingsPage() {
       window.dispatchEvent(new Event('profile-updated'))
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const changePassword = async () => {
+    setPasswordStatus('idle')
+    setPasswordMessage(null)
+
+    if (!currentPassword.trim()) {
+      setPasswordStatus('error')
+      setPasswordMessage('Enter your current password.')
+      return
+    }
+    if (newPassword.length < 8) {
+      setPasswordStatus('error')
+      setPasswordMessage('New password must be at least 8 characters long.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus('error')
+      setPasswordMessage('New passwords do not match.')
+      return
+    }
+    if (currentPassword === newPassword) {
+      setPasswordStatus('error')
+      setPasswordMessage('New password must be different from current password.')
+      return
+    }
+
+    setIsChangingPassword(true)
+    try {
+      const res = await fetch('/api/me/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        const message = typeof data?.error === 'string' ? data.error : 'Failed to change password.'
+        throw new Error(message)
+      }
+      setPasswordStatus('success')
+      setPasswordMessage('Password updated successfully.')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setTimeout(() => {
+        setPasswordStatus('idle')
+        setPasswordMessage(null)
+      }, 4000)
+    } catch (error) {
+      console.error('Password change failed:', error)
+      setPasswordStatus('error')
+      setPasswordMessage(error instanceof Error ? error.message : 'Failed to change password.')
+    } finally {
+      setIsChangingPassword(false)
     }
   }
 
@@ -126,8 +186,15 @@ export default function SettingsPage() {
               <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="you@example.com" className="mt-1" disabled />
             </div>
             <div>
-              <label className="text-sm font-medium">New Password</label>
-              <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="••••••••" className="mt-1" />
+              <label className="text-sm font-medium">Current Password</label>
+              <Input
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                type="password"
+                placeholder="Enter current password"
+                className="mt-1"
+                autoComplete="current-password"
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Photo</label>
@@ -140,10 +207,44 @@ export default function SettingsPage() {
                 <Input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadPhoto(e.target.files[0])} />
               </div>
             </div>
+            <div>
+              <label className="text-sm font-medium">New Password</label>
+              <Input
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                type="password"
+                placeholder="Enter new password"
+                className="mt-1"
+                autoComplete="new-password"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Confirm New Password</label>
+              <Input
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                type="password"
+                placeholder="Confirm new password"
+                className="mt-1"
+                autoComplete="new-password"
+              />
+            </div>
           </div>
+          {passwordMessage && (
+            <div
+              className={`text-sm ${
+                passwordStatus === 'success' ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {passwordMessage}
+            </div>
+          )}
           <div className="flex justify-end">
             <div className="flex gap-2 flex-wrap items-center">
               <Button variant="outline" onClick={exportData} disabled={exporting}>{exporting ? 'Exporting…' : 'Export data'}</Button>
+              <Button onClick={changePassword} disabled={isChangingPassword}>
+                {isChangingPassword ? 'Updating...' : 'Change Password'}
+              </Button>
               <Button onClick={saveProfile} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Profile'}</Button>
             </div>
           </div>
@@ -184,5 +285,4 @@ export default function SettingsPage() {
     </div>
   )
 }
-
 

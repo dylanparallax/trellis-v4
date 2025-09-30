@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useTransition, type Dispatch, type SetStateAction } from 'react'
+import { useState, useTransition, useEffect, type Dispatch, type SetStateAction } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChevronDown, ChevronUp, Save, Trash2, Edit3, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 type Evaluation = {
   id: string
@@ -24,6 +25,7 @@ type Props = {
 export default function EvaluationDetailClient({ evaluation }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSubmitting, startTransition] = useTransition()
+  const router = useRouter()
 
   const [summary, setSummary] = useState(evaluation.summary || '')
   const [type, setType] = useState<Evaluation['type']>(evaluation.type)
@@ -31,18 +33,58 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
   const [recommendations, setRecommendations] = useState<string[]>(evaluation.recommendations || [])
   const [nextSteps, setNextSteps] = useState<string[]>(evaluation.nextSteps || [])
   const [showSummary, setShowSummary] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const toggle = (setter: Dispatch<SetStateAction<boolean>>) => setter(prev => !prev)
 
+  useEffect(() => {
+    setSummary(evaluation.summary || '')
+    setType(evaluation.type)
+    setStatus(evaluation.status)
+    setRecommendations(evaluation.recommendations || [])
+    setNextSteps(evaluation.nextSteps || [])
+  }, [evaluation])
+
+  const resetForm = () => {
+    setSummary(evaluation.summary || '')
+    setType(evaluation.type)
+    setStatus(evaluation.status)
+    setRecommendations(evaluation.recommendations || [])
+    setNextSteps(evaluation.nextSteps || [])
+  }
+
   const handleSave = () => {
+    if (!isEditing || isSubmitting) return
     const payload = { summary, type, status, recommendations, nextSteps }
+    setSaveStatus('idle')
+    setErrorMessage(null)
     startTransition(async () => {
-      const res = await fetch(`/api/evaluations/${evaluation.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (res.ok) setIsEditing(false)
+      try {
+        const res = await fetch(`/api/evaluations/${evaluation.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        if (!res.ok) {
+          throw new Error('Failed to save feedback changes')
+        }
+        const updated = await res.json() as Evaluation
+        setSummary(updated.summary || '')
+        setType(updated.type)
+        setStatus(updated.status)
+        setRecommendations(updated.recommendations || [])
+        setNextSteps(updated.nextSteps || [])
+        setIsEditing(false)
+        setSaveStatus('success')
+        router.refresh()
+        setTimeout(() => setSaveStatus('idle'), 3000)
+      } catch (error) {
+        console.error(error)
+        setSaveStatus('error')
+        setErrorMessage(error instanceof Error ? error.message : 'Something went wrong while saving')
+        setTimeout(() => setSaveStatus('idle'), 4000)
+      }
     })
   }
 
@@ -55,10 +97,27 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
 
   return (
     <div className="space-y-4">
+      {saveStatus === 'success' && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-3 text-sm text-green-800">Feedback saved.</CardContent>
+        </Card>
+      )}
+      {saveStatus === 'error' && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-3 text-sm text-red-700">{errorMessage ?? 'Failed to save feedback changes.'}</CardContent>
+        </Card>
+      )}
       <div className="flex gap-2 justify-end">
         {isEditing ? (
           <>
-            <Button variant="outline" onClick={() => setIsEditing(false)} disabled={isSubmitting}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetForm()
+                setIsEditing(false)
+              }}
+              disabled={isSubmitting}
+            >
               <X className="h-4 w-4 mr-2" /> Cancel
             </Button>
             <Button onClick={handleSave} disabled={isSubmitting}>
@@ -154,5 +213,3 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
     </div>
   )
 }
-
-

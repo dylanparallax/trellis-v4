@@ -315,13 +315,24 @@ export function EvaluationsListClient({ initial }: Props) {
                     </Link>
                   </Button>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(evaluation)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleEdit(evaluation)}
+                      aria-label="Edit feedback"
+                      title="Edit feedback"
+                    >
+                      <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => setDeleteConfirmId(evaluation.id)}>
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-destructive"
+                      onClick={() => setDeleteConfirmId(evaluation.id)}
+                      aria-label="Delete feedback"
+                      title="Delete feedback"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
