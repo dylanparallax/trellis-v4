@@ -38,6 +38,7 @@ export default function ObservationDetailClient({ observation }: Props) {
   const [focusAreas, setFocusAreas] = useState<string[]>(observation.focusAreas || [])
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isEnhancing, setIsEnhancing] = useState(false)
 
   // Side-by-side layout replaces collapsible sections
 
@@ -107,22 +108,32 @@ export default function ObservationDetailClient({ observation }: Props) {
   }
 
   const enhanceWithAI = () => {
+    if (!rawNotes.trim() || isEnhancing) return
+
+    setIsEnhancing(true)
     startTransition(async () => {
-      const res = await fetch('/api/observations/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rawNotes,
-          observationType,
-          focusAreas,
-          // Leave teacherId undefined here; API can still enhance without it
-        }),
-      })
-      if (res.ok) {
+      try {
+        const res = await fetch('/api/observations/enhance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rawNotes,
+            observationType,
+            focusAreas,
+            // Leave teacherId undefined here; API can still enhance without it
+          }),
+        })
+        if (!res.ok) {
+          throw new Error('Failed to enhance notes')
+        }
         const data = await res.json() as { enhancedNotes?: string }
         if (typeof data.enhancedNotes === 'string') {
           setEnhancedNotes(data.enhancedNotes)
         }
+      } catch (error) {
+        console.error('Enhancement failed:', error)
+      } finally {
+        setIsEnhancing(false)
       }
     })
   }
@@ -256,10 +267,27 @@ export default function ObservationDetailClient({ observation }: Props) {
               <CardTitle className="text-sm">AI Enhanced Notes</CardTitle>
               <CardDescription>Readable, shareable summary</CardDescription>
             </div>
-            {!enhancedNotes && !isEditing && (
-              <Button size="sm" variant="ai" onClick={enhanceWithAI}>
-                <Sparkles className="h-4 w-4 mr-1" /> Enhance
+            {isEditing ? (
+              <Button
+                size="sm"
+                variant="ai"
+                onClick={enhanceWithAI}
+                disabled={isEnhancing || !rawNotes.trim()}
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                {isEnhancing ? 'Enhancing...' : 'Enhance with AI'}
               </Button>
+            ) : (
+              !enhancedNotes && (
+                <Button
+                  size="sm"
+                  variant="ai"
+                  onClick={enhanceWithAI}
+                  disabled={isEnhancing || !rawNotes.trim()}
+                >
+                  <Sparkles className="h-4 w-4 mr-1" /> Enhance
+                </Button>
+              )
             )}
           </CardHeader>
           <CardContent>
