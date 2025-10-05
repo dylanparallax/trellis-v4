@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
+import type { Prisma } from '@prisma/client'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 import { z } from 'zod'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
@@ -65,27 +66,23 @@ export async function POST(
       uploadedAt: new Date().toISOString(),
     }
 
-    let nextContent: unknown = evaluation.content
+    let nextContent: Prisma.InputJsonValue = { markdown: '', meta: { artifacts: [artifact] } } as unknown as Prisma.InputJsonValue
     try {
-      if (evaluation.content && typeof evaluation.content === 'object' && !Array.isArray(evaluation.content)) {
-        const obj = evaluation.content as Record<string, unknown>
+      if (typeof evaluation.content === 'string') {
+        nextContent = { markdown: evaluation.content, meta: { artifacts: [artifact] } } as unknown as Prisma.InputJsonValue
+      } else if (evaluation.content && typeof evaluation.content === 'object' && !Array.isArray(evaluation.content)) {
+        const obj = evaluation.content as unknown as Record<string, unknown>
         const prevMeta = (obj.meta as Record<string, unknown> | undefined) || {}
         const prevList = (prevMeta.artifacts as unknown[]) || []
-        nextContent = { ...obj, meta: { ...prevMeta, artifacts: [...prevList, artifact] } }
-      } else if (typeof evaluation.content === 'string') {
-        nextContent = { markdown: evaluation.content, meta: { artifacts: [artifact] } }
-      } else if (evaluation.content && typeof evaluation.content === 'object' && 'markdown' in (evaluation.content as Record<string, unknown>)) {
-        const obj = evaluation.content as { markdown?: string; meta?: Record<string, unknown> }
-        const prevList = (obj.meta?.artifacts as unknown[]) || []
-        nextContent = { ...obj, meta: { ...(obj.meta || {}), artifacts: [...prevList, artifact] } }
+        nextContent = { ...obj, meta: { ...prevMeta, artifacts: [...prevList, artifact] } } as unknown as Prisma.InputJsonValue
       } else {
-        nextContent = { markdown: '', meta: { artifacts: [artifact] } }
+        nextContent = { markdown: '', meta: { artifacts: [artifact] } } as unknown as Prisma.InputJsonValue
       }
     } catch {
-      nextContent = evaluation.content
+      nextContent = { markdown: '', meta: { artifacts: [artifact] } } as unknown as Prisma.InputJsonValue
     }
 
-    const updated = await prisma.evaluation.update({ where: { id }, data: { content: nextContent } })
+    const updated = await prisma.evaluation.update({ where: { id }, data: { content: nextContent as Prisma.InputJsonValue } })
     return NextResponse.json({ ok: true, artifact, evaluationId: updated.id })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -110,7 +107,7 @@ export async function GET(
 
     let artifacts: unknown[] = []
     const c = evaluation.content
-    if (c && typeof c === 'object') {
+    if (c && typeof c === 'object' && !Array.isArray(c)) {
       const obj = c as Record<string, unknown>
       const meta = obj.meta as Record<string, unknown> | undefined
       const list = (meta?.artifacts as unknown[]) || []
