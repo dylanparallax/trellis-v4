@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
+import type { Prisma } from '@prisma/client'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
@@ -26,25 +27,21 @@ export async function POST(
     assertSameSchool(existing, auth.schoolId)
 
     const now = new Date()
-
+    const metaBase = { deliveredAt: now.toISOString(), deliveredByEmail: auth.email }
     // Merge a deliveredAt meta timestamp into content JSON without breaking markdown payloads
-    let nextContent: unknown = existing.content
+    let nextContent: Prisma.InputJsonValue = { markdown: '', meta: metaBase } as unknown as Prisma.InputJsonValue
     try {
-      if (existing.content && typeof existing.content === 'object' && !Array.isArray(existing.content)) {
-        const obj = existing.content as Record<string, unknown>
-        const meta = { ...(obj.meta as Record<string, unknown> | undefined), deliveredAt: now.toISOString(), deliveredByEmail: auth.email }
-        nextContent = { ...obj, meta }
-      } else if (existing.content && typeof existing.content === 'string') {
-        nextContent = { markdown: existing.content, meta: { deliveredAt: now.toISOString(), deliveredByEmail: auth.email } }
-      } else if (existing.content && typeof existing.content === 'object' && 'markdown' in (existing.content as Record<string, unknown>)) {
-        const obj = existing.content as { markdown?: string; [k: string]: unknown }
-        const prevMeta = (obj as { meta?: Record<string, unknown> }).meta || {}
-        nextContent = { ...obj, meta: { ...prevMeta, deliveredAt: now.toISOString(), deliveredByEmail: auth.email } }
+      if (typeof existing.content === 'string') {
+        nextContent = { markdown: existing.content, meta: metaBase } as unknown as Prisma.InputJsonValue
+      } else if (existing.content && typeof existing.content === 'object' && !Array.isArray(existing.content)) {
+        const obj = existing.content as unknown as Record<string, unknown>
+        const prevMeta = (obj.meta as Record<string, unknown> | undefined) || {}
+        nextContent = { ...obj, meta: { ...prevMeta, ...metaBase } } as unknown as Prisma.InputJsonValue
       } else {
-        nextContent = { markdown: '', meta: { deliveredAt: now.toISOString(), deliveredByEmail: auth.email } }
+        nextContent = { markdown: '', meta: metaBase } as unknown as Prisma.InputJsonValue
       }
     } catch {
-      nextContent = existing.content
+      nextContent = { markdown: '', meta: metaBase } as unknown as Prisma.InputJsonValue
     }
 
     const updated = await prisma.evaluation.update({
@@ -52,7 +49,7 @@ export async function POST(
       data: {
         status: 'SUBMITTED',
         submittedAt: now,
-        content: nextContent,
+        content: nextContent as Prisma.InputJsonValue,
       },
       include: {
         teacher: { select: { id: true, name: true } },
