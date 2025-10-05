@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { TagInput } from '@/components/ui/tag-input'
 
 type Teacher = {
   id: string
@@ -11,6 +12,8 @@ type Teacher = {
   email?: string | null
   subject?: string | null
   gradeLevel?: string | null
+  tenureStatus?: 'TEMPORARY' | 'PROBATIONARY' | 'PERMANENT' | null
+  departments?: string[]
   strengths?: string[]
   growthAreas?: string[]
 }
@@ -25,6 +28,8 @@ export default function EditTeacherClient({ teacher }: Props) {
   const [email, setEmail] = useState(teacher.email || '')
   const [subject, setSubject] = useState(teacher.subject || '')
   const [gradeLevel, setGradeLevel] = useState(teacher.gradeLevel || '')
+  const [tenureStatus, setTenureStatus] = useState<Teacher['tenureStatus']>(teacher.tenureStatus || null)
+  const [departments, setDepartments] = useState<string[]>((teacher.departments || []))
   const [strengths, setStrengths] = useState((teacher.strengths || []).join(', '))
   const [growthAreas, setGrowthAreas] = useState((teacher.growthAreas || []).join(', '))
 
@@ -35,6 +40,8 @@ export default function EditTeacherClient({ teacher }: Props) {
         email,
         subject,
         gradeLevel,
+        tenureStatus,
+        departments,
         strengths: strengths.split(',').map((s) => s.trim()).filter(Boolean),
         growthAreas: growthAreas.split(',').map((s) => s.trim()).filter(Boolean),
       }
@@ -71,6 +78,21 @@ export default function EditTeacherClient({ teacher }: Props) {
           <div>
             <label className="text-sm font-medium">Grade Level</label>
             <Input value={gradeLevel} onChange={(e) => setGradeLevel(e.target.value)} />
+          </div>
+          <div>
+            <label className="text-sm font-medium">Tenure Status</label>
+            <select className="w-full mt-1 p-2 border rounded-md bg-background" value={tenureStatus || ''} onChange={(e) => setTenureStatus((e.target.value || null) as Teacher['tenureStatus'])}>
+              <option value="">—</option>
+              <option value="TEMPORARY">Temporary</option>
+              <option value="PROBATIONARY">Probationary</option>
+              <option value="PERMANENT">Permanent</option>
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium">Departments</label>
+            <div className="mt-1">
+              <TagInput value={departments} onChange={setDepartments} placeholder="Type department and press Enter…" />
+            </div>
           </div>
         </CardContent>
       </Card>

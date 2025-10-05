@@ -33,33 +33,43 @@ model User {
   role              Role     @default(EVALUATOR)
   schoolId          String
   school            School   @relation(fields: [schoolId], references: [id])
+  // Optional link to Teacher record when this user is a teacher
+  teacherId         String?
+  teacher           Teacher? @relation(fields: [teacherId], references: [id])
   
   observations      Observation[]
   evaluations       Evaluation[]
   createdAt         DateTime @default(now())
+
+  @@unique([teacherId])
 }
 
 enum Role {
   ADMIN
   EVALUATOR
   DISTRICT_ADMIN
+  TEACHER
 }
 
 model Teacher {
   id                String   @id @default(cuid())
   name              String
-  email             String?
+  email             String?  @unique
   subject           String?
   gradeLevel        String?
   photoUrl          String?  // URL to teacher's photo
   schoolId          String
   school            School   @relation(fields: [schoolId], references: [id])
+  // Back-reference to User when the teacher has a login
+  user              User?
   
   // Performance tracking
   performanceHistory Json    @default("[]")
   currentGoals      Json     @default("[]")
   strengths         String[]
   growthAreas       String[]
+  departments       String[] @default([])
+  tenureStatus      TenureStatus?
   
   observations      Observation[]
   evaluations       Evaluation[]
@@ -84,6 +94,7 @@ model Observation {
   date              DateTime
   duration          Int?     // minutes
   observationType   ObservationType
+  subject           String?
   focusAreas        String[]
   
   artifacts         ObservationArtifact[]
@@ -97,6 +108,13 @@ enum ObservationType {
   FORMAL
   INFORMAL
   WALKTHROUGH
+  OTHER
+}
+
+enum TenureStatus {
+  TEMPORARY
+  PROBATIONARY
+  PERMANENT
 }
 
 model ObservationArtifact {

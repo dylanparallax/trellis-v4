@@ -17,9 +17,11 @@ export default function NewTeacherPage() {
   const [subject, setSubject] = useState('')
     const [gradeLevel, setGradeLevel] = useState('')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [tenureStatus, setTenureStatus] = useState<'TEMPORARY' | 'PROBATIONARY' | 'PERMANENT' | ''>('')
   
   const [strengths, setStrengths] = useState<string[]>([])
   const [growthAreas, setGrowthAreas] = useState<string[]>([])
+  const [departments, setDepartments] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -56,6 +58,8 @@ export default function NewTeacherPage() {
         email: email || undefined,
         subject: subject || undefined,
         gradeLevel: gradeLevel || undefined,
+        tenureStatus: tenureStatus || undefined,
+        departments,
         strengths,
         growthAreas,
         currentGoals: [],
@@ -129,6 +133,15 @@ export default function NewTeacherPage() {
                 </label>
                 <Input value={gradeLevel} onChange={(e) => setGradeLevel(e.target.value)} placeholder="e.g., 5" className="mt-1" />
               </div>
+              <div>
+                <label className="text-sm font-medium flex items-center gap-2">Tenure Status</label>
+                <select className="w-full mt-1 p-2 border rounded-md bg-background" value={tenureStatus} onChange={(e) => setTenureStatus(e.target.value as 'TEMPORARY' | 'PROBATIONARY' | 'PERMANENT' | '')}>
+                  <option value="">—</option>
+                  <option value="TEMPORARY">Temporary</option>
+                  <option value="PROBATIONARY">Probationary</option>
+                  <option value="PERMANENT">Permanent</option>
+                </select>
+              </div>
               <div className="md:col-span-2">
                 <label className="text-sm font-medium flex items-center gap-2">
                   <UploadIcon className="h-4 w-4" /> Photo (optional)
@@ -148,6 +161,12 @@ export default function NewTeacherPage() {
                 <label className="text-sm font-medium">Growth Areas</label>
                 <div className="mt-1">
                   <TagInput value={growthAreas} onChange={setGrowthAreas} placeholder="Type and press Enter…" />
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium">Departments</label>
+                <div className="mt-1">
+                  <TagInput value={departments} onChange={setDepartments} placeholder="Type department and press Enter…" />
                 </div>
               </div>
             </div>

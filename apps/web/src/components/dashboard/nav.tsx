@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, Menu, X, Loader2, ExternalLink } from 'lucide-react'
+import { Bell, Search, Menu, X, Loader2, ExternalLink, Award, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEffect, useState } from 'react'
@@ -10,15 +10,17 @@ import { navigation } from '@/components/dashboard/sidebar'
 
 type DashboardNavProps = {
   schoolName?: string
+  role?: 'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN' | 'TEACHER'
 }
 
-export function DashboardNav({ schoolName }: DashboardNavProps) {
+export function DashboardNav({ schoolName, role }: DashboardNavProps) {
   const [clientSchoolName, setClientSchoolName] = useState<string | undefined>(undefined)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<Array<{ id: string; type: 'observation' | 'evaluation' | 'teacher'; title: string; subtitle?: string; href: string }>>([])
   const [open, setOpen] = useState(false)
+  const [notifCount, setNotifCount] = useState<number>(0)
 
   useEffect(() => {
     let isMounted = true
@@ -42,7 +44,37 @@ export function DashboardNav({ schoolName }: DashboardNavProps) {
     }
   }, [])
 
+  useEffect(() => {
+    let isMounted = true
+    const load = async () => {
+      try {
+        const res = await fetch('/api/notifications', { cache: 'no-store' })
+        if (!isMounted) return
+        if (res.ok) {
+          const data = await res.json() as { count?: number }
+          setNotifCount(typeof data.count === 'number' ? data.count : 0)
+        } else {
+          setNotifCount(0)
+        }
+      } catch {
+        if (isMounted) setNotifCount(0)
+      }
+    }
+    load()
+    const id = setInterval(load, 30_000)
+    return () => {
+      isMounted = false
+      clearInterval(id)
+    }
+  }, [])
+
   const displaySchoolName = schoolName || clientSchoolName || 'Your School'
+  const navItems = role === 'TEACHER'
+    ? [
+        { name: 'Feedback', href: '/teacher', icon: Award },
+        { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
+      ]
+    : navigation
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="flex h-16 items-center px-3 sm:px-4 gap-3 sm:gap-4">
@@ -115,10 +147,15 @@ export function DashboardNav({ schoolName }: DashboardNavProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="hover:scale-[1.02] transition-transform"
+            className="relative hover:scale-[1.02] transition-transform"
             aria-label="Notifications"
           >
             <Bell className="h-4 w-4" />
+            {notifCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 px-1 rounded-full bg-rose-500/20 text-rose-500 text-[10px] leading-4 flex items-center justify-center">
+                {notifCount > 99 ? '99+' : String(notifCount)}
+              </span>
+            )}
           </Button>
           
           <div className="flex items-center gap-2">
@@ -137,7 +174,7 @@ export function DashboardNav({ schoolName }: DashboardNavProps) {
               </Button>
             </div>
             <nav className="flex-1 space-y-2">
-              {navigation.map((item) => (
+              {navItems.map((item) => (
                 <Link key={item.name} href={item.href} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-foreground hover:bg-accent" onClick={() => setIsMobileMenuOpen(false)}>
                   <item.icon className="h-4 w-4" />
                   {item.name}

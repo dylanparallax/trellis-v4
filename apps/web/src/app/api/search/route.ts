@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
 
     const qInsensitive = q
 
-    // Observations: search raw/enhanced notes and related names
-    const observations = await prisma.observation.findMany({
+    // Observations: staff only
+    const observations = auth.role === 'TEACHER' ? [] : await prisma.observation.findMany({
       where: {
         schoolId: auth.schoolId,
         OR: [
@@ -50,15 +50,20 @@ export async function GET(request: NextRequest) {
     })
 
     // Evaluations: search summary and related names; fetch a few and filter content markdown on server
+    const evalWhere: Record<string, unknown> = { schoolId: auth.schoolId }
+    if (auth.role === 'TEACHER') {
+      const teacher = await prisma.teacher.findFirst({ where: { email: auth.email, schoolId: auth.schoolId }, select: { id: true } })
+      if (!teacher) return NextResponse.json({ results: [] })
+      evalWhere.teacherId = teacher.id
+    } else {
+      evalWhere.OR = [
+        { summary: { contains: qInsensitive, mode: 'insensitive' } },
+        { teacher: { name: { contains: qInsensitive, mode: 'insensitive' } } },
+        { evaluator: { name: { contains: qInsensitive, mode: 'insensitive' } } },
+      ]
+    }
     const evaluationsRaw = await prisma.evaluation.findMany({
-      where: {
-        schoolId: auth.schoolId,
-        OR: [
-          { summary: { contains: qInsensitive, mode: 'insensitive' } },
-          { teacher: { name: { contains: qInsensitive, mode: 'insensitive' } } },
-          { evaluator: { name: { contains: qInsensitive, mode: 'insensitive' } } },
-        ],
-      },
+      where: evalWhere,
       include: {
         teacher: { select: { name: true } },
         evaluator: { select: { name: true } },
@@ -79,7 +84,8 @@ export async function GET(request: NextRequest) {
       .slice(0, 5)
 
     // Teachers: search basic fields
-    const teachers = await prisma.teacher.findMany({
+    // Teachers: staff only
+    const teachers = auth.role === 'TEACHER' ? [] : await prisma.teacher.findMany({
       where: {
         schoolId: auth.schoolId,
         OR: [

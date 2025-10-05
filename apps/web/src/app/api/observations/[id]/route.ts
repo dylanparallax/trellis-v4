@@ -27,6 +27,7 @@ export async function GET(
     if (!observation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     assertSameSchool(observation, auth.schoolId)
 
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     return NextResponse.json(observation)
   } catch {
     return NextResponse.json({ error: 'Failed to fetch observation' }, { status: 500 })
@@ -37,10 +38,14 @@ const updateSchema = z.object({
   rawNotes: z.string().min(1).optional(),
   enhancedNotes: z.string().optional().nullable(),
   duration: z.number().int().min(1).optional(),
-  observationType: z.enum(['FORMAL', 'INFORMAL', 'WALKTHROUGH']).optional(),
+  observationType: z.enum(['FORMAL', 'INFORMAL', 'WALKTHROUGH', 'OTHER']).optional(),
   focusAreas: z.array(z.string()).optional(),
   // Accept either full ISO datetime or simple YYYY-MM-DD date strings
   date: z.string().optional(),
+  // Optional time in HH:mm, when provided with date YYYY-MM-DD will combine
+  time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  // Optional subject for this observation
+  subject: z.string().optional().or(z.literal('')),
 })
 
 export async function PATCH(
@@ -69,8 +74,11 @@ export async function PATCH(
     let normalizedDate: Date | undefined
     if (typeof dateInput === 'string') {
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
-        // Interpret as start of day in UTC to avoid TZ drift
-        normalizedDate = new Date(`${dateInput}T00:00:00.000Z`)
+        if (parsed.time && /^\d{2}:\d{2}$/.test(parsed.time)) {
+          normalizedDate = new Date(`${dateInput}T${parsed.time}:00.000Z`)
+        } else {
+          normalizedDate = new Date(`${dateInput}T00:00:00.000Z`)
+        }
       } else {
         const d = new Date(dateInput)
         normalizedDate = isNaN(d.getTime()) ? undefined : d
@@ -86,6 +94,7 @@ export async function PATCH(
         observationType: parsed.observationType ?? undefined,
         focusAreas: parsed.focusAreas ?? undefined,
         date: normalizedDate ?? undefined,
+        subject: parsed.subject === undefined ? undefined : (parsed.subject || null),
       },
       include: {
         teacher: { select: { id: true, name: true, subject: true, gradeLevel: true } },

@@ -12,6 +12,8 @@ const teacherUpdateSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   subject: z.string().optional().or(z.literal('')),
   gradeLevel: z.string().optional().or(z.literal('')),
+  tenureStatus: z.enum(['TEMPORARY', 'PROBATIONARY', 'PERMANENT']).optional().or(z.literal('')),
+  departments: z.array(z.string()).optional(),
   strengths: z.array(z.string()).optional(),
   growthAreas: z.array(z.string()).optional(),
   currentGoals: z.array(z.object({
@@ -28,6 +30,7 @@ export async function GET(
   try {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const { id } = await params
     const { prisma } = await import('@trellis/database')
     const teacher = await prisma.teacher.findUnique({
@@ -65,6 +68,7 @@ export async function PUT(
     }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const { id } = await params
     const body = await request.json()
     const validated = teacherUpdateSchema.parse(body)
@@ -79,6 +83,8 @@ export async function PUT(
     if (validated.email !== undefined) updateData.email = validated.email || null
     if (validated.subject !== undefined) updateData.subject = validated.subject || null
     if (validated.gradeLevel !== undefined) updateData.gradeLevel = validated.gradeLevel || null
+    if (validated.tenureStatus !== undefined) updateData.tenureStatus = validated.tenureStatus || null
+    if (validated.departments !== undefined) updateData.departments = validated.departments
     if (validated.strengths !== undefined) updateData.strengths = validated.strengths
     if (validated.growthAreas !== undefined) updateData.growthAreas = validated.growthAreas
     if (validated.currentGoals !== undefined) updateData.currentGoals = validated.currentGoals

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+export const dynamic = 'force-dynamic'
 import { Button } from '@/components/ui/button'
 import { Users, Binoculars, Award, TrendingUp, Plus } from 'lucide-react'
 import Link from 'next/link'
@@ -11,6 +12,67 @@ import { FocusPieChart } from '@/components/analytics/focus-pie-chart'
 export default async function DashboardPage({ searchParams }: { searchParams?: Promise<{ timeframe?: string }> }) {
   const auth = await getAuthContext()
   const schoolId = auth?.schoolId
+
+  // Teacher: show only their own feedback
+  if (auth?.role === 'TEACHER') {
+    if (!auth.email || !schoolId) {
+      return (
+        <div className="space-y-6">
+          <Header />
+          <Card>
+            <CardHeader>
+              <CardTitle>My Feedback</CardTitle>
+              <CardDescription>Your submitted feedback</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">No data.</div>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
+    // Resolve teacher by email within the same school
+    const teacher = await prisma.teacher.findFirst({ where: { email: { equals: auth.email, mode: 'insensitive' }, schoolId }, select: { id: true, name: true, schoolId: true } })
+    // If no Teacher found by email, we intentionally do not fallback to user linkage here
+    // to avoid surfacing cross-school or mismatched accounts.
+    let myEvals: Array<{ id: string; createdAt: Date; type: string; status: string }> = []
+    if (teacher) {
+      myEvals = await prisma.evaluation.findMany({
+        where: { teacherId: teacher.id, schoolId, status: 'SUBMITTED' },
+        select: { id: true, createdAt: true, type: true, status: true },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      })
+    }
+    return (
+      <div className="space-y-6">
+        <Header showNewObservationButton={false} />
+        <Card>
+          <CardHeader>
+            <CardTitle>My Feedback</CardTitle>
+            <CardDescription>{teacher?.name ? `Feedback for ${teacher.name}` : 'Your feedback'}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {myEvals.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No feedback yet.</div>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {myEvals.map((e) => (
+                  <li key={e.id} className="flex items-center justify-between">
+                    <span className="truncate">
+                      {new Date(e.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {` • ${e.type}`} {` • ${e.status}`}
+                    </span>
+                    <a className="underline" href={`/dashboard/evaluations/${e.id}`}>View</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (!schoolId) {
     return (
@@ -209,7 +271,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   )
 }
 
-function Header() {
+function Header({ showNewObservationButton = true }: { showNewObservationButton?: boolean }) {
   return (
     <div className="flex items-center justify-between flex-wrap gap-3">
       <div>
@@ -217,12 +279,14 @@ function Header() {
         <p className="text-muted-foreground">Welcome back!</p>
       </div>
       <div className="flex gap-2 w-full sm:w-auto">
-        <Button asChild>
-          <Link href="/dashboard/observations/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Observation
-          </Link>
-        </Button>
+        {showNewObservationButton && (
+          <Button asChild>
+            <Link href="/dashboard/observations/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Observation
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   )

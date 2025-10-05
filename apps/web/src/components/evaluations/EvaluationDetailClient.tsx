@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect, type Dispatch, type SetStateAction 
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
-import { ChevronDown, ChevronUp, Save, Trash2, Edit3, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Save, Trash2, Edit3, X, Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type Evaluation = {
@@ -35,6 +35,7 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
   const [showSummary, setShowSummary] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [deliverStatus, setDeliverStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   const toggle = (setter: Dispatch<SetStateAction<boolean>>) => setter(prev => !prev)
 
@@ -95,8 +96,30 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
     })
   }
 
+  const handleDeliver = () => {
+    if (deliverStatus === 'sending') return
+    setDeliverStatus('sending')
+    startTransition(async () => {
+      try {
+        const res = await fetch(`/api/evaluations/${evaluation.id}/deliver`, { method: 'POST' })
+        if (!res.ok) throw new Error('Failed to send to teacher')
+        setDeliverStatus('sent')
+        router.refresh()
+        setTimeout(() => setDeliverStatus('idle'), 2500)
+      } catch (e) {
+        setDeliverStatus('error')
+        setTimeout(() => setDeliverStatus('idle'), 3000)
+      }
+    })
+  }
+
   return (
     <div className="space-y-4">
+      {deliverStatus === 'sent' && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-3 text-sm text-blue-800">Submitted to teacher.</CardContent>
+        </Card>
+      )}
       {saveStatus === 'success' && (
         <Card className="border-green-200 bg-green-50">
           <CardContent className="p-3 text-sm text-green-800">Feedback saved.</CardContent>
@@ -129,6 +152,12 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
             <Button variant="outline" onClick={() => setIsEditing(true)}>
               <Edit3 className="h-4 w-4 mr-2" /> Edit
             </Button>
+            {status !== 'SUBMITTED' && status !== 'ACKNOWLEDGED' ? (
+              <Button onClick={handleDeliver} disabled={deliverStatus === 'sending'}>
+                <Send className="h-4 w-4 mr-2" />
+                {deliverStatus === 'sending' ? 'Submitting…' : 'Submit to Teacher'}
+              </Button>
+            ) : null}
             <Button variant="destructive" onClick={handleDelete}>
               <Trash2 className="h-4 w-4 mr-2" /> Delete
             </Button>

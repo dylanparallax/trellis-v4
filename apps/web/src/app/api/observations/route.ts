@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 // Import Prisma dynamically to avoid crashes when DATABASE_URL isn't configured
 import { z } from 'zod'
+import type { ObservationType } from '@trellis/types'
 import { getAuthContext } from '@/lib/auth/server'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
@@ -8,11 +9,15 @@ const observationSchema = z.object({
   teacherId: z.string().min(1, 'Teacher ID is required'),
   rawNotes: z.string().min(1, 'Raw notes are required'),
   enhancedNotes: z.string().optional(),
-  observationType: z.enum(['FORMAL', 'INFORMAL', 'WALKTHROUGH']),
+  observationType: z.enum(['FORMAL', 'INFORMAL', 'WALKTHROUGH', 'OTHER']) as unknown as z.ZodType<ObservationType>,
   duration: z.number().min(1, 'Duration must be at least 1 minute').optional(),
   focusAreas: z.array(z.string()).default([]),
   // Accept either full ISO datetime or simple YYYY-MM-DD date strings
   date: z.string().optional(),
+  // Optional separate time input in HH:mm format to combine with date
+  time: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  // Optional subject for this observation instance
+  subject: z.string().optional().or(z.literal('')),
   artifacts: z.array(z.object({
     fileName: z.string(),
     fileUrl: z.string(),
@@ -24,6 +29,7 @@ export async function GET(request: NextRequest) {
   try {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const { searchParams } = new URL(request.url)
     const teacherId = searchParams.get('teacherId')
 
@@ -88,8 +94,12 @@ export async function POST(request: NextRequest) {
     if (dateInput && typeof dateInput === 'string') {
       // YYYY-MM-DD
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
-        // Interpret as start of day in UTC to avoid TZ drift
-        parsedDate = new Date(`${dateInput}T00:00:00.000Z`)
+        // If time provided, combine; else start of day (UTC) to avoid TZ drift
+        if (validated.time && /^\d{2}:\d{2}$/.test(validated.time)) {
+          parsedDate = new Date(`${dateInput}T${validated.time}:00.000Z`)
+        } else {
+          parsedDate = new Date(`${dateInput}T00:00:00.000Z`)
+        }
       } else {
         const d = new Date(dateInput)
         parsedDate = isNaN(d.getTime()) ? new Date() : d

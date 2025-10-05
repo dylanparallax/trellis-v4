@@ -286,6 +286,7 @@ export function ObservationsListClient({ initial }: Props) {
                   <option value="FORMAL">Formal</option>
                   <option value="INFORMAL">Informal</option>
                   <option value="WALKTHROUGH">Walkthrough</option>
+                  <option value="OTHER">Other</option>
                 </select>
                 <span className="pointer-events-none absolute right-3 text-muted-foreground">
                   {/* simple chevron svg to avoid importing */}
@@ -369,6 +370,9 @@ export function ObservationsListClient({ initial }: Props) {
                         {observation.observationType === 'WALKTHROUGH' && (
                           <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Walkthrough</Badge>
                         )}
+                        {observation.observationType === 'OTHER' && (
+                          <Badge className="bg-slate-100 text-slate-700 border-slate-200">Other</Badge>
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground">{formatDate(observation.date)}</div>
                     </div>
@@ -384,6 +388,14 @@ export function ObservationsListClient({ initial }: Props) {
                       <div className="flex items-center gap-1">
                         <Clock className="h-3.5 w-3.5" />
                         {observation.duration} minutes
+                      </div>
+                    ) : null}
+                    {typeof (observation as any).subject === 'string' && (observation as any).subject ? (
+                      <div className="flex items-center gap-1">
+                        {(/* subject icon inline to avoid new import */
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5"><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V7.75A2.75 2.75 0 0 0 17.25 5H7A3 3 0 0 0 4 8v11.5Zm3.5-14h9.75c.69 0 1.25.56 1.25 1.25V19.5c0 .69-.56 1.25-1.25 1.25h-11A1.25 1.25 0 0 1 5 19.5V8c0-1.1.9-2 2-2Zm.75 4.25c0-.41.34-.75.75-.75h6a.75.75 0 1 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm0 3c0-.41.34-.75.75-.75h6a.75.75 0 1 1 0 1.5h-6a.75.75 0 0 1-.75-.75Z"/></svg>
+                        )}
+                        {(observation as any).subject}
                       </div>
                     ) : null}
                     <div className="flex items-center gap-1">
@@ -423,10 +435,9 @@ export function ObservationsListClient({ initial }: Props) {
                   )}
                 </CardContent>
                 <div className="mt-auto flex items-center justify-between px-6 pb-5">
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="ghost" size="icon" asChild aria-label="View details" title="View details">
                     <Link href={`/dashboard/observations/${observation.id}`}>
-                      <Binoculars className="mr-2 h-4 w-4" />
-                      View Details
+                      <Binoculars className="h-4 w-4" />
                     </Link>
                   </Button>
                   <div className="flex gap-1.5">
@@ -487,6 +498,9 @@ export function ObservationsListClient({ initial }: Props) {
                     )}
                     {observation.observationType === 'WALKTHROUGH' && (
                       <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Walkthrough</Badge>
+                    )}
+                    {observation.observationType === 'OTHER' && (
+                      <Badge className="bg-slate-100 text-slate-700 border-slate-200">Other</Badge>
                     )}
                   </td>
                   <td className="px-3 py-2">{formatDate(observation.date)}</td>

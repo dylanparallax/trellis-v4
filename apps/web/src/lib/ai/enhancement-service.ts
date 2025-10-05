@@ -19,7 +19,7 @@ type Observation = {
 }
 
 export class AIEnhancementService {
-  private static readonly ANTHROPIC_MODEL = 'claude-3-5-sonnet-20241022'
+  private static readonly ANTHROPIC_MODEL = 'claude-sonnet-4-5-20250929'
   private static readonly OPENAI_MODEL = 'gpt-4-turbo'
   async enhanceObservation(
     rawNotes: string,

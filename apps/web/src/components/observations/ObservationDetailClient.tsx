@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useEffect, type Dispatch, type SetStateAction } from 'react'
+import { useState, useTransition, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -16,9 +16,10 @@ type Observation = {
   rawNotes: string
   enhancedNotes?: string | null
   duration?: number | null
-  observationType: 'FORMAL' | 'INFORMAL' | 'WALKTHROUGH'
+  observationType: 'FORMAL' | 'INFORMAL' | 'WALKTHROUGH' | 'OTHER'
   focusAreas: string[]
   date: string
+  subject?: string | null
 }
 
 type Props = {
@@ -34,8 +35,15 @@ export default function ObservationDetailClient({ observation }: Props) {
   const [enhancedNotes, setEnhancedNotes] = useState(observation.enhancedNotes || '')
   const [duration, setDuration] = useState(observation.duration?.toString() || '')
   const [date, setDate] = useState(observation.date.slice(0, 10))
+  const [time, setTime] = useState(() => {
+    const d = new Date(observation.date)
+    const hh = String(d.getUTCHours()).padStart(2, '0')
+    const mm = String(d.getUTCMinutes()).padStart(2, '0')
+    return `${hh}:${mm}`
+  })
   const [observationType, setObservationType] = useState<Observation['observationType']>(observation.observationType)
   const [focusAreas, setFocusAreas] = useState<string[]>(observation.focusAreas || [])
+  const [subject, setSubject] = useState<string>(observation.subject || '')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isEnhancing, setIsEnhancing] = useState(false)
@@ -47,8 +55,13 @@ export default function ObservationDetailClient({ observation }: Props) {
     setEnhancedNotes(observation.enhancedNotes || '')
     setDuration(observation.duration?.toString() || '')
     setDate(observation.date.slice(0, 10))
+    const d = new Date(observation.date)
+    const hh = String(d.getUTCHours()).padStart(2, '0')
+    const mm = String(d.getUTCMinutes()).padStart(2, '0')
+    setTime(`${hh}:${mm}`)
     setObservationType(observation.observationType)
     setFocusAreas(observation.focusAreas || [])
+    setSubject(observation.subject || '')
   }, [observation])
 
   const resetForm = () => {
@@ -60,7 +73,7 @@ export default function ObservationDetailClient({ observation }: Props) {
     setFocusAreas(observation.focusAreas || [])
   }
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (!isEditing || isSubmitting) return
     const payload: Record<string, unknown> = {
       enhancedNotes: enhancedNotes || null,
@@ -68,6 +81,8 @@ export default function ObservationDetailClient({ observation }: Props) {
       observationType,
       focusAreas,
       date,
+      time,
+      subject: subject || undefined,
     }
     if (rawNotes.trim().length > 0) payload.rawNotes = rawNotes
 
@@ -88,8 +103,15 @@ export default function ObservationDetailClient({ observation }: Props) {
         setEnhancedNotes(updated.enhancedNotes || '')
         setDuration(updated.duration?.toString() || '')
         setDate(updated.date.slice(0, 10))
+        {
+          const d = new Date(updated.date)
+          const hh = String(d.getUTCHours()).padStart(2, '0')
+          const mm = String(d.getUTCMinutes()).padStart(2, '0')
+          setTime(`${hh}:${mm}`)
+        }
         setObservationType(updated.observationType)
         setFocusAreas(updated.focusAreas || [])
+        setSubject(updated.subject || '')
         setIsEditing(false)
         setSaveStatus('success')
         router.refresh()
@@ -105,7 +127,7 @@ export default function ObservationDetailClient({ observation }: Props) {
         }, 4000)
       }
     })
-  }
+  }, [isEditing, isSubmitting, enhancedNotes, duration, observationType, focusAreas, date, rawNotes, observation.id, router])
 
   const enhanceWithAI = () => {
     if (!rawNotes.trim() || isEnhancing) return
@@ -151,14 +173,15 @@ export default function ObservationDetailClient({ observation }: Props) {
       window.removeEventListener('observation-save', onSave)
       window.removeEventListener('observation-delete', onDelete)
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing])
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     startTransition(async () => {
       const res = await fetch(`/api/observations/${observation.id}`, { method: 'DELETE' })
       if (res.ok) window.location.href = '/dashboard/observations'
     })
-  }
+  }, [observation.id])
 
   // Use shared markdown spacing formatter
 
@@ -198,7 +221,7 @@ export default function ObservationDetailClient({ observation }: Props) {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label className="text-sm font-medium">Observation Type</label>
           <select
@@ -210,6 +233,7 @@ export default function ObservationDetailClient({ observation }: Props) {
             <option value="FORMAL">Formal</option>
             <option value="INFORMAL">Informal</option>
             <option value="WALKTHROUGH">Walkthrough</option>
+            <option value="OTHER">Other</option>
           </select>
         </div>
 
@@ -221,6 +245,14 @@ export default function ObservationDetailClient({ observation }: Props) {
         <div>
           <label className="text-sm font-medium">Date</label>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1" disabled={!isEditing} />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Time</label>
+          <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-1" disabled={!isEditing} />
+        </div>
+        <div>
+          <label className="text-sm font-medium">Subject</label>
+          <Input value={subject} onChange={(e) => setSubject(e.target.value)} className="mt-1" disabled={!isEditing} placeholder="e.g., Algebra" />
         </div>
       </div>
 

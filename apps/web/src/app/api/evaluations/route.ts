@@ -12,9 +12,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const teacherId = searchParams.get('teacherId')
 
-    const where: Record<string, string> = {}
-    if (teacherId) where.teacherId = teacherId
-    where.schoolId = auth.schoolId
+    const where: Record<string, unknown> = { schoolId: auth.schoolId }
+    if (auth.role === 'TEACHER') {
+      // Limit teacher to only their evaluations
+      const teacher = await prisma.teacher.findFirst({ where: { email: auth.email, schoolId: auth.schoolId }, select: { id: true } })
+      if (!teacher) return NextResponse.json([], { status: 200 })
+      where.teacherId = teacher.id
+    } else if (teacherId) {
+      where.teacherId = teacherId
+    }
 
     const evaluations = await prisma.evaluation.findMany({
       where,
@@ -44,6 +50,7 @@ export async function POST(request: NextRequest) {
     }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const body = await request.json()
     const {
       teacherId,

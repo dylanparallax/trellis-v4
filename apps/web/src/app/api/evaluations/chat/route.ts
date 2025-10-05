@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const json = await request.json()
     const { userMessage, teacherId, evaluationType, schoolYear, currentEvaluation } = requestSchema.parse(json)
 

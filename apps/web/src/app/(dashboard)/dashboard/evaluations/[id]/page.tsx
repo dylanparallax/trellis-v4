@@ -1,11 +1,14 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar, ArrowLeft, Award } from 'lucide-react'
 import EvaluationDetailClient from '@/components/evaluations/EvaluationDetailClient'
+import TeacherEvaluationClient from '@/components/evaluations/TeacherEvaluationClient'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { getAuthContext } from '@/lib/auth/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +35,7 @@ type PageParams = { params: Promise<{ id: string }> }
 export default async function EvaluationDetailPage({ params }: PageParams) {
   const { id } = await params
   const evaluation = await getEvaluation(id)
+  const auth = await getAuthContext()
   if (!evaluation) {
     return (
       <div className="p-6">
@@ -202,8 +206,16 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
             <div className="flex items-center gap-1">
               <Calendar className="h-4 w-4" /> {dateStr}
             </div>
-            <div className="flex items-center gap-1">
-              Status: {evaluation.status}
+            <div className="flex items-center gap-2">
+              {evaluation.status === 'DRAFT' && (
+                <Badge className="bg-slate-100 text-slate-700 border-slate-200">Draft</Badge>
+              )}
+              {evaluation.status === 'SUBMITTED' && (
+                <Badge className="bg-amber-100 text-amber-700 border-amber-200">Submitted</Badge>
+              )}
+              {evaluation.status === 'ACKNOWLEDGED' && (
+                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Acknowledged</Badge>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <Award className="h-4 w-4" /> Type: {evaluation.type}
@@ -221,8 +233,12 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
             <div className="text-sm text-muted-foreground">No generated feedback content.</div>
           )}
 
-          {/* Editable metadata (type/status/summary/recs/next) */}
-          <EvaluationDetailClient evaluation={evaluation} />
+          {/* Role-aware actions */}
+          {auth?.role === 'TEACHER' ? (
+            <TeacherEvaluationClient evaluation={{ id: evaluation.id, status: evaluation.status }} />
+          ) : (
+            <EvaluationDetailClient evaluation={evaluation} />
+          )}
         </CardContent>
       </Card>
     </div>

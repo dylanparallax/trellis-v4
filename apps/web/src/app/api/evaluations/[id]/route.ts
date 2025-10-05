@@ -23,6 +23,16 @@ export async function GET(
     })
     if (!evaluation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     assertSameSchool(evaluation, auth.schoolId)
+    // Teachers may only access their own evaluations
+    if (auth.role === 'TEACHER') {
+      // Resolve teacher either by email or via User.teacherId link
+      const teacherByEmail = await prisma.teacher.findFirst({ where: { email: { equals: auth.email, mode: 'insensitive' }, schoolId: auth.schoolId }, select: { id: true } })
+      let teacherId: string | null = teacherByEmail?.id || null
+      // No additional fallback; only email-based match is used for teacher context
+      if (!teacherId || teacherId !== evaluation.teacher.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
     return NextResponse.json(evaluation)
   } catch {
     return NextResponse.json({ error: 'Failed to fetch evaluation' }, { status: 500 })

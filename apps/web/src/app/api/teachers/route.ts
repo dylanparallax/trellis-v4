@@ -11,8 +11,10 @@ const teacherSchema = z.object({
   subject: z.string().optional().or(z.literal('')),
   gradeLevel: z.string().optional().or(z.literal('')),
   photoUrl: z.string().url().optional().or(z.literal('')),
+  tenureStatus: z.enum(['TEMPORARY', 'PROBATIONARY', 'PERMANENT']).optional(),
   strengths: z.array(z.string()).default([]),
   growthAreas: z.array(z.string()).default([]),
+  departments: z.array(z.string()).default([]),
   currentGoals: z.array(z.object({
     goal: z.string(),
     progress: z.number().min(0).max(100)
@@ -23,6 +25,7 @@ export async function GET() {
   try {
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { prisma } = await import('@trellis/database')
     const teachers = await prisma.teacher.findMany({
@@ -73,6 +76,7 @@ export async function POST(request: NextRequest) {
     }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const body = await request.json()
     const validated = teacherSchema.parse(body)
     
@@ -84,6 +88,8 @@ export async function POST(request: NextRequest) {
         email: validated.email || undefined,
         subject: validated.subject || undefined,
         gradeLevel: validated.gradeLevel || undefined,
+        tenureStatus: validated.tenureStatus || undefined,
+        departments: validated.departments,
         schoolId: auth.schoolId,
         performanceHistory: [],
         currentGoals: validated.currentGoals,

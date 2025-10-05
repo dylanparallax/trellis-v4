@@ -11,7 +11,7 @@ const rowSchema = z.object({
   teacherEmail: z.string().optional().or(z.literal('')),
   teacherName: z.string().optional().or(z.literal('')),
   date: z.string().optional().or(z.literal('')),
-  observationType: z.enum(['FORMAL', 'INFORMAL', 'WALKTHROUGH']).default('INFORMAL'),
+  observationType: z.enum(['FORMAL', 'INFORMAL', 'WALKTHROUGH', 'OTHER']).default('INFORMAL'),
   duration: z.string().optional().or(z.literal('')),
   focusAreas: z.string().optional().or(z.literal('')),
   rawNotes: z.string().min(1, 'rawNotes required'),

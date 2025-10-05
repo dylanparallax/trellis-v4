@@ -284,7 +284,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
       </Card>
 
       {viewMode === 'grid' ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTeachers.map((teacher) => (
             <a href={`/dashboard/teachers/${teacher.id}`} key={teacher.id} className="block">
               <Card 
@@ -403,7 +403,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                       {teacher.observations.length} observations
                     </span>
                     <span>
-                      {teacher.evaluations.length} evaluations
+                      {teacher.evaluations.length} feedback
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">

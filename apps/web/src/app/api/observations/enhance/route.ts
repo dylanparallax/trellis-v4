@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const { text } = await generateText({
-        model: anthropic('claude-3-5-sonnet-20241022'),
+        model: anthropic('claude-sonnet-4-5-20250929'),
         prompt,
         temperature: 0.7,
       })

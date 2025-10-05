@@ -1,5 +1,7 @@
 import { ObservationsListClient, type ObservationItem } from '@/components/observations/observations-list-client'
 import { headers } from 'next/headers'
+import { getAuthContext } from '@/lib/auth/server'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +29,8 @@ async function getObservations(): Promise<ObservationItem[]> {
 }
 
 export default async function ObservationsPage() {
+  const auth = await getAuthContext()
+  if (auth?.role === 'TEACHER') redirect('/dashboard')
   const observations = await getObservations()
   return <ObservationsListClient initial={observations} />
 }

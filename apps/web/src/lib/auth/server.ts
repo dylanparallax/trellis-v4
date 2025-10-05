@@ -5,7 +5,7 @@ export type AuthContext = {
   userId: string
   email: string
   name: string | null
-  role: 'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN'
+  role: 'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN' | 'TEACHER'
   schoolId: string
   schoolName?: string
 }
@@ -90,23 +90,34 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     if (isDbConfigured && process.env.DEMO_MODE !== 'true') {
       try {
         const { prisma } = await import('@trellis/database')
-        const prismaUser = await prisma.user.findUnique({
-          where: { email: user.email },
-          include: { school: { select: { name: true } } },
-        })
-        if (prismaUser && prismaUser.email) {
+        // Fetch both in parallel
+        const [prismaUser, prismaTeacher] = await Promise.all([
+          prisma.user.findUnique({
+            where: { email: user.email },
+            include: { school: { select: { name: true } } },
+          }),
+          prisma.teacher.findFirst({
+            where: { email: { equals: userEmail, mode: 'insensitive' } },
+            include: { school: { select: { name: true } } },
+          }),
+        ])
+
+        // If this email belongs to a Teacher, ALWAYS prefer TEACHER role context
+        if (prismaTeacher) {
+          return {
+            userId: prismaTeacher.id,
+            email: userEmail,
+            name: composedName,
+            role: 'TEACHER',
+            schoolId: prismaTeacher.schoolId,
+            schoolName: prismaTeacher.school?.name ?? userMetadata?.schoolName,
+          }
+        }
+
+        if (prismaUser) {
           return {
             userId: prismaUser.id,
             email: prismaUser.email ?? userEmail,
-            name: prismaUser.name ?? composedName,
-            role: prismaUser.role,
-            schoolId: prismaUser.schoolId,
-            schoolName: prismaUser.school?.name ?? userMetadata?.schoolName,
-          }
-        } else if (prismaUser) {
-          return {
-            userId: prismaUser.id,
-            email: userEmail,
             name: prismaUser.name ?? composedName,
             role: prismaUser.role,
             schoolId: prismaUser.schoolId,
@@ -126,6 +137,29 @@ export async function getAuthContext(): Promise<AuthContext | null> {
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         if (supabaseUrl && supabaseAnonKey) {
           const client = createClient(supabaseUrl, supabaseAnonKey)
+          // Prefer Teacher record first for role/school scoping
+          const { data: teacher } = await client
+            .from('Teacher')
+            .select('id, email, schoolId, School(name)')
+            .eq('email', userEmail)
+            .limit(1)
+            .maybeSingle()
+          if (teacher) {
+            const schoolRelation = (teacher as { School?: { name?: string } | { name?: string }[] }).School
+            const relatedSchoolName = Array.isArray(schoolRelation)
+              ? schoolRelation[0]?.name
+              : schoolRelation?.name
+            return {
+              userId: teacher.id,
+              email: userEmail,
+              name: composedName,
+              role: 'TEACHER',
+              schoolId: teacher.schoolId ?? '',
+              schoolName: relatedSchoolName ?? userMetadata?.schoolName,
+            }
+          }
+
+          // Fallback to User role when no Teacher record exists
           const { data: dbUser } = await client
             .from('User')
             .select('name, role, schoolId, School(name)')
@@ -139,8 +173,8 @@ export async function getAuthContext(): Promise<AuthContext | null> {
                 : 'EVALUATOR') as AuthContext['role']
             const schoolRelation = (dbUser as { School?: { name?: string } | { name?: string }[] }).School
             const relatedSchoolName = Array.isArray(schoolRelation)
-              ? schoolRelation[0]?.name
-              : schoolRelation?.name
+              ? (schoolRelation as { name?: string }[])[0]?.name
+              : (schoolRelation as { name?: string } | undefined)?.name
             return {
               userId: user.id,
               email: userEmail,

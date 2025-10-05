@@ -8,7 +8,6 @@ import dynamic from 'next/dynamic'
 import { 
   Send, 
   Download, 
-  Sparkles, 
   User, 
   Copy,
   Check,
@@ -63,6 +62,9 @@ function EvaluationChatContent() {
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [isSubmittingEval, setIsSubmittingEval] = useState(false)
+  const [savedEvaluationId, setSavedEvaluationId] = useState<string>('')
+  const [deliverStatus, setDeliverStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [showDeliverToast, setShowDeliverToast] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -320,17 +322,17 @@ function EvaluationChatContent() {
             </div>
           </div>
           {currentEvaluation && teacher && (
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex justify-end gap-2">
               <Button
                 variant="default"
                 size="sm"
                 disabled={isSubmittingEval || submitSuccess}
-                onClick={async (e) => {
+                onClick={async (event) => {
                   if (!currentEvaluation || !teacher) return
                   setIsSubmittingEval(true)
                   try {
                     // Sparkles micro-interaction
-                    const btn = (e.currentTarget as HTMLButtonElement)
+                    const btn = (event.currentTarget as HTMLButtonElement)
                     const rect = btn.getBoundingClientRect()
                     const container = document.createElement('div')
                     container.style.position = 'fixed'
@@ -362,7 +364,7 @@ function EvaluationChatContent() {
                       schoolYear: schoolYear || '2024-2025',
                       content: { markdown: currentEvaluation.content },
                       summary: currentEvaluation.content.slice(0, 180),
-                      status: 'SUBMITTED',
+                      status: 'DRAFT',
                     }
                     const res = await fetch('/api/evaluations', {
                       method: 'POST',
@@ -370,6 +372,8 @@ function EvaluationChatContent() {
                       body: JSON.stringify(payload),
                     })
                     if (!res.ok) throw new Error('Failed to save evaluation')
+                    const created = await res.json() as { id: string }
+                    setSavedEvaluationId(created?.id || '')
                     setSubmitSuccess(true)
                     setShowToast(true)
                     setTimeout(() => setShowToast(false), 2500)
@@ -380,8 +384,31 @@ function EvaluationChatContent() {
                   }
                 }}
               >
-                {submitSuccess ? 'Submitted' : (isSubmittingEval ? 'Submitting…' : 'Submit Evaluation')}
+                {submitSuccess ? 'Saved' : (isSubmittingEval ? 'Saving…' : 'Save Feedback')}
               </Button>
+              {savedEvaluationId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={deliverStatus === 'sending' || deliverStatus === 'sent'}
+                  onClick={async () => {
+                    if (!savedEvaluationId) return
+                    setDeliverStatus('sending')
+                    try {
+                      const res = await fetch(`/api/evaluations/${savedEvaluationId}/deliver`, { method: 'POST' })
+                      if (!res.ok) throw new Error('Failed to submit to teacher')
+                      setDeliverStatus('sent')
+                      setShowDeliverToast(true)
+                      setTimeout(() => setShowDeliverToast(false), 2500)
+                    } catch {
+                      setDeliverStatus('error')
+                      setTimeout(() => setDeliverStatus('idle'), 2500)
+                    }
+                  }}
+                >
+                  {deliverStatus === 'sending' ? 'Submitting…' : (deliverStatus === 'sent' ? 'Submitted' : 'Submit to Teacher')}
+                </Button>
+              )}
             </div>
           )}
           
@@ -414,13 +441,16 @@ function EvaluationChatContent() {
 
       {/* Main Content */}
       <div className="flex-1 min-h-0 grid grid-cols-12 overflow-hidden">
-        {showToast && (
+          {showToast && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-            <div className="px-4 py-2 rounded-md bg-emerald-600 text-white shadow">
-              Evaluation submitted successfully
-            </div>
+            <div className="px-4 py-2 rounded-md bg-emerald-600 text-white shadow">Feedback saved</div>
           </div>
         )}
+          {showDeliverToast && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+              <div className="px-4 py-2 rounded-md bg-blue-600 text-white shadow">Submitted to teacher</div>
+            </div>
+          )}
         {/* Chat Area (left) */}
         <div className="col-span-5 min-w-0 flex flex-col border-r border-gray-200 overflow-hidden">
           {/* Messages */}

@@ -39,6 +39,8 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
   const [duration, setDuration] = useState('')
   const [focusAreas, setFocusAreas] = useState<string[]>([])
   const [observationDate, setObservationDate] = useState(new Date().toISOString().split('T')[0])
+  const [observationTime, setObservationTime] = useState('')
+  const [observationSubject, setObservationSubject] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [isSavingDraft, setIsSavingDraft] = useState(false)
@@ -152,6 +154,8 @@ Excellent progress on the classroom management goal from last month's observatio
         duration: parseInt(duration) || undefined,
         focusAreas,
         date: observationDate,
+        time: observationTime,
+        subject: observationSubject || undefined,
         artifacts: artifacts.map(f => ({ name: f.name, size: f.size })),
         savedAt: new Date().toISOString(),
         isDraft: true
@@ -203,6 +207,8 @@ Excellent progress on the classroom management goal from last month's observatio
         duration: parseInt(duration) || undefined,
         focusAreas,
         date: observationDate,
+        time: observationTime || undefined,
+        subject: observationSubject || undefined,
         artifacts: artifacts.map(f => ({ 
           fileName: f.name, 
           fileUrl: `demo-url/${f.name}`, // In real app, this would be uploaded
@@ -294,6 +300,7 @@ Excellent progress on the classroom management goal from last month's observatio
                 <option value="FORMAL">Formal</option>
                 <option value="INFORMAL">Informal</option>
                 <option value="WALKTHROUGH">Walkthrough</option>
+                <option value="OTHER">Other</option>
               </select>
             </div>
             
@@ -311,7 +318,7 @@ Excellent progress on the classroom management goal from last month's observatio
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium flex items-center gap-2">
                 Observation Date
@@ -322,6 +329,28 @@ Excellent progress on the classroom management goal from last month's observatio
                 onChange={(e) => setObservationDate(e.target.value)}
                 className="mt-1"
                 required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium flex items-center gap-2">
+                Observation Time
+              </label>
+              <Input
+                type="time"
+                value={observationTime}
+                onChange={(e) => setObservationTime(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium flex items-center gap-2">
+                Subject (optional)
+              </label>
+              <Input
+                value={observationSubject}
+                onChange={(e) => setObservationSubject(e.target.value)}
+                placeholder="e.g., Algebra"
+                className="mt-1"
               />
             </div>
           </div>

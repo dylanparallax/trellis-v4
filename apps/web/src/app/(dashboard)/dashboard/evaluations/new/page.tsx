@@ -8,6 +8,21 @@ import { Input } from '@/components/ui/input'
 import { Search, Sparkles, User, Award, ArrowLeft } from 'lucide-react'
 
 export default function NewEvaluationPage() {
+  // Client route guard: teachers should not access
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const res = await fetch('/api/me', { cache: 'no-store' })
+        if (res.ok) {
+          const me = await res.json()
+          if (me?.role === 'TEACHER') {
+            window.location.replace('/dashboard')
+          }
+        }
+      } catch {}
+    }
+    run()
+  }, [])
   const router = useRouter()
   const [selectedTeacher, setSelectedTeacher] = useState('')
   const [evaluationType, setEvaluationType] = useState('FORMATIVE')

@@ -129,13 +129,43 @@ export async function middleware(req: NextRequest) {
       return withSecurityHeaders(response)
     }
 
-    if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!session && (req.nextUrl.pathname.startsWith('/dashboard') || req.nextUrl.pathname.startsWith('/teacher'))) {
       return withSecurityHeaders(NextResponse.redirect(new URL('/login', req.url)))
     }
 
     if (session && (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup'))) {
       return withSecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)))
     }
+
+    // Role-based redirect: teacher → /teacher, staff → /dashboard
+    try {
+      const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+        cookies: {
+          get(name: string) { return req.cookies.get(name)?.value },
+          set() {},
+          remove() {},
+        },
+      })
+      const { data } = await supabase.auth.getUser()
+      const email = data.user?.email
+      if (email) {
+        // Resolve role quickly via headers fetch to API (avoids DB here)
+        const roleRes = await fetch(new URL('/api/me', req.url), { headers: { cookie: req.headers.get('cookie') || '' } })
+        if (roleRes.ok) {
+          const me = (await roleRes.json()) as { role?: string }
+          const isTeacher = me?.role === 'TEACHER'
+          const path = req.nextUrl.pathname
+          // Allow teachers to view specific evaluation detail pages under /dashboard/evaluations/:id
+          const isTeacherAllowedDashboardPath = path.startsWith('/dashboard/evaluations/')
+          if (isTeacher && (path === '/' || (path.startsWith('/dashboard') && !isTeacherAllowedDashboardPath))) {
+            return withSecurityHeaders(NextResponse.redirect(new URL('/teacher', req.url)))
+          }
+          if (!isTeacher && path.startsWith('/teacher')) {
+            return withSecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)))
+          }
+        }
+      }
+    } catch {}
 
     return withSecurityHeaders(baseResponse)
   } catch (error) {
@@ -162,6 +192,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*'
+    '/dashboard/:path*',
+    '/teacher/:path*'
   ]
 } 

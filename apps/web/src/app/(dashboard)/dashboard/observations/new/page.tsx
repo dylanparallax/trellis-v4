@@ -1,11 +1,13 @@
-'use client'
-
 import { ObservationForm } from '@/components/observations/observation-form'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { getAuthContext } from '@/lib/auth/server'
+import { redirect } from 'next/navigation'
 
-export default function NewObservationPage() {
+export default async function NewObservationPage() {
+  const auth = await getAuthContext()
+  if (auth?.role === 'TEACHER') redirect('/dashboard')
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -31,9 +33,8 @@ export default function NewObservationPage() {
       <ObservationForm 
         onSubmit={(data) => {
           console.log('Observation submitted:', data)
-          // Handle submission - could redirect to observations list
         }}
       />
     </div>
   )
-} 
+}

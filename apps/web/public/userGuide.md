@@ -56,7 +56,8 @@
   * Left: Chat with Trellis to refine the feedback (ask for rewrites, add examples, adjust tone).  
   * Right: Generated Feedback panel with version tabs (V1, V2, …).  
   * Actions: Copy or Download the current version.  
-  * When ready, click “Submit Feedback” to save it (status: SUBMITTED).
+  * When ready, click “Save Feedback” to save a draft (status: DRAFT).  
+  * After saving, click “Submit to Teacher” to deliver it to the teacher (status: SUBMITTED).
 
 ### **Settings**
 

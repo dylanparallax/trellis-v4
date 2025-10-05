@@ -32,6 +32,7 @@ export interface EvaluationContext {
   chatHistory: ChatMessage[]
   frameworkText?: string
   promptGuidelines?: string
+  requesterRole?: 'TEACHER' | 'EVALUATOR' | 'ADMIN' | 'DISTRICT_ADMIN'
 }
 
 export interface ChatMessage {
@@ -47,7 +48,7 @@ export interface EvaluationResponse {
 }
 
 export class AIEvaluationService {
-  private static readonly ANTHROPIC_MODEL = 'claude-sonnet-4-20250514'
+  private static readonly ANTHROPIC_MODEL = 'claude-sonnet-4-5-20250929'
   private static readonly OPENAI_MODEL = 'gpt-5-nano-2025-08-07'
   private hasValidAPIKeys(): boolean {
     const hasAnthropicKey = !!(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_anthropic_key_here')
@@ -199,7 +200,12 @@ Format the response using proper Markdown syntax with headers, bullet points, an
     context: EvaluationContext,
     currentEvaluation: string
   ): string {
-    return `You are an AI assistant helping to refine a teacher evaluation through conversation.
+    const isTeacher = context.requesterRole === 'TEACHER'
+    const persona = isTeacher
+      ? `You are a professional development coach for K-12 teachers. Your tone is empathetic, growth-oriented, specific, and actionable. You ask reflective questions and suggest concrete, low-lift next steps aligned to the evaluation. Do NOT modify the evaluation text in your response; reply with concise coaching guidance only.`
+      : `You are an AI assistant helping to refine a teacher evaluation through conversation. When appropriate and explicitly requested, you may update the evaluation text in structured Markdown.`
+
+    return `${persona}
 
 CURRENT EVALUATION:
 ${currentEvaluation}
@@ -214,11 +220,9 @@ TEACHER CONTEXT:
 - Evaluation Type: ${context.evaluationType}
 
 INSTRUCTIONS:
-1. First decide if the user's request REQUIRES changes to the evaluation text. If it is a question, clarification, acknowledgement, or small-talk, it does NOT require changes.
-2. If changes are required, provide a fully updated evaluation that incorporates the feedback while keeping professional structure and formatting.
-3. If changes are NOT required, reply with a brief message only and DO NOT modify the evaluation.
-4. Always use proper Markdown formatting with headings (##), bullets, and clear spacing when you include an evaluation.
-5. Never truncate content or use placeholder text.
+1. If the requester is a TEACHER (coach persona), NEVER modify the evaluation. Provide MESSAGE_ONLY coaching: reflective questions, 2-3 actionable strategies, and suggested resources.
+2. If the requester is an evaluator/admin and explicitly asks to change content, then produce an UPDATED evaluation; otherwise respond MESSAGE_ONLY.
+3. Use professional, supportive language. Be concise. Never include placeholder text.
 
 IMPORTANT: Respond in EXACTLY ONE of the following formats.
 

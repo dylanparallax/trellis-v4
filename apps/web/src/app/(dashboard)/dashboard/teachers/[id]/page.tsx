@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MessageSquare, Binoculars, ArrowLeft } from 'lucide-react'
+import InviteTeacherButton from '@/components/teachers/invite-teacher-button'
 
 async function getBaseUrl(): Promise<string> {
   const env = process.env.NEXT_PUBLIC_BASE_URL
@@ -84,6 +85,11 @@ export default async function TeacherDashboardPage({ params }: PageParams) {
         <CardContent className="space-y-4">
           <div className="text-sm text-muted-foreground">{teacher.subject || '—'} • Grade {teacher.gradeLevel || '—'}</div>
           {teacher.email && <div className="text-sm">{teacher.email}</div>}
+          {teacher.email ? (
+            <div className="pt-2">
+              <InviteTeacherButton email={teacher.email} teacherId={teacher.id} />
+            </div>
+          ) : null}
           {teacher.strengths?.length ? (
             <div>
               <h4 className="text-sm font-medium mb-1">Strengths</h4>

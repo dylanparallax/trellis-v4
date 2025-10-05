@@ -41,6 +41,7 @@ function useCurrentUser() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [profileName, setProfileName] = useState<string | null>(null)
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
+  const [role, setRole] = useState<'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN' | 'TEACHER' | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -59,9 +60,10 @@ function useCurrentUser() {
         // Fetch DB-backed name/role
         const res = await fetch('/api/me', { cache: 'no-store' })
         if (res.ok) {
-          const data: { name?: string | null; photoUrl?: string | null } = await res.json()
+          const data: { name?: string | null; photoUrl?: string | null; role?: 'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN' | 'TEACHER' } = await res.json()
           if (data?.name) setProfileName(data.name)
           if (data?.photoUrl) setProfilePhotoUrl(data.photoUrl)
+          if (data?.role) setRole(data.role)
         }
       } catch (error) {
         console.error('Error fetching user:', error)
@@ -89,14 +91,14 @@ function useCurrentUser() {
     }
   }, [])
 
-  return { user, profileName, profilePhotoUrl, loading }
+  return { user, profileName, profilePhotoUrl, role, loading }
 }
 
-export function Sidebar() {
+export function Sidebar({ initialRole }: { initialRole?: 'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN' | 'TEACHER' }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const { user, profileName, profilePhotoUrl, loading } = useCurrentUser()
+  const { user, profileName, profilePhotoUrl, role, loading } = useCurrentUser()
 
   const handleLogout = async () => {
     try {
@@ -151,8 +153,19 @@ export function Sidebar() {
     return 'User'
   }
 
+  const navItems = (() => {
+    const effectiveRole = role ?? initialRole ?? null
+    if (effectiveRole === 'TEACHER') {
+      return [
+        { name: 'Feedback', href: '/teacher', icon: Award },
+        { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
+      ]
+    }
+    return navigation
+  })()
+
   return (
-    <div className="hidden md:flex flex-col w-56 border-r bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+    <div className="hidden md:flex sticky top-0 h-screen shrink-0 flex-col w-56 border-r bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="flex items-center gap-3 p-4 border-b">
         <Image
           src="/trellis-light.svg"
@@ -165,7 +178,7 @@ export function Sidebar() {
       </div>
       
       <nav className="flex-1 p-4 space-y-2">
-        {navigation.map((item) => {
+        {navItems.map((item) => {
           const isActive = pathname === item.href
           return (
             <Link

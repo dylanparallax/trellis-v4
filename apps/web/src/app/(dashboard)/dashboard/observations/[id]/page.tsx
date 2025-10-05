@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Calendar, Clock, ArrowLeft } from 'lucide-react'
 import ObservationDetailClient from '@/components/observations/ObservationDetailClient'
 import ObservationHeaderActions from '@/components/observations/ObservationHeaderActions'
+import { getAuthContext } from '@/lib/auth/server'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +31,8 @@ async function getObservation(id: string) {
 type PageParams = { params: Promise<{ id: string }> }
 
 export default async function ObservationDetailPage({ params }: PageParams) {
+  const auth = await getAuthContext()
+  if (auth?.role === 'TEACHER') redirect('/dashboard')
   const { id } = await params
   const observation = await getObservation(id)
   if (!observation) {

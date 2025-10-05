@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     // Auth only required when using real DB
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     // Fetch core entities from DB (non-demo)
     const { prisma } = await import('@trellis/database')
@@ -63,6 +64,22 @@ export async function POST(request: NextRequest) {
       createdAt: e.createdAt,
       type: e.type,
       summary: e.summary ?? undefined,
+      // Expose only APPROVED artifacts into prompts context
+      artifacts: (() => {
+        try {
+          const c = e.content
+          if (c && typeof c === 'object') {
+            const meta = (c as { meta?: Record<string, unknown> }).meta || {}
+            const list = (meta.artifacts as Array<Record<string, unknown>> | undefined) || []
+            return list.filter(a => (a?.status as string) === 'APPROVED').map(a => ({
+              fileName: String(a.fileName || ''),
+              fileType: String(a.fileType || ''),
+              fileUrl: String(a.fileUrl || ''),
+            }))
+          }
+        } catch {}
+        return []
+      })(),
     }))
 
     const school = await prisma.school.findUnique({ where: { id: auth.schoolId } })
