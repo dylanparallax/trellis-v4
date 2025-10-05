@@ -25,8 +25,8 @@ export default async function TeacherHomePage() {
           id: e.id,
           createdAt: e.createdAt.toISOString(),
           submittedAt: e.submittedAt ? e.submittedAt.toISOString() : null,
-          type: e.type as any,
-          status: e.status as any,
+          type: e.type as 'FORMATIVE' | 'SUMMATIVE' | 'MID_YEAR' | 'END_YEAR',
+          status: e.status as 'DRAFT' | 'SUBMITTED' | 'ACKNOWLEDGED',
           evaluatorName: e.evaluator?.name || null,
         }))}
       />

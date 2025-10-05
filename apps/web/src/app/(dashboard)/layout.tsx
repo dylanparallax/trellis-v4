@@ -42,9 +42,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
 
     return (
       <div className="flex min-h-screen">
-        <Sidebar initialRole={auth.role as any} />
+        <Sidebar initialRole={auth.role} />
         <div className="flex-1 flex flex-col">
-          <DashboardNav schoolName={schoolName} role={auth.role as any} />
+          <DashboardNav schoolName={schoolName} role={auth.role} />
           <main className="flex-1 p-4 sm:p-6">
             <div className="max-w-7xl mx-auto px-0 sm:px-2">
               {children}

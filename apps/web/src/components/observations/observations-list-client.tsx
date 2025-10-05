@@ -390,12 +390,13 @@ export function ObservationsListClient({ initial }: Props) {
                         {observation.duration} minutes
                       </div>
                     ) : null}
-                    {typeof (observation as any).subject === 'string' && (observation as any).subject ? (
+                    {/* Support legacy observations that may have subject at root */}
+                    {typeof (observation as unknown as { subject?: string }).subject === 'string' && (observation as unknown as { subject?: string }).subject ? (
                       <div className="flex items-center gap-1">
                         {(/* subject icon inline to avoid new import */
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5"><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22h11a2.5 2.5 0 0 0 2.5-2.5V7.75A2.75 2.75 0 0 0 17.25 5H7A3 3 0 0 0 4 8v11.5Zm3.5-14h9.75c.69 0 1.25.56 1.25 1.25V19.5c0 .69-.56 1.25-1.25 1.25h-11A1.25 1.25 0 0 1 5 19.5V8c0-1.1.9-2 2-2Zm.75 4.25c0-.41.34-.75.75-.75h6a.75.75 0 1 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm0 3c0-.41.34-.75.75-.75h6a.75.75 0 1 1 0 1.5h-6a.75.75 0 0 1-.75-.75Z"/></svg>
                         )}
-                        {(observation as any).subject}
+                        {(observation as unknown as { subject?: string }).subject}
                       </div>
                     ) : null}
                     <div className="flex items-center gap-1">
@@ -575,7 +576,7 @@ export function ObservationsListClient({ initial }: Props) {
                       const refreshed = await fetch('/api/observations', { cache: 'no-store' })
                       if (refreshed.ok) {
                         const json = await refreshed.json() as Array<ObservationItem>
-                        setObservations(json.map((o) => ({ ...o, date: typeof o.date === 'string' ? o.date : new Date(o.date as unknown as string).toISOString() })))
+                        setObservations(json.map((o) => ({ ...o, date: typeof o.date === 'string' ? o.date : new Date(String((o as unknown as { date: string | number | Date }).date)).toISOString() })))
                       }
                     } catch {
                       setImportResult({ createdCount: 0, errors: [{ row: 0, error: 'Network error' }] })

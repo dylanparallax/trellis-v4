@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     if (auth.role === 'TEACHER') {
       // Teacher notifications: count evaluations submitted to them but not acknowledged
       const teacherByEmail = await prisma.teacher.findFirst({ where: { email: { equals: auth.email, mode: 'insensitive' }, schoolId: auth.schoolId }, select: { id: true } })
-      let teacherId: string | null = teacherByEmail?.id || null
+      const teacherId: string | null = teacherByEmail?.id || null
       // No additional fallback; only email-based match is used for teacher context
       if (!teacherId) return NextResponse.json({ count: 0 })
       const count = await prisma.evaluation.count({ where: { teacherId, schoolId: auth.schoolId, status: 'SUBMITTED' } })

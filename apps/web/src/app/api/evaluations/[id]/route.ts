@@ -27,7 +27,7 @@ export async function GET(
     if (auth.role === 'TEACHER') {
       // Resolve teacher either by email or via User.teacherId link
       const teacherByEmail = await prisma.teacher.findFirst({ where: { email: { equals: auth.email, mode: 'insensitive' }, schoolId: auth.schoolId }, select: { id: true } })
-      let teacherId: string | null = teacherByEmail?.id || null
+      const teacherId: string | null = teacherByEmail?.id || null
       // No additional fallback; only email-based match is used for teacher context
       if (!teacherId || teacherId !== evaluation.teacher.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

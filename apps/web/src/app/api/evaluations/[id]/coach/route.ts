@@ -66,7 +66,7 @@ export async function POST(
         strengths: (evaluation.teacher.strengths as string[] | null) ?? undefined,
         growthAreas: (evaluation.teacher.growthAreas as string[] | null) ?? undefined,
       },
-      evaluationType: evaluation.type as any,
+      evaluationType: evaluation.type as 'FORMATIVE' | 'SUMMATIVE' | 'MID_YEAR' | 'END_YEAR',
       schoolYear: String(new Date().getFullYear()),
       previousObservations,
       previousEvaluations,
