@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
+import type { Prisma } from '@prisma/client'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
@@ -31,16 +32,16 @@ export async function POST(
     }
 
     const now = new Date()
-    let nextContent: unknown = existing.content
+    let nextContent: Prisma.InputJsonValue | null = existing.content as unknown as Prisma.InputJsonValue | null
     try {
       if (typeof existing.content === 'string') {
-        nextContent = { markdown: existing.content, meta: { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } }
+        nextContent = { markdown: existing.content, meta: { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } } as Prisma.InputJsonValue
       } else if (existing.content && typeof existing.content === 'object' && !Array.isArray(existing.content)) {
-        const obj = existing.content as Record<string, unknown>
+        const obj = existing.content as unknown as Record<string, unknown>
         const prevMeta = (obj.meta as Record<string, unknown> | undefined) || {}
-        nextContent = { ...obj, meta: { ...prevMeta, acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } }
+        nextContent = { ...obj, meta: { ...prevMeta, acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } } as unknown as Prisma.InputJsonValue
       } else {
-        nextContent = { markdown: '', meta: { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } }
+        nextContent = { markdown: '', meta: { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } } as Prisma.InputJsonValue
       }
     } catch {}
 
