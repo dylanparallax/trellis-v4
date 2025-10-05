@@ -140,7 +140,7 @@ export async function PATCH(
     if (!evaluation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     assertSameSchool(evaluation, auth.schoolId)
 
-    let nextContent: unknown = evaluation.content
+    let nextContent: Prisma.InputJsonValue | undefined = undefined
     let found = false
     if (evaluation.content && typeof evaluation.content === 'object' && !Array.isArray(evaluation.content)) {
       const obj = evaluation.content as Record<string, unknown>
@@ -154,12 +154,12 @@ export async function PATCH(
         return art
       })
       if (!found) return NextResponse.json({ error: 'Artifact not found' }, { status: 404 })
-      nextContent = { ...obj, meta: { ...meta, artifacts: list } }
+      nextContent = { ...obj, meta: { ...meta, artifacts: list } } as unknown as Prisma.InputJsonValue
     } else {
       return NextResponse.json({ error: 'No artifacts to update' }, { status: 400 })
     }
 
-    await prisma.evaluation.update({ where: { id }, data: { content: nextContent } })
+    await prisma.evaluation.update({ where: { id }, data: { content: nextContent as Prisma.InputJsonValue } })
     return NextResponse.json({ ok: true })
   } catch (error) {
     if (error instanceof z.ZodError) {
