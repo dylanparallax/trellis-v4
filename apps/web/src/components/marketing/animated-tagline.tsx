@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Wand2, FileText, Shield, TrendingUp, Zap, GraduationCap, BarChart3, Users } from "lucide-react"
+import { Wand2, FileText, Shield, TrendingUp, Zap, GraduationCap, BarChart3, Users, Lock, Heart, Database } from "lucide-react"
 
 export function AnimatedTagline() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -10,12 +10,12 @@ export function AnimatedTagline() {
 
   const taglines = [
     {
-      text: "AI-powered Teacher Evaluations",
+      text: "AI-powered Teacher Feedback",
       icon: <Wand2 className="mr-2 h-3 w-3" />,
       color: "bg-indigo-500/20 text-indigo-500",
     },
     {
-      text: "Enhanced Observation Notes",
+      text: "AI-Enhanced Observations",
       icon: <FileText className="mr-2 h-3 w-3" />,
       color: "bg-blue-500/20 text-blue-500",
     },
@@ -30,7 +30,7 @@ export function AnimatedTagline() {
       color: "bg-purple-500/20 text-purple-500",
     },
     {
-      text: "80% Time Savings",
+      text: "10+ hours saved per teacher",
       icon: <Zap className="mr-2 h-3 w-3" />,
       color: "bg-orange-500/20 text-orange-500",
     },
@@ -39,15 +39,26 @@ export function AnimatedTagline() {
       icon: <GraduationCap className="mr-2 h-3 w-3" />,
       color: "bg-teal-500/20 text-teal-500",
     },
-    {
-      text: "Comprehensive 8-12 Page Reports",
-      icon: <BarChart3 className="mr-2 h-3 w-3" />,
-      color: "bg-pink-500/20 text-pink-500",
-    },
+   
     {
       text: "Institutional Memory",
       icon: <Users className="mr-2 h-3 w-3" />,
       color: "bg-cyan-500/20 text-cyan-500",
+    },
+    {
+      text: "Enterprise-grade Security",
+      icon: <Lock className="mr-2 h-3 w-3" />,
+      color: "bg-red-500/20 text-red-500",
+    },
+    {
+      text: "Teacher-focused Feedback",
+      icon: <Heart className="mr-2 h-3 w-3" />,
+      color: "bg-rose-500/20 text-rose-500",
+    },
+    {
+      text: "Private & Secure Data",
+      icon: <Database className="mr-2 h-3 w-3" />,
+      color: "bg-emerald-500/20 text-emerald-500",
     },
   ]
 

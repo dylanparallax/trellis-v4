@@ -3,7 +3,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AnimatedTagline } from "@/components/marketing/animated-tagline"
-import { ArrowRight, TrendingUp, Star, MessageSquare, Heart, Plus } from "lucide-react"
+import { ArrowRight, TrendingUp, Star, MessageSquare, Heart, Plus, Shield, Lock, Database, Eye, CheckCircle2, Server, Check, Zap, Building2 } from "lucide-react"
 import StakeholderToggle from "@/components/marketing/stakeholder-toggle"
 import RoiCalculator from "@/components/marketing/roi-calculator"
 
@@ -88,9 +88,9 @@ export function LandingPage() {
 
       <section className="relative overflow-hidden py-20 sm:py-32">
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl text-center">
+          <div className="mx-auto max-w-4xl text-center">
             <AnimatedTagline />
-            <h1 className="text-6xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
+            <h1 className="text-10xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
               Give every teacher the
               <span className="relative bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 {" "}personalized feedback {" "}
@@ -98,7 +98,7 @@ export function LandingPage() {
               </span>
               they deserve.
             </h1>
-            <h2 className="mt-6 text-2xl leading-8 text-muted-foreground sm:text-2xl">
+            <h2 className="mt-6 text-3xl leading-8 text-muted-foreground sm:text-2xl">
               From scattered observations to comprehensive, continuous feedback that helps teachers thrive.
             </h2>
             <div className="mt-10 flex items-center justify-center gap-x-6">
@@ -155,6 +155,202 @@ export function LandingPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+{/* Section 2: Enterprise-Grade Security & Privacy */}
+      <section className="py-20 sm:py-32">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+                Enterprise-Grade Security
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                Trellis is built on industry-leading infrastructure with multiple layers of protection for sensitive educational information.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+              <Card className="border-1 hover:border-primary/50 transition-colors duration-300">
+                <CardHeader>
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg">
+                      <Lock className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <CardTitle className="text-xl">Industry Certifications</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    Our AI infrastructure maintains the highest security standards:
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>SOC 2 Type 2</strong> – Rigorous security controls audited annually</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>ISO 27001</strong> – International information security standard</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>ISO 42001</strong> – AI management system certification</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>HIPAA Compliant</strong> – Healthcare-grade data protection</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>CSA Star</strong> – Cloud security excellence verified</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="border-1 hover:border-primary/50 transition-colors duration-300">
+                <CardHeader>
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg">
+                      <Database className="w-5 h-5 text-purple-500" />
+                    </div>
+                    <CardTitle className="text-xl">Data Protection</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    Your sensitive data is protected at every layer:
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>End-to-end encryption</strong> for data in transit and at rest</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Zero data retention</strong> – AI providers never train on your data</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Isolated databases</strong> – Each district&apos;s data is completely separate</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Regular backups</strong> with point-in-time recovery</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>2FA authentication</strong> for added security</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="border-1 hover:border-primary/50 transition-colors duration-300">
+                <CardHeader>
+                  <div className="flex items-center space-x-3 mb-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg">
+                      <Eye className="w-5 h-5 text-green-500" />
+                    </div>
+                    <CardTitle className="text-2xl">Privacy First</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    We&apos;re committed to protecting teacher and student privacy:
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>FERPA compliant</strong> – Meets educational privacy standards</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Role-based access</strong> – Staff only see what they need</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Audit logs</strong> – Track every data access and change</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Data ownership</strong> – Your data belongs to you, always</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Easy export</strong> – Download your data anytime</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="border-1 hover:border-primary/50 transition-colors duration-300">
+                <CardHeader>
+                  <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg">
+                      <Server className="w-5 h-5 text-orange-500" />
+                    </div>
+                    <CardTitle className="text-2xl">Reliable Infrastructure</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    Built on enterprise-grade platforms you can trust:
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Database</strong> – Enterprise PostgreSQL database</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>99.9% uptime SLA</strong> – Reliable access when you need it</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Automatic scaling</strong> – Grows with your district</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>Geographic redundancy</strong> – Data replicated across regions</span>
+                    </li>
+                    <li className="flex items-start space-x-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span><strong>24/7 monitoring</strong> – Proactive threat detection</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="bg-indigo-500/10 border border-indigo-500 rounded-lg p-8 border border-border/50">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-shrink-0">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/10">
+                    <Shield className="w-8 h-8 text-indigo-500" />
+                  </div>
+                </div>
+                <div className="flex-1 text-center md:text-left">
+                  <h3 className="text-xl font-semibold mb-2">Questions about security?</h3>
+                  <p className="text-muted-foreground">
+                    We&apos;re happy to provide detailed security documentation, sign BAAs, and answer any compliance questions your district may have.
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <Button asChild variant="default" size="lg">
+                    <Link href="mailto:josh@gettrellis.app?subject=Trellis%20Security%20Inquiry">
+                      Contact Security Team
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -247,11 +443,201 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="py-20 sm:py-32 bg-muted/80">
+      <section className="py-20 sm:py-32 bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl text-center">
-            <h2 className="text-6xl font-bold tracking-tight sm:text-4xl">$100 per teacher per year</h2>
-            <p className="mt-4 text-lg text-muted-foreground">Simple, transparent pricing. All features included.</p>
+          <div className="mx-auto max-w-6xl">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl mb-4">
+                Simple, Transparent Pricing
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Start with a free trial, scale with confidence. No hidden fees, cancel anytime.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-6">
+              {/* Free Trial Tier */}
+              <Card className="relative border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
+                <CardHeader className="text-center pb-8 pt-8">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
+                    <Zap className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <CardTitle className="text-2xl mb-2">Free Trial</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-5xl font-bold">$0</span>
+                  </div>
+                  <p className="text-muted-foreground mt-2">30 days full access</p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <Button asChild className="w-full" size="lg" variant="outline">
+                    <Link href="/signup">Start Free Trial</Link>
+                  </Button>
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">What&apos;s included:</p>
+                    <ul className="space-y-3">
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Full access to all features</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Unlimited observations</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">AI-powered evaluations</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Up to 25 teachers</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Email support</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">No credit card required</span>
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Professional Tier */}
+              <Card className="relative border-2 border-primary shadow-xl hover:shadow-2xl transition-all duration-300 scale-105">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                    Most Popular
+                  </span>
+                </div>
+                <CardHeader className="text-center pb-8 pt-12">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Star className="w-6 h-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-2xl mb-2">Professional</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-5xl font-bold">$99</span>
+                    <span className="text-muted-foreground ml-2">/teacher/year</span>
+                  </div>
+                  <p className="text-muted-foreground mt-2">Billed annually</p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <Button asChild className="w-full" size="lg">
+                    <Link href="/signup">Get Started</Link>
+                  </Button>
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Everything in Free, plus:</p>
+                    <ul className="space-y-3">
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Unlimited teachers</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Advanced analytics & reports</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Custom evaluation frameworks</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Bulk observation upload</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Priority email support</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Data export capabilities</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">99.9% uptime SLA</span>
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Enterprise Tier */}
+              <Card className="relative border-2 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
+                <CardHeader className="text-center pb-8 pt-8">
+                  <div className="mx-auto w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
+                    <Building2 className="w-6 h-6 text-purple-500" />
+                  </div>
+                  <CardTitle className="text-2xl mb-2">Enterprise</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-3xl font-bold">Custom</span>
+                  </div>
+                  <p className="text-muted-foreground mt-2">For large districts</p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <Button asChild className="w-full" size="lg" variant="outline">
+                    <Link href="mailto:josh@gettrellis.app?subject=Trellis%20Enterprise%20Inquiry">
+                      Contact Sales
+                    </Link>
+                  </Button>
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Everything in Pro, plus:</p>
+                    <ul className="space-y-3">
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Volume discounts</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Dedicated account manager</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Custom integrations & API</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">SSO & advanced security</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Onboarding & training</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">Custom BAA & legal agreements</span>
+                      </li>
+                      <li className="flex items-start space-x-3">
+                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">24/7 phone & chat support</span>
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="mt-16 text-center">
+              <p className="text-muted-foreground mb-4">All plans include enterprise-grade security and compliance</p>
+              <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>SOC 2 Type 2</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>FERPA Compliant</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>HIPAA Ready</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>ISO 27001</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -305,7 +691,7 @@ export function LandingPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-foreground">Features</a></li>
                 <li><a href="#" className="hover:text-foreground">Pricing</a></li>
-                <li><a href="#" className="hover:text-foreground">Demo</a></li>
+                <li><Link href="/security" className="hover:text-foreground">Security</Link></li>
                 
               </ul>
             </div>
@@ -319,12 +705,12 @@ export function LandingPage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Support</h3>
+              <h3 className="font-semibold mb-4">Legal</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground">Help Center</a></li>
-                <li><a href="#" className="hover:text-foreground">Documentation</a></li>
-                <li><a href="#" className="hover:text-foreground">Status</a></li>
-                <li><a href="#" className="hover:text-foreground">Security</a></li>
+                <li><Link href="/security" className="hover:text-foreground">Security</Link></li>
+                <li><a href="#" className="hover:text-foreground">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-foreground">Terms of Service</a></li>
+                <li><a href="mailto:josh@gettrellis.app" className="hover:text-foreground">Contact</a></li>
               </ul>
             </div>
           </div>
@@ -334,7 +720,7 @@ export function LandingPage() {
               <div className="flex items-center space-x-6 text-sm text-muted-foreground">
                 <a href="#" className="hover:text-foreground">Privacy Policy</a>
                 <a href="#" className="hover:text-foreground">Terms of Service</a>
-                <a href="#" className="hover:text-foreground">Cookie Policy</a>
+                <Link href="/security" className="hover:text-foreground">Security</Link>
               </div>
             </div>
           </div>
