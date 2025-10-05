@@ -17,6 +17,7 @@ import Image from 'next/image'
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
 import remarkGfm from 'remark-gfm'
 import { formatMarkdownForSpacing } from '@/lib/utils'
+import LoadingAnimation from '@/components/ui/loading-animation'
 
 
 interface ChatMessage {
@@ -290,7 +291,7 @@ function EvaluationChatContent() {
   if (teacherError) return <div className="p-6 text-sm text-destructive">{teacherError}</div>
   if (!teacher) return (
     <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-2">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2" />
+      <LoadingAnimation label="Loading teacher" size={40} />
       <div className="text-sm text-muted-foreground">Loading teacher…</div>
     </div>
   )
@@ -457,7 +458,9 @@ function EvaluationChatContent() {
           <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-3" />
+                <div className="mb-3">
+                  <LoadingAnimation label="Generating feedback" size={44} />
+                </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-1">Generating feedback…</h3>
                 <p className="text-gray-500 max-w-md">Feedback can take up to one minute.</p>
               </div>

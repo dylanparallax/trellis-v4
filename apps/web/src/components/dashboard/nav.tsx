@@ -1,6 +1,7 @@
 'use client'
 
-import { Bell, Search, Menu, X, Loader2, ExternalLink, Award, Settings2 } from 'lucide-react'
+import { Bell, Search, Menu, X, ExternalLink, Award, Settings2 } from 'lucide-react'
+import LoadingAnimation from '@/components/ui/loading-animation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEffect, useState } from 'react'
@@ -121,7 +122,12 @@ export function DashboardNav({ schoolName, role }: DashboardNavProps) {
               <div className="absolute mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md overflow-hidden z-50">
                 <div className="max-h-72 overflow-auto">
                   {isLoading ? (
-                    <div className="flex items-center gap-2 p-3 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Searching…</div>
+                    <div className="flex items-center gap-3 p-3 text-sm text-muted-foreground">
+                      <div className="scale-75">
+                        <LoadingAnimation label="Searching" size={24} />
+                      </div>
+                      Searching…
+                    </div>
                   ) : results.length === 0 ? (
                     <div className="p-3 text-sm text-muted-foreground">No results</div>
                   ) : (

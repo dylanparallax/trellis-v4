@@ -10,6 +10,7 @@ import { Sparkles, Upload, Award, CheckCircle, AlertCircle } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import remarkGfm from 'remark-gfm'
 import { formatMarkdownForSpacing } from '@/lib/utils'
+import LoadingAnimation from '@/components/ui/loading-animation'
 
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
 
@@ -259,7 +260,9 @@ Excellent progress on the classroom management goal from last month's observatio
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="mx-auto mb-4">
+            <LoadingAnimation label="Loading teachers" size={40} />
+          </div>
           <p className="text-muted-foreground">Loading teachers...</p>
         </div>
       </div>

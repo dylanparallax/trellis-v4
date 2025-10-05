@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import LoadingAnimation from '@/components/ui/loading-animation'
 
 export default function SettingsPage() {
   const [framework, setFramework] = useState('')
@@ -167,7 +168,14 @@ export default function SettingsPage() {
     }
   }
 
-  if (!loaded) return <div className="p-6">Loading...</div>
+  if (!loaded) return (
+    <div className="p-6">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <LoadingAnimation label="Loading settings" size={24} />
+        Loading...
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-6">

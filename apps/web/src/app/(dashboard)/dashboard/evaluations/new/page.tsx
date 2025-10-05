@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Sparkles, User, Award, ArrowLeft } from 'lucide-react'
+import LoadingAnimation from '@/components/ui/loading-animation'
 
 export default function NewEvaluationPage() {
   // Client route guard: teachers should not access
@@ -112,7 +113,10 @@ export default function NewEvaluationPage() {
             
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {isLoading ? (
-                <div className="text-sm text-muted-foreground">Loading teachers…</div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <LoadingAnimation label="Loading teachers" size={24} />
+                  Loading teachers…
+                </div>
               ) : loadError ? (
                 <div className="text-sm text-destructive">{loadError}</div>
               ) : filteredTeachers.length === 0 ? (

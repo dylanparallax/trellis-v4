@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
+import LoadingAnimation from '@/components/ui/loading-animation'
 import Link from 'next/link'
 
 const ReactMarkdown = dynamic(() => import('react-markdown'), { ssr: false })
@@ -50,7 +51,10 @@ export default function GuidePage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-sm text-muted-foreground">Loading guide…</div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <LoadingAnimation label="Loading guide" size={24} />
+              Loading guide…
+            </div>
           ) : error ? (
             <div className="text-sm text-destructive">{error}</div>
           ) : (
