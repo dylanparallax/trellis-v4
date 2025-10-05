@@ -6,7 +6,6 @@ import { z } from 'zod'
 // Import Prisma dynamically to avoid failures when DATABASE_URL isn't set
 import { getAuthContext } from '@/lib/auth/server'
 import { AIEvaluationService } from '@/lib/ai/evaluation-service'
-import { getTeacherById, getObservationsByTeacherId, getEvaluationsByTeacherId } from '@/lib/data/mock-data'
 
 const requestSchema = z.object({
   userMessage: z.string().min(1),
@@ -29,47 +28,7 @@ export async function POST(request: NextRequest) {
     const json = await request.json()
     const { userMessage, teacherId, evaluationType, schoolYear, currentEvaluation } = requestSchema.parse(json)
 
-    // Demo-mode fallback: use mock data only when explicitly enabled
-    if (process.env.DEMO_MODE === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
-      const mock = getTeacherById(teacherId)
-      if (!mock) {
-        return NextResponse.json({ error: 'Teacher not found' }, { status: 404 })
-      }
-      const teacher = {
-        id: mock.id,
-        name: mock.name,
-        subject: mock.subject ?? undefined,
-        gradeLevel: mock.gradeLevel ?? undefined,
-        strengths: mock.strengths ?? [],
-        growthAreas: mock.growthAreas ?? [],
-      }
-      const previousObservations = getObservationsByTeacherId(teacherId).map((o) => ({
-        date: o.date as Date,
-        enhancedNotes: (o as { enhancedNotes?: string }).enhancedNotes ?? undefined,
-        rawNotes: (o as { rawNotes: string }).rawNotes,
-      }))
-      const previousEvaluations = getEvaluationsByTeacherId(teacherId).map((e) => ({
-        createdAt: e.createdAt as Date,
-        type: e.type as 'FORMATIVE' | 'SUMMATIVE' | 'MID_YEAR' | 'END_YEAR',
-        summary: e.summary ?? undefined,
-      }))
-
-      const evaluationService = new AIEvaluationService()
-      const response = await evaluationService.handleChatMessage(
-        userMessage,
-        {
-          teacher,
-          evaluationType,
-          schoolYear,
-          previousObservations,
-          previousEvaluations,
-          chatHistory: [],
-        },
-        currentEvaluation,
-      )
-
-      return NextResponse.json(response)
-    }
+    // Mock data removed: always use database-backed path
 
     const { prisma } = await import('@trellis/database')
     const teacherRecord = await prisma.teacher.findUnique({ where: { id: teacherId } })
