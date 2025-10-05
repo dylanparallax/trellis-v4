@@ -7,8 +7,7 @@ import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 
 export async function GET(request: Request) {
   try {
-    // Request has no Headers type; cast from any to extract headers
-    const ip = (request as unknown as { headers: Headers }).headers
+    const ip = getClientIpFromHeaders(request.headers as Headers)
     const rl = checkRateLimit(ip, 'notifications:GET', 120, 60_000)
     if (!rl.allowed) {
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429, headers: { 'Retry-After': String(rl.retryAfterSeconds) } })
