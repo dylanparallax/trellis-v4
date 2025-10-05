@@ -52,19 +52,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true)
-    setError('')
-
-    try {
-      // For demo mode, just redirect to dashboard
-      router.push('/dashboard')
-    } catch {
-      setError('Demo login failed')
-      setIsLoading(false)
-    }
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <Card className="w-full max-w-md">
@@ -134,30 +121,8 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">
-                  Or
-                </span>
-              </div>
-            </div>
-            
-            <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={handleDemoLogin}
-              disabled={isLoading}
-            >
-              Try Demo Mode
-            </Button>
-          </div>
-
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            Don’t have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="/signup" className="underline">Create one</a>
           </div>
         </CardContent>
