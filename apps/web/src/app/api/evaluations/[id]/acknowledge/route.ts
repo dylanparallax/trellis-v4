@@ -33,15 +33,11 @@ export async function POST(
     const now = new Date()
     let nextContent: unknown = existing.content
     try {
-      if (existing.content && typeof existing.content === 'object' && !Array.isArray(existing.content)) {
-        const obj = existing.content as Record<string, unknown>
-        const meta = { ...(obj.meta as Record<string, unknown> | undefined), acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email }
-        nextContent = { ...obj, meta }
-      } else if (existing.content && typeof existing.content === 'string') {
+      if (typeof existing.content === 'string') {
         nextContent = { markdown: existing.content, meta: { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } }
-      } else if (existing.content && typeof existing.content === 'object' && 'markdown' in (existing.content as Record<string, unknown>)) {
-        const obj = existing.content as { markdown?: string; [k: string]: unknown }
-        const prevMeta = (obj as { meta?: Record<string, unknown> }).meta || {}
+      } else if (existing.content && typeof existing.content === 'object' && !Array.isArray(existing.content)) {
+        const obj = existing.content as Record<string, unknown>
+        const prevMeta = (obj.meta as Record<string, unknown> | undefined) || {}
         nextContent = { ...obj, meta: { ...prevMeta, acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } }
       } else {
         nextContent = { markdown: '', meta: { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } }
