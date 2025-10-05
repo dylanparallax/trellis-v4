@@ -9,6 +9,8 @@ export const mockTeachers: Teacher[] = [
     email: 'sarah.johnson@school.edu',
     schoolId: '1',
     photoUrl: null,
+    departments: [],
+    tenureStatus: null,
     performanceHistory: [],
     currentGoals: [],
     strengths: [
@@ -25,7 +27,7 @@ export const mockTeachers: Teacher[] = [
     ],
     createdAt: new Date('2016-08-15'),
     updatedAt: new Date()
-  },
+  } as unknown as Teacher,
   {
     id: '2',
     name: 'Michael Chen',
@@ -34,6 +36,8 @@ export const mockTeachers: Teacher[] = [
     email: 'michael.chen@school.edu',
     schoolId: '1',
     photoUrl: null,
+    departments: [],
+    tenureStatus: null,
     performanceHistory: [],
     currentGoals: [],
     strengths: [
@@ -50,7 +54,7 @@ export const mockTeachers: Teacher[] = [
     ],
     createdAt: new Date('2019-08-20'),
     updatedAt: new Date()
-  },
+  } as unknown as Teacher,
   {
     id: '3',
     name: 'Emily Rodriguez',
@@ -59,6 +63,8 @@ export const mockTeachers: Teacher[] = [
     email: 'emily.rodriguez@school.edu',
     schoolId: '1',
     photoUrl: null,
+    departments: [],
+    tenureStatus: null,
     performanceHistory: [],
     currentGoals: [],
     strengths: [
@@ -75,7 +81,7 @@ export const mockTeachers: Teacher[] = [
     ],
     createdAt: new Date('2012-08-10'),
     updatedAt: new Date()
-  }
+  } as unknown as Teacher
 ]
 
 export const mockObservations: Observation[] = [
