@@ -32,18 +32,21 @@ export async function POST(
     }
 
     const now = new Date()
-    let nextContent: Prisma.InputJsonValue | null = existing.content as unknown as Prisma.InputJsonValue | null
+    const metaBase = { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email }
+    let nextContent: Prisma.InputJsonValue = { markdown: '', meta: metaBase } as unknown as Prisma.InputJsonValue
     try {
       if (typeof existing.content === 'string') {
-        nextContent = { markdown: existing.content, meta: { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } } as Prisma.InputJsonValue
+        nextContent = { markdown: existing.content, meta: metaBase } as unknown as Prisma.InputJsonValue
       } else if (existing.content && typeof existing.content === 'object' && !Array.isArray(existing.content)) {
         const obj = existing.content as unknown as Record<string, unknown>
         const prevMeta = (obj.meta as Record<string, unknown> | undefined) || {}
-        nextContent = { ...obj, meta: { ...prevMeta, acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } } as unknown as Prisma.InputJsonValue
+        nextContent = { ...obj, meta: { ...prevMeta, ...metaBase } } as unknown as Prisma.InputJsonValue
       } else {
-        nextContent = { markdown: '', meta: { acknowledgedAt: now.toISOString(), acknowledgedByEmail: auth.email } } as Prisma.InputJsonValue
+        nextContent = { markdown: '', meta: metaBase } as unknown as Prisma.InputJsonValue
       }
-    } catch {}
+    } catch {
+      nextContent = { markdown: '', meta: metaBase } as unknown as Prisma.InputJsonValue
+    }
 
     const updated = await prisma.evaluation.update({
       where: { id },
