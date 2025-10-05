@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
 import { Sparkles, Upload, Award, CheckCircle, AlertCircle } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import remarkGfm from 'remark-gfm'
@@ -44,6 +45,14 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
   const [draftStatus, setDraftStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [isLoadingTeachers, setIsLoadingTeachers] = useState(true)
+
+  // Convert teachers to combobox options
+  const teacherOptions: ComboboxOption[] = useMemo(() => {
+    return teachers.map((teacher) => ({
+      value: teacher.id,
+      label: `${teacher.name} - ${teacher.subject} (Grade ${teacher.gradeLevel})`,
+    }))
+  }, [teachers])
 
   // Fetch teachers from API
   useEffect(() => {
@@ -262,23 +271,17 @@ Excellent progress on the classroom management goal from last month's observatio
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium flex items-center gap-2">
-    
+              <label className="text-sm font-medium flex items-center gap-2 mb-1">
                 Teacher
               </label>
-              <select
+              <Combobox
+                options={teacherOptions}
                 value={selectedTeacherId}
-                onChange={(e) => setSelectedTeacherId(e.target.value)}
-                className="w-full mt-1 p-2 pr-10 border rounded-md bg-background appearance-none"
-                required
-              >
-                <option value="">Select a teacher...</option>
-                {teachers.map((teacher) => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.name} - {teacher.subject} (Grade {teacher.gradeLevel})
-                  </option>
-                ))}
-              </select>
+                onValueChange={setSelectedTeacherId}
+                placeholder="Select a teacher..."
+                searchPlaceholder="Type to search teachers..."
+                emptyText="No teachers found."
+              />
             </div>
             
             <div>
