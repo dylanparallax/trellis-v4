@@ -16,9 +16,9 @@ export async function GET() {
     let schoolName = auth.schoolName
     let photoUrl: string | undefined
 
-    // Enrich from Prisma whenever DB is configured and not in demo mode
+    // Enrich from Prisma whenever DB is configured
     const isDbConfigured = Boolean(process.env.DATABASE_URL)
-    if (isDbConfigured && process.env.DEMO_MODE !== 'true') {
+    if (isDbConfigured) {
       try {
         const { prisma } = await import('@trellis/database')
         const user = await prisma.user.findUnique({

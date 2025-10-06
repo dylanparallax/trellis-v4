@@ -51,17 +51,7 @@ export async function getSupabaseServerClient() {
 
 export async function getAuthContext(): Promise<AuthContext | null> {
   try {
-    // Enable demo mode only when explicitly set
-    if (process.env.DEMO_MODE === 'true') {
-      return {
-        userId: 'demo-user-1',
-        email: 'demo@trellis.local',
-        name: 'Demo User',
-        role: 'ADMIN',
-        schoolId: 'demo-school-1',
-        schoolName: 'Demo School',
-      }
-    }
+    // Demo mode disabled entirely; require real auth
     
     const supabase = await getSupabaseServerClient()
     const { data, error } = await supabase.auth.getUser()
@@ -87,7 +77,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
       null
 
     // Prefer Prisma when DATABASE_URL is configured and not in demo mode
-    if (isDbConfigured && process.env.DEMO_MODE !== 'true') {
+    if (isDbConfigured) {
       try {
         const { prisma } = await import('@trellis/database')
         // Fetch both in parallel
@@ -130,7 +120,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     }
 
     // Fallback: try Supabase public schema 'User' table if accessible and not in demo mode
-    if (process.env.DEMO_MODE !== 'true') {
+    {
       try {
         const { createClient } = await import('@supabase/supabase-js')
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

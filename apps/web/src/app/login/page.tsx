@@ -23,12 +23,8 @@ export default function LoginPage() {
     setError('')
 
     try {
-      // Check for demo mode (only when explicitly enabled)
-      const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !isSupabaseConfigured
-      
-      if (isDemoMode) {
-        // Demo mode: skip Supabase and go to dashboard
-        router.push('/dashboard')
+      if (!isSupabaseConfigured) {
+        setError('Authentication is not configured. Please contact support.')
         return
       }
       
@@ -45,8 +41,7 @@ export default function LoginPage() {
         router.push('/dashboard')
       }
     } catch {
-      const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true' || !isSupabaseConfigured
-      setError(isDemoMode ? 'Demo mode: routing to dashboard.' : 'Login failed. Check your credentials.')
+      setError('Login failed. Check your credentials.')
     } finally {
       setIsLoading(false)
     }

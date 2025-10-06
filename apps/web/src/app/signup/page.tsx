@@ -28,7 +28,7 @@ export default function SignupPage() {
 
     try {
       if (!isSupabaseConfigured) {
-        router.push('/dashboard')
+        setError('Authentication is not configured. Please contact support.')
         return
       }
 

@@ -79,14 +79,28 @@ export async function POST(request: NextRequest) {
     }
     const auth = await getAuthContext()
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (auth.role === 'TEACHER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const body = await request.json()
     const validated = observationSchema.parse(body)
     
     const { prisma } = await import('@trellis/database')
-    // Resolve Prisma user id to ensure FK integrity
-    const prismaUser = await prisma.user.findUnique({ where: { email: auth.email } })
+    // Verify the teacher belongs to the same school
+    const teacher = await prisma.teacher.findUnique({ where: { id: validated.teacherId }, select: { schoolId: true } })
+    if (!teacher || teacher.schoolId !== auth.schoolId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Resolve Prisma user id to ensure FK integrity (auto-create if missing)
+    let prismaUser = await prisma.user.findUnique({ where: { email: auth.email } })
     if (!prismaUser) {
-      return NextResponse.json({ error: 'User not found in database' }, { status: 403 })
+      prismaUser = await prisma.user.create({
+        data: {
+          email: auth.email,
+          name: auth.name ?? auth.email.split('@')[0],
+          role: 'EVALUATOR',
+          schoolId: auth.schoolId,
+        },
+      })
     }
     // Normalize provided date, accepting both ISO and YYYY-MM-DD
     const dateInput = validated.date

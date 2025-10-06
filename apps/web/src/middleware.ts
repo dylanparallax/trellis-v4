@@ -29,17 +29,10 @@ function withSecurityHeaders(response: NextResponse) {
 
 export async function middleware(req: NextRequest) {
   try {
-    // Enable demo mode only when explicitly set
-    const isDemoMode = process.env.DEMO_MODE === 'true'
-    if (isDemoMode) {
-      return withSecurityHeaders(NextResponse.next({ request: { headers: req.headers } }))
-    }
-
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
-    // If Supabase is not configured, avoid attempting network calls in middleware.
-    // Instead, require auth by redirecting dashboard routes to /login.
+    // If Supabase is not configured, require auth by redirecting protected routes to /login.
     const isSupabaseConfigured = Boolean(
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
@@ -48,8 +41,10 @@ export async function middleware(req: NextRequest) {
     )
 
     if (!isSupabaseConfigured) {
-      // If Supabase is not configured, allow all routes (demo/dev mode)
-      return withSecurityHeaders(NextResponse.next())
+      if (req.nextUrl.pathname.startsWith('/dashboard') || req.nextUrl.pathname.startsWith('/teacher')) {
+        return withSecurityHeaders(NextResponse.redirect(new URL('/login', req.url)))
+      }
+      return withSecurityHeaders(NextResponse.next({ request: { headers: req.headers } }))
     }
 
     // Base response where any refreshed cookies will be attached

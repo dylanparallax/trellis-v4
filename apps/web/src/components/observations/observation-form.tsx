@@ -61,7 +61,7 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const response = await fetch('/api/teachers?schoolId=demo-school-1')
+        const response = await fetch('/api/teachers')
         if (response.ok) {
           const data = await response.json()
           setTeachers(data)
@@ -109,26 +109,7 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
       setEnhancedNotes(data.enhancedNotes)
     } catch (error) {
       console.error('Enhancement failed:', error)
-      // Fallback to demo enhancement
-      const enhanced = `
-**Instructional Strengths Observed:**
-• Effective classroom management with clear expectations
-• Strong student engagement through interactive activities
-• Appropriate use of formative assessment strategies
-
-**Areas for Growth:**
-• Consider providing more differentiated instruction for diverse learners
-• Opportunity to incorporate more student-led discussions
-
-**Next Steps:**
-1. Implement small-group activities to support struggling students
-2. Add more open-ended questions to promote critical thinking
-3. Continue building on the strong classroom culture you've established
-
-**Connection to Previous Goals:**
-Excellent progress on the classroom management goal from last month's observation.
-      `
-      setEnhancedNotes(enhanced)
+      setEnhancedNotes('')
     } finally {
       setIsEnhancing(false)
     }
