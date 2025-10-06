@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { getAuthContext } from '@/lib/auth/server'
 import { redirect } from 'next/navigation'
 
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 async function getBaseUrl(): Promise<string> {

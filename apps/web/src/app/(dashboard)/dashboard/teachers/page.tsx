@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 import { TeacherList } from '@/components/teachers/teacher-list'
 import { getAuthContext } from '@/lib/auth/server'
 

@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 import { ObservationForm } from '@/components/observations/observation-form'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'

@@ -1,3 +1,4 @@
+export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 // Import Prisma dynamically to avoid SSR crashes when DATABASE_URL is not set
 import { z } from 'zod'

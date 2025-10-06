@@ -7,8 +7,7 @@ import Link from 'next/link'
 import { prisma } from '@trellis/database'
 import { getAuthContext } from '@/lib/auth/server'
 import { startOfMonth, endOfMonth, format, subDays } from 'date-fns'
-import { ObservationsLineChart, type ObservationsSeriesPoint } from '@/components/analytics/observations-line-chart'
-import { FocusPieChart } from '@/components/analytics/focus-pie-chart'
+import type { ObservationsSeriesPoint } from '@/components/analytics/observations-line-chart'
 
 export default async function DashboardPage({ searchParams }: { searchParams?: Promise<{ timeframe?: string }> }) {
   const auth = await getAuthContext()
@@ -334,12 +333,6 @@ function QuickActions({ className }: { className?: string }) {
           <Link href="/dashboard/teachers">
             <Users className="mr-2 h-4 w-4" />
             Manage Teachers
-          </Link>
-        </Button>
-        <Button variant="outline" className="w-full justify-start" asChild>
-          <Link href="/dashboard/analytics">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            View Analytics
           </Link>
         </Button>
       </CardContent>
