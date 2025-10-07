@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 // Import Prisma dynamically to avoid crashes when DATABASE_URL isn't configured
 import { z } from 'zod'

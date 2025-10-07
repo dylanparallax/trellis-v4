@@ -21,27 +21,35 @@ export async function getSupabaseServerClient() {
         return cookieStore.get(name)?.value
       },
       set(name: string, value: string, options: Record<string, unknown>) {
-        const cookieOptions = {
-          path: '/',
-          secure: process.env.NODE_ENV === 'production',
-          httpOnly: false,
-          sameSite: 'lax' as const,
-          maxAge: 60 * 60 * 24 * 7, // 7 days
-          ...options,
+        try {
+          const cookieOptions = {
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            httpOnly: false,
+            sameSite: 'lax' as const,
+            maxAge: 60 * 60 * 24 * 7, // 7 days
+            ...options,
+          }
+          cookieStore.set({ name, value, ...cookieOptions })
+        } catch {
+          // Ignore cookie set failures in RSC contexts
         }
-        cookieStore.set({ name, value, ...cookieOptions })
       },
       remove(name: string, options: Record<string, unknown>) {
-        const cookieOptions = {
-          path: '/',
-          secure: process.env.NODE_ENV === 'production',
-          httpOnly: false,
-          sameSite: 'lax' as const,
-          maxAge: 0,
-          expires: new Date(0),
-          ...options,
+        try {
+          const cookieOptions = {
+            path: '/',
+            secure: process.env.NODE_ENV === 'production',
+            httpOnly: false,
+            sameSite: 'lax' as const,
+            maxAge: 0,
+            expires: new Date(0),
+            ...options,
+          }
+          cookieStore.set({ name, value: '', ...cookieOptions })
+        } catch {
+          // Ignore cookie remove failures in RSC contexts
         }
-        cookieStore.set({ name, value: '', ...cookieOptions })
       },
     },
   })

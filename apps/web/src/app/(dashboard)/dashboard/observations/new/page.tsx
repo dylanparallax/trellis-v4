@@ -32,11 +32,7 @@ export default async function NewObservationPage() {
         </p>
       </div>
 
-      <ObservationForm 
-        onSubmit={(data) => {
-          console.log('Observation submitted:', data)
-        }}
-      />
+      <ObservationForm />
     </div>
   )
 }
