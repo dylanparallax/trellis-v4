@@ -1,20 +1,11 @@
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-import NextDynamic from 'next/dynamic'
+import { ObservationForm } from '@/components/observations/observation-form'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { getAuthContext } from '@/lib/auth/server'
 import { redirect } from 'next/navigation'
-
-const ObservationForm = NextDynamic(() => import('@/components/observations/observation-form').then(m => m.ObservationForm), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center p-8">
-      <div className="text-center text-muted-foreground">Loading form…</div>
-    </div>
-  )
-})
 
 export default async function NewObservationPage() {
   const auth = await getAuthContext()
