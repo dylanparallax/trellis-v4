@@ -1,13 +1,13 @@
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-import dynamic from 'next/dynamic'
+import NextDynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { getAuthContext } from '@/lib/auth/server'
 import { redirect } from 'next/navigation'
 
-const ObservationForm = dynamic(() => import('@/components/observations/observation-form').then(m => m.ObservationForm), {
+const ObservationForm = NextDynamic(() => import('@/components/observations/observation-form').then(m => m.ObservationForm), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center p-8">
