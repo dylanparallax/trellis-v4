@@ -92,7 +92,19 @@ export async function getAuthContext(): Promise<AuthContext | null> {
           }),
         ])
 
-        // If this email belongs to a Teacher, ALWAYS prefer TEACHER role context
+        // Prefer high-privilege staff roles first (ADMIN/DISTRICT_ADMIN)
+        if (prismaUser && ['ADMIN', 'DISTRICT_ADMIN'].includes(String(prismaUser.role))) {
+          return {
+            userId: prismaUser.id,
+            email: prismaUser.email ?? userEmail,
+            name: prismaUser.name ?? composedName,
+            role: prismaUser.role,
+            schoolId: prismaUser.schoolId,
+            schoolName: prismaUser.school?.name ?? userMetadata?.schoolName,
+          }
+        }
+
+        // Prefer teacher over evaluator if both exist (common when a teacher was initially created as evaluator)
         if (prismaTeacher) {
           return {
             userId: prismaTeacher.id,
@@ -104,6 +116,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
           }
         }
 
+        // Otherwise fall back to any remaining user record (e.g., EVALUATOR)
         if (prismaUser) {
           return {
             userId: prismaUser.id,
@@ -119,7 +132,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
       }
     }
 
-    // Fallback: try Supabase public schema 'User' table if accessible and not in demo mode
+    // Fallback: prefer staff user in Supabase public schema if accessible
     {
       try {
         const { createClient } = await import('@supabase/supabase-js')
@@ -127,7 +140,29 @@ export async function getAuthContext(): Promise<AuthContext | null> {
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         if (supabaseUrl && supabaseAnonKey) {
           const client = createClient(supabaseUrl, supabaseAnonKey)
-          // Prefer Teacher record first for role/school scoping
+          // Look up staff user first
+          const { data: dbUser } = await client
+            .from('User')
+            .select('name, role, schoolId, School(name)')
+            .eq('email', userEmail)
+            .limit(1)
+            .maybeSingle()
+          if (dbUser && ['ADMIN','DISTRICT_ADMIN'].includes(dbUser.role)) {
+            const schoolRelation = (dbUser as { School?: { name?: string } | { name?: string }[] }).School
+            const relatedSchoolName = Array.isArray(schoolRelation)
+              ? (schoolRelation as { name?: string }[])[0]?.name
+              : (schoolRelation as { name?: string } | undefined)?.name
+            return {
+              userId: user.id,
+              email: userEmail,
+              name: dbUser.name ?? composedName,
+              role: dbUser.role as AuthContext['role'],
+              schoolId: dbUser.schoolId ?? '',
+              schoolName: relatedSchoolName ?? userMetadata?.schoolName,
+            }
+          }
+
+          // Prefer Teacher over Evaluator when both exist
           const { data: teacher } = await client
             .from('Teacher')
             .select('id, email, schoolId, School(name)')
@@ -149,18 +184,8 @@ export async function getAuthContext(): Promise<AuthContext | null> {
             }
           }
 
-          // Fallback to User role when no Teacher record exists
-          const { data: dbUser } = await client
-            .from('User')
-            .select('name, role, schoolId, School(name)')
-            .eq('email', userEmail)
-            .limit(1)
-            .maybeSingle()
+          // Finally, treat remaining user as evaluator
           if (dbUser) {
-            const role =
-              (['ADMIN','EVALUATOR','DISTRICT_ADMIN'].includes(dbUser.role)
-                ? dbUser.role
-                : 'EVALUATOR') as AuthContext['role']
             const schoolRelation = (dbUser as { School?: { name?: string } | { name?: string }[] }).School
             const relatedSchoolName = Array.isArray(schoolRelation)
               ? (schoolRelation as { name?: string }[])[0]?.name
@@ -169,7 +194,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
               userId: user.id,
               email: userEmail,
               name: dbUser.name ?? composedName,
-              role,
+              role: 'EVALUATOR',
               schoolId: dbUser.schoolId ?? '',
               schoolName: relatedSchoolName ?? userMetadata?.schoolName,
             }
