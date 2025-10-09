@@ -49,11 +49,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-none">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Welcome to Trellis AI</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome to Trellis</CardTitle>
           <CardDescription>
-            Sign in to access your teacher evaluation dashboard
+            Sign in to access your teacher feedback dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>

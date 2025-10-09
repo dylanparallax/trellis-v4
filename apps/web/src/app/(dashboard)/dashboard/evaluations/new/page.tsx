@@ -76,14 +76,14 @@ export default function NewEvaluationPage() {
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Evaluations
+          Back to Feedback
         </Button>
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">New Teacher Evaluation</h1>
+        <h1 className="text-3xl font-bold tracking-tight">New Teacher Feedback</h1>
         <p className="text-muted-foreground">
-          Select a teacher and evaluation type to generate a comprehensive AI-powered evaluation.
+          Select a teacher and feedback type to generate comprehensive AI-powered feedback.
         </p>
       </div>
 
@@ -96,7 +96,7 @@ export default function NewEvaluationPage() {
               Select Teacher
             </CardTitle>
             <CardDescription>
-              Choose the teacher you want to evaluate
+              Choose the teacher to provide feedback for
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -150,20 +150,20 @@ export default function NewEvaluationPage() {
           </CardContent>
         </Card>
 
-        {/* Evaluation Settings */}
+        {/* Feedback Settings */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="h-5 w-5" />
-              Evaluation Settings
+              Feedback Settings
             </CardTitle>
             <CardDescription>
-              Configure the evaluation parameters
+              Configure the feedback parameters
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Evaluation Type</label>
+              <label className="text-sm font-medium">Feedback Type</label>
               <div className="mt-2 space-y-2">
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
@@ -220,10 +220,10 @@ export default function NewEvaluationPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="font-semibold">Ready to Generate Evaluation</h3>
+              <h3 className="font-semibold">Ready to Generate Feedback</h3>
               <p className="text-sm text-muted-foreground">
                 {selectedTeacher 
-                  ? `Generate a ${evaluationType.toLowerCase()} evaluation for ${teachers.find(t => t.id === selectedTeacher)?.name || 'Selected Teacher'}`
+                  ? `Generate a ${evaluationType.toLowerCase()} feedback for ${teachers.find(t => t.id === selectedTeacher)?.name || 'Selected Teacher'}`
                   : 'Select a teacher to continue'
                 }
               </p>
@@ -236,7 +236,7 @@ export default function NewEvaluationPage() {
               className={`${selectedTeacher ? '' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
             >
               <Sparkles className="mr-2 h-5 w-5" />
-              {selectedTeacher ? 'Generate Evaluation' : 'Select a Teacher First'}
+              {selectedTeacher ? 'Generate Feedback' : 'Select a Teacher First'}
             </Button>
           </div>
         </CardContent>

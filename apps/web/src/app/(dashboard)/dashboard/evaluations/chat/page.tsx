@@ -138,26 +138,26 @@ function EvaluationChatContent() {
       // Create initial version first
       const version = createEvaluationVersion(
         data.evaluation,
-        `${evaluationType || 'Annual'} Evaluation`,
-        'Initial AI-generated evaluation'
+        `${evaluationType || 'Annual'} Feedback`,
+        'Initial AI-generated feedback'
       )
       // Add assistant message with summary and thumbnail
       const initialMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: data.message || `Generated an initial evaluation for ${teacher.name}.`,
+        content: data.message || `Generated initial feedback for ${teacher.name}.`,
         timestamp: new Date(),
         artifactId: version.id,
       }
       setMessages([initialMessage])
       
     } catch (error) {
-      console.error('Error generating initial evaluation:', error)
+      console.error('Error generating initial feedback:', error)
       // Add error message
       const errorMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error generating the initial evaluation. Please try again.',
+        content: 'Sorry, I encountered an error generating the initial feedback. Please try again.',
         timestamp: new Date()
       }
       setMessages([errorMessage])
@@ -221,14 +221,14 @@ function EvaluationChatContent() {
 
       const data = await response.json()
       
-      // Create new evaluation version if content changed
+      // Create new feedback version if content changed
       let newVersion: EvaluationVersion | null = null
       let artifactId: string | undefined = undefined
       
       if (!currentEvaluation || data.evaluation !== currentEvaluation.content) {
         newVersion = createEvaluationVersion(
           data.evaluation,
-          `Updated ${evaluationType} Evaluation`,
+          `Updated ${evaluationType} Feedback`,
           `Updated based on: "${input.substring(0, 50)}${input.length > 50 ? '...' : ''}"`
         )
         artifactId = newVersion.id
@@ -239,7 +239,7 @@ function EvaluationChatContent() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: newVersion 
-          ? (data.message || 'Updated the evaluation. Click to view V2.')
+          ? (data.message || 'Updated the feedback. Click to view V2.')
           : (data.message || 'No changes were necessary.'),
         timestamp: new Date(),
         artifactId
@@ -281,7 +281,7 @@ function EvaluationChatContent() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${teacher.name}-${evaluationType}-Evaluation-v${currentEvaluation.version}.txt`
+    a.download = `${teacher.name}-${evaluationType}-Feedback-v${currentEvaluation.version}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -317,7 +317,7 @@ function EvaluationChatContent() {
               </h1>
               {teacher && (
                 <p className="text-sm text-gray-500">
-                  {teacher.name} • {evaluationType || 'Annual'} Evaluation
+                  {teacher.name} • {evaluationType || 'Annual'} Feedback
                 </p>
               )}
             </div>
@@ -503,7 +503,7 @@ function EvaluationChatContent() {
                             <div className="font-medium text-sm">{teacher?.name} – {evaluationType} Feedback</div>
                             <span className="text-xs text-muted-foreground">V{evaluationVersions.find(v => v.id === message.artifactId)?.version || ''}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground">Click to open the generated evaluation</div>
+                          <div className="text-xs text-muted-foreground">Click to open the generated feedback</div>
                         </div>
                       ) : null}
                     </div>
@@ -537,7 +537,7 @@ function EvaluationChatContent() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me to modify the evaluation, add specific examples, or clarify any points..."
+                placeholder="Ask me to modify the feedback, add specific examples, or clarify any points..."
                 className="flex-1 min-h-[60px] max-h-40 resize-y"
                 disabled={isLoading}
               />

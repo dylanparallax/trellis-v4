@@ -44,7 +44,7 @@ export default async function EvaluationDetailPage({ params }: PageParams) {
             <ArrowLeft className="h-4 w-4" /> Back to all feedback
           </Link>
         </Button>
-        <p className="mt-4 text-muted-foreground">Evaluation not found.</p>
+        <p className="mt-4 text-muted-foreground">Feedback not found.</p>
       </div>
     )
   }

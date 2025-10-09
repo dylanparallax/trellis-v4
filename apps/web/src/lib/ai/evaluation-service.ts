@@ -72,7 +72,7 @@ export class AIEvaluationService {
       
       return {
         evaluation: text,
-        message: `I've generated a comprehensive ${context.evaluationType.toLowerCase()} evaluation for ${context.teacher.name}. Here's what I found based on their observations and performance data:`,
+        message: `I've generated comprehensive ${context.evaluationType.toLowerCase()} feedback for ${context.teacher.name}. Here's what I found based on their observations and performance data:`,
         suggestions: this.generateSuggestions()
       }
     } catch (error) {
@@ -87,7 +87,7 @@ export class AIEvaluationService {
         
         return {
           evaluation: text,
-          message: `I've generated a comprehensive ${context.evaluationType.toLowerCase()} evaluation for ${context.teacher.name}. Here's what I found based on their observations and performance data:`,
+          message: `I've generated comprehensive ${context.evaluationType.toLowerCase()} feedback for ${context.teacher.name}. Here's what I found based on their observations and performance data:`,
           suggestions: this.generateSuggestions()
         }
       } catch (gptError) {
@@ -153,7 +153,7 @@ export class AIEvaluationService {
     const observations = context.previousObservations
     const evaluations = context.previousEvaluations
     
-    return `You are an expert educational evaluator creating a comprehensive ${context.evaluationType} teacher evaluation.
+    return `You are an expert instructional coach creating comprehensive ${context.evaluationType} teacher feedback.
 
 TEACHER INFORMATION:
 - Name: ${teacher.name}
@@ -162,11 +162,11 @@ TEACHER INFORMATION:
 - Strengths: ${teacher.strengths ? teacher.strengths.join(', ') : 'Not specified'}
 - Growth Areas: ${teacher.growthAreas ? teacher.growthAreas.join(', ') : 'Not specified'}
 
-EVALUATION CONTEXT:
+FEEDBACK CONTEXT:
 - Type: ${context.evaluationType}
 - School Year: ${context.schoolYear}
 - Previous Observations: ${observations.length} total
-${frameworkText ? `\nEVALUATION FRAMEWORK (reference):\n${frameworkText}\n` : ''}
+${frameworkText ? `\nINSTRUCTIONAL FRAMEWORK (reference):\n${frameworkText}\n` : ''}
 ${guidelines ? `\nPROMPT GUIDELINES:\n${guidelines}\n` : ''}
 
 RECENT OBSERVATIONS:
@@ -175,14 +175,14 @@ ${observations.slice(0, 5).map(obs => {
   return `\nDate: ${date.toLocaleDateString()}\nNotes: ${obs.enhancedNotes || obs.rawNotes}\n`
 }).join('')}
 
-PREVIOUS EVALUATIONS:
+PREVIOUS FEEDBACK:
 ${evaluations.slice(0, 3).map(evaluation => {
   const date = typeof evaluation.createdAt === 'string' ? new Date(evaluation.createdAt) : evaluation.createdAt
   return `\nDate: ${date.toLocaleDateString()}\nType: ${evaluation.type}\nSummary: ${evaluation.summary || ''}\n`
 }).join('')}
 
 INSTRUCTIONS:
-Create a professional, comprehensive teacher evaluation report based on the context you have been given, using Markdown formatting. Include:
+Create a professional, comprehensive teacher feedback report based on the context you have been given, using Markdown formatting. Include:
 
 1. **Executive Summary** (2-3 paragraphs)
 2. **Strengths**
@@ -191,6 +191,8 @@ Create a professional, comprehensive teacher evaluation report based on the cont
 5. **Next Steps**
 
 Use specific examples from observations when available. Be constructive and actionable. Focus on evidence-based feedback. Use professional educational language intended to help the teacher grow and thrive.
+
+Critical constraint: Do not use the word "evaluation" anywhere in the generated content. Use "feedback" terminology instead.
 
 Format the response using proper Markdown syntax with headers, bullet points, and emphasis where appropriate.`
   }
@@ -202,12 +204,12 @@ Format the response using proper Markdown syntax with headers, bullet points, an
   ): string {
     const isTeacher = context.requesterRole === 'TEACHER'
     const persona = isTeacher
-      ? `You are a professional development coach for K-12 teachers. Your tone is empathetic, growth-oriented, specific, and actionable. You ask reflective questions and suggest concrete, low-lift next steps aligned to the evaluation. Do NOT modify the evaluation text in your response; reply with concise coaching guidance only.`
-      : `You are an AI assistant helping to refine a teacher evaluation through conversation. When appropriate and explicitly requested, you may update the evaluation text in structured Markdown.`
+      ? `You are a professional development coach for K-12 teachers. Your tone is empathetic, growth-oriented, specific, and actionable. You ask reflective questions and suggest concrete, low-lift next steps aligned to the feedback. Do NOT modify the feedback text in your response; reply with concise coaching guidance only.`
+      : `You are an AI assistant helping to refine teacher feedback through conversation. When appropriate and explicitly requested, you may update the feedback text in structured Markdown.`
 
     return `${persona}
 
-CURRENT EVALUATION:
+CURRENT FEEDBACK:
 ${currentEvaluation}
 
 USER REQUEST:
@@ -217,11 +219,11 @@ TEACHER CONTEXT:
 - Name: ${context.teacher.name}
 - Subject: ${context.teacher.subject}
 - Grade Level: ${context.teacher.gradeLevel}
-- Evaluation Type: ${context.evaluationType}
+- Feedback Type: ${context.evaluationType}
 
 INSTRUCTIONS:
-1. If the requester is a TEACHER (coach persona), NEVER modify the evaluation. Provide MESSAGE_ONLY coaching: reflective questions, 2-3 actionable strategies, and suggested resources.
-2. If the requester is an evaluator/admin and explicitly asks to change content, then produce an UPDATED evaluation; otherwise respond MESSAGE_ONLY.
+1. If the requester is a TEACHER (coach persona), NEVER modify the feedback. Provide MESSAGE_ONLY coaching: reflective questions, 2-3 actionable strategies, and suggested resources.
+2. If the requester is an evaluator/admin and explicitly asks to change content, then produce an UPDATED feedback document; otherwise respond MESSAGE_ONLY.
 3. Use professional, supportive language. Be concise. Never include placeholder text.
 
 IMPORTANT: Respond in EXACTLY ONE of the following formats.
@@ -234,7 +236,7 @@ MESSAGE:
 CASE B (changes required):
 RESPONSE_TYPE: UPDATED
 UPDATED EVALUATION:
-[The complete updated evaluation with proper Markdown formatting]
+[The complete updated feedback with proper Markdown formatting]
 
 MESSAGE:
 [Brief explanation of changes made]
@@ -267,19 +269,19 @@ Do not include any other text before or after these sections.`
     
     // Fallback: if no structured format, try to extract just the evaluation part
     // Look for common evaluation section headers
-    const evaluationSections = ['TEACHER EVALUATION REPORT', 'EXECUTIVE SUMMARY', 'STRENGTHS', 'AREAS FOR GROWTH']
+    const evaluationSections = ['TEACHER FEEDBACK REPORT', 'EXECUTIVE SUMMARY', 'STRENGTHS', 'AREAS FOR GROWTH']
     const hasEvaluationContent = evaluationSections.some(section => response.includes(section))
     
     if (hasEvaluationContent) {
-      console.log('Found evaluation content, using full response as evaluation')
+      console.log('Found feedback content, using full response as feedback')
       return {
         updatedEvaluation: response.trim(),
-        message: "I've updated the evaluation based on your feedback."
+        message: "I've updated the feedback based on your request."
       }
     }
     
     // Last resort: return original evaluation with a note
-    console.log('No evaluation content found, returning original')
+    console.log('No feedback content found, returning original')
     return {
       updatedEvaluation: currentEvaluation,
       message: "I couldn't parse the AI response properly. Please try rephrasing your request."
@@ -290,12 +292,12 @@ Do not include any other text before or after these sections.`
     const teacher = context.teacher
     const evaluationType = context.evaluationType
     
-    const demoEvaluation = `# Teacher Evaluation Report
+    const demoEvaluation = `# Teacher Feedback Report
 
 **Teacher:** ${teacher.name}  
 **Subject:** ${teacher.subject || 'Not specified'}  
 **Grade Level:** ${teacher.gradeLevel || 'Not specified'}  
-**Evaluation Type:** ${evaluationType}  
+**Feedback Type:** ${evaluationType}  
 **School Year:** ${context.schoolYear}  
 **Date:** ${new Date().toLocaleDateString()}
 
@@ -332,7 +334,7 @@ ${teacher.growthAreas?.map(area => `- **${area}** - Opportunity for continued pr
 
     return {
       evaluation: demoEvaluation,
-      message: `I've generated a comprehensive ${evaluationType.toLowerCase()} evaluation for ${teacher.name}. Here's what I found based on their observations and performance data:`,
+      message: `I've generated comprehensive ${evaluationType.toLowerCase()} feedback for ${teacher.name}. Here's what I found based on their observations and performance data:`,
       suggestions: this.generateSuggestions()
     }
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Search, Menu, X, ExternalLink, Award, Settings2 } from 'lucide-react'
+import { Search, Menu, X, ExternalLink, Award, Settings2 } from 'lucide-react'
 import LoadingAnimation from '@/components/ui/loading-animation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,7 +21,6 @@ export function DashboardNav({ schoolName, role }: DashboardNavProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<Array<{ id: string; type: 'observation' | 'evaluation' | 'teacher'; title: string; subtitle?: string; href: string }>>([])
   const [open, setOpen] = useState(false)
-  const [notifCount, setNotifCount] = useState<number>(0)
 
   useEffect(() => {
     let isMounted = true
@@ -45,29 +44,7 @@ export function DashboardNav({ schoolName, role }: DashboardNavProps) {
     }
   }, [])
 
-  useEffect(() => {
-    let isMounted = true
-    const load = async () => {
-      try {
-        const res = await fetch('/api/notifications', { cache: 'no-store' })
-        if (!isMounted) return
-        if (res.ok) {
-          const data = await res.json() as { count?: number }
-          setNotifCount(typeof data.count === 'number' ? data.count : 0)
-        } else {
-          setNotifCount(0)
-        }
-      } catch {
-        if (isMounted) setNotifCount(0)
-      }
-    }
-    load()
-    const id = setInterval(load, 30_000)
-    return () => {
-      isMounted = false
-      clearInterval(id)
-    }
-  }, [])
+  
 
   const displaySchoolName = schoolName || clientSchoolName || 'Your School'
   const navItems = role === 'TEACHER'
@@ -150,20 +127,6 @@ export function DashboardNav({ schoolName, role }: DashboardNavProps) {
         </div>
         
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative hover:scale-[1.02] transition-transform"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-            {notifCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[1rem] h-4 px-1 rounded-full bg-rose-500/20 text-rose-500 text-[10px] leading-4 flex items-center justify-center">
-                {notifCount > 99 ? '99+' : String(notifCount)}
-              </span>
-            )}
-          </Button>
-          
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline text-sm text-muted-foreground">{displaySchoolName}</span>
             <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_0_3px_rgba(34,197,94,0.15)]" />

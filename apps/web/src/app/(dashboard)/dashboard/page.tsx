@@ -2,12 +2,12 @@ export const runtime = 'nodejs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 export const dynamic = 'force-dynamic'
 import { Button } from '@/components/ui/button'
-import { Users, Binoculars, Award, TrendingUp, Plus } from 'lucide-react'
+import { Users, Binoculars, Award, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { prisma } from '@trellis/database'
 import { getAuthContext } from '@/lib/auth/server'
 import { startOfMonth, endOfMonth, format, subDays } from 'date-fns'
-import type { ObservationsSeriesPoint } from '@/components/analytics/observations-line-chart'
+ 
 
 export default async function DashboardPage({ searchParams }: { searchParams?: Promise<{ timeframe?: string }> }) {
   const auth = await getAuthContext()
@@ -78,11 +78,10 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
     return (
       <div className="space-y-6">
         <Header />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard title="Total Teachers" value="—" icon={<Users className="h-4 w-4 text-muted-foreground" />} subtitle="No data" />
           <StatCard title="Observations This Month" value="—" icon={<Binoculars className="h-4 w-4 text-muted-foreground" />} subtitle="No data" />
-          <StatCard title="Evaluations Due" value="—" icon={<Award className="h-4 w-4 text-muted-foreground" />} subtitle="No data" />
-          <StatCard title="Performance Score" value="—" icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} subtitle="No evaluations" />
+          <StatCard title="Feedback Drafts" value="—" icon={<Award className="h-4 w-4 text-muted-foreground" />} subtitle="No data" />
         </div>
         <QuickActions />
       </div>
@@ -95,7 +94,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   const sp = (await searchParams) || {}
   const timeframeDays = Math.max(7, Math.min(180, Number(sp.timeframe ?? 30)))
   const since = subDays(now, timeframeDays)
-  const [totalTeachers, observationsThisMonth, evaluationsDue, recentObservations, evaluations, obsCurrent, obsAll, teachers] = await Promise.all([
+  const [totalTeachers, observationsThisMonth, evaluationsDue, recentObservations, obsCurrent] = await Promise.all([
     prisma.teacher.count({ where: { schoolId } }),
     prisma.observation.count({ where: { schoolId, date: { gte: monthStart, lte: monthEnd } } }),
     prisma.evaluation.count({ where: { schoolId, status: 'DRAFT' } }),
@@ -105,78 +104,33 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
       take: 5,
       include: { teacher: { select: { id: true, name: true } } },
     }),
-    prisma.evaluation.findMany({ where: { schoolId } }),
     prisma.observation.findMany({
       where: { schoolId, date: { gte: since } },
       select: { id: true, date: true, observationType: true, duration: true, focusAreas: true, teacherId: true, rawNotes: true, enhancedNotes: true },
     }),
-    prisma.observation.findMany({
-      where: { schoolId },
-      select: { id: true, date: true, observationType: true, duration: true, focusAreas: true, teacherId: true, rawNotes: true, enhancedNotes: true },
-    }),
-    prisma.teacher.findMany({ where: { schoolId }, select: { strengths: true, growthAreas: true } }),
+    // teachers: not currently used in insights; fetch when needed
   ])
 
-  let avgPerformance: string = '—'
-  if (evaluations.length > 0) {
-    const numbers: number[] = []
-    for (const e of evaluations) {
-      const scores = e.scores as unknown as { overall?: number } | null
-      const overall = scores && typeof scores === 'object' ? scores.overall : undefined
-      if (typeof overall === 'number' && Number.isFinite(overall)) numbers.push(overall)
-    }
-    if (numbers.length > 0) {
-      const avg = numbers.reduce((a, b) => a + b, 0) / numbers.length
-      avgPerformance = avg.toFixed(1)
-    }
-  }
-
-  // Compute trends and insights for the selected timeframe
-  type Counts = Record<string, number>
-  const countMap = (items: string[]): Counts => items.reduce((acc, k) => { acc[k] = (acc[k] || 0) + 1; return acc }, {} as Counts)
-
-  const currentFocus = countMap(obsCurrent.flatMap(o => Array.isArray(o.focusAreas) ? o.focusAreas : []))
-  const currentByType = countMap(obsCurrent.map(o => o.observationType))
-
-  // Top tags for strengths/growth shown in pies below
-
-  const allStrengths = teachers.flatMap(t => Array.isArray(t.strengths) ? t.strengths : [])
-  const allGrowth = teachers.flatMap(t => Array.isArray(t.growthAreas) ? t.growthAreas : [])
-  const topStrengths = Object.entries(countMap(allStrengths)).sort((a, b) => b[1] - a[1]).slice(0, 6)
-  const topGrowth = Object.entries(countMap(allGrowth)).sort((a, b) => b[1] - a[1]).slice(0, 6)
-
-  // Build a simple time series by week for current window
-  function groupByWeek(items: { date: Date }[]) {
-    const map = new Map<string, number>()
-    items.forEach((x) => {
-      const d = new Date(x.date)
-      const year = d.getUTCFullYear()
-      const week = Math.floor(((d.getTime() - new Date(Date.UTC(year,0,1)).getTime()) / 86400000 + new Date(Date.UTC(year,0,1)).getUTCDay()+1) / 7)
-      const key = `${year}-W${String(week).padStart(2,'0')}`
-      map.set(key, (map.get(key) || 0) + 1)
-    })
-    return map
-  }
-
-  const currSeriesMap = groupByWeek(obsCurrent as unknown as { date: Date }[])
-  const seriesKeys = Array.from(currSeriesMap.keys()).sort()
-  const seriesData: ObservationsSeriesPoint[] = seriesKeys.map((k) => ({ label: k, current: currSeriesMap.get(k) || 0 }))
+  // Compute insights for the selected timeframe
 
   // Lightweight AI-like insights (rule-based for now). We can later swap to LLM.
   function extractInsights(observations: { rawNotes?: string | null; enhancedNotes?: string | null; focusAreas?: string[]; teacherId: string }[]) {
-    const text = observations
-      .map(o => `${o.enhancedNotes || ''}\n${o.rawNotes || ''}`.toLowerCase())
-      .join('\n')
-    const total = observations.length || 1
-    const containsPct = (needle: RegExp) => {
-      const matches = text.match(needle)
-      const count = matches ? matches.length : 0
-      return Math.round((count / total) * 100)
+    const total = observations.length
+    const percentByObservationPresence = (needle: RegExp) => {
+      if (total === 0) return 0
+      let numObservationsWithMatch = 0
+      for (const o of observations) {
+        const text = `${o.enhancedNotes || ''} ${o.rawNotes || ''}`.toLowerCase()
+        // Use a non-global, case-insensitive regex to avoid stateful lastIndex issues
+        const re = new RegExp(needle.source, 'i')
+        if (re.test(text)) numObservationsWithMatch += 1
+      }
+      return Math.round((numObservationsWithMatch / total) * 100)
     }
-    const devicePct = containsPct(/(device|phone|tablet|laptop)/g)
-    const managementPct = containsPct(/classroom management|behavior|routine|procedures?/g)
-    const engagementPct = containsPct(/engagement|on-task|participation|active learning/g)
-    const aiPct = containsPct(/ai\b|chatgpt|claude|copilot/g)
+    const devicePct = percentByObservationPresence(/(device|phone|tablet|laptop)/)
+    const managementPct = percentByObservationPresence(/classroom management|behavior|routine|procedures?/)
+    const engagementPct = percentByObservationPresence(/engagement|on-task|participation|active learning/)
+    const aiPct = percentByObservationPresence(/ai\b|chatgpt|claude|copilot/)
     const teachersWithMgmt = new Set(
       observations
         .filter(o => /classroom management|behavior|routine|procedures?/.test(`${o.enhancedNotes || ''} ${o.rawNotes || ''}`.toLowerCase()))
@@ -192,16 +146,15 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
     return insights.slice(0, 4)
   }
 
-  const aiInsights = extractInsights(obsAll as unknown as { rawNotes?: string | null; enhancedNotes?: string | null; focusAreas?: string[]; teacherId: string }[])
+  const aiInsights = extractInsights(obsCurrent as unknown as { rawNotes?: string | null; enhancedNotes?: string | null; focusAreas?: string[]; teacherId: string }[])
 
   return (
     <div className="space-y-6">
       <Header />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard title="Total Teachers" value={String(totalTeachers)} icon={<Users className="h-4 w-4 text-muted-foreground" />} subtitle={totalTeachers === 0 ? 'No teachers yet' : undefined} />
         <StatCard title="Observations This Month" value={String(observationsThisMonth)} icon={<Binoculars className="h-4 w-4 text-muted-foreground" />} subtitle={observationsThisMonth === 0 ? 'No observations' : undefined} />
         <StatCard title="Feedback Drafts" value={String(evaluationsDue)} icon={<Award className="h-4 w-4 text-muted-foreground" />} subtitle={evaluationsDue === 0 ? 'All caught up' : undefined} />
-        <StatCard title="Performance Score" value={avgPerformance} icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />} subtitle={avgPerformance === '—' ? 'No feedback' : undefined} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-7">

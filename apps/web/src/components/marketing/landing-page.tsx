@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AnimatedTagline } from "@/components/marketing/animated-tagline"
 import { ArrowRight, TrendingUp, Star, MessageSquare, Heart, Plus, Shield, Lock, Database, Eye, CheckCircle2, Server, Check, Zap, Building2 } from "lucide-react"
 import StakeholderToggle from "@/components/marketing/stakeholder-toggle"
-import RoiCalculator from "@/components/marketing/roi-calculator"
+import FAQSection from "@/components/marketing/faq"
 
 export function LandingPage() {
   const features = [
@@ -31,7 +31,7 @@ export function LandingPage() {
   const testimonials = [
     {
       quote:
-        "Trellis has revolutionized how we approach teacher evaluations. The AI enhancement feature alone saves us hours of work every week.",
+        "Trellis has revolutionized how we approach teacher feedback. The AI enhancement feature alone saves us hours of work every week.",
       author: "Sarah Johnson",
       role: "Principal, Lincoln High School",
       rating: 5,
@@ -39,7 +39,7 @@ export function LandingPage() {
     },
     {
       quote:
-        "The comprehensive evaluation reports are incredibly detailed and professional. Our teachers appreciate the growth-focused approach.",
+        "The comprehensive feedback reports are incredibly detailed and professional. Our teachers appreciate the growth-focused approach.",
       author: "Terrence Underwood",
       role: " Superintendent, Brighton School District",
       rating: 5,
@@ -47,7 +47,7 @@ export function LandingPage() {
     },
     {
       quote:
-        "Finally, a platform that understands the complexity of teacher evaluation while making it simple and efficient. I love Trellis so much.",
+        "Finally, a platform that understands the complexity of teacher feedback while making it simple and efficient. I love Trellis so much.",
       author: "Lisa Rodriguez",
       role: "Director of Curriculum & Instruction",
       rating: 5,
@@ -406,6 +406,9 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <FAQSection />
+
       <section className="py-20 sm:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-5xl text-center">
@@ -485,7 +488,7 @@ export function LandingPage() {
                       </li>
                       <li className="flex items-start space-x-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm">AI-powered evaluations</span>
+                        <span className="text-sm">AI-powered feedback</span>
                       </li>
                       <li className="flex items-start space-x-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -539,7 +542,7 @@ export function LandingPage() {
                       </li>
                       <li className="flex items-start space-x-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm">Custom evaluation frameworks</span>
+                        <span className="text-sm">Custom feedback frameworks</span>
                       </li>
                       <li className="flex items-start space-x-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -642,17 +645,23 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="py-20 sm:py-32">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Trellis is an investment in your teachers and in your productivity</h2>
-            <p className="mt-4 text-lg text-muted-foreground">Calculate ROI for your school or district.</p>
+      {/**
+       * ROI Calculator (temporarily disabled)
+       * Restore when ready: uncomment the section and re-add RoiCalculator import
+       */}
+      {false && (
+        <section className="py-20 sm:py-32">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-5xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Trellis is an investment in your teachers and in your productivity</h2>
+              <p className="mt-4 text-lg text-muted-foreground">Calculate ROI for your school or district.</p>
+            </div>
+            <div className="mt-12">
+              {/* <RoiCalculator /> */}
+            </div>
           </div>
-          <div className="mt-12">
-            <RoiCalculator />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="py-20 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -692,6 +701,7 @@ export function LandingPage() {
                 <li><a href="#" className="hover:text-foreground">Features</a></li>
                 <li><a href="#" className="hover:text-foreground">Pricing</a></li>
                 <li><Link href="/security" className="hover:text-foreground">Security</Link></li>
+                <li><Link href="/#faq" className="hover:text-foreground">FAQs</Link></li>
                 
               </ul>
             </div>

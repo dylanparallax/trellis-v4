@@ -1,4 +1,4 @@
-import { openai } from '@ai-sdk/openai'
+import { openai, createOpenAI } from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { generateText } from 'ai'
 import { OBSERVATION_ENHANCEMENT_PROMPT } from '@trellis/ai-prompts'
@@ -19,8 +19,15 @@ type Observation = {
 }
 
 export class AIEnhancementService {
+  private static readonly GROQ_MODEL = 'llama-3.1-8b-instant'
   private static readonly ANTHROPIC_MODEL = 'claude-sonnet-4-5-20250929'
   private static readonly OPENAI_MODEL = 'gpt-4-turbo'
+  
+  // OpenAI-compatible provider for Groq
+  private static readonly groq = createOpenAI({
+    baseURL: 'https://api.groq.com/openai/v1',
+    apiKey: process.env.GROQ_API_KEY,
+  })
   async enhanceObservation(
     rawNotes: string,
     teacher: Teacher,
@@ -32,26 +39,32 @@ export class AIEnhancementService {
       previousObservations
     )
     
+    // Prefer Groq for enhancement (fast/cost-effective)
     try {
-      // Try Claude first
       const { text } = await generateText({
-        model: anthropic(AIEnhancementService.ANTHROPIC_MODEL),
+        model: AIEnhancementService.groq(AIEnhancementService.GROQ_MODEL),
         prompt,
         temperature: 0.7,
       })
-      
       return text
-    } catch (error) {
-      console.error('Claude enhancement failed, falling back to GPT:', error)
-      
-      // Fallback to GPT
-      const { text } = await generateText({
-        model: openai(AIEnhancementService.OPENAI_MODEL),
-        prompt,
-        temperature: 0.7,
-      })
-      
-      return text
+    } catch (groqError) {
+      console.error('Groq enhancement failed, falling back to Claude:', groqError)
+      try {
+        const { text } = await generateText({
+          model: anthropic(AIEnhancementService.ANTHROPIC_MODEL),
+          prompt,
+          temperature: 0.7,
+        })
+        return text
+      } catch (anthropicError) {
+        console.error('Claude enhancement failed, falling back to GPT:', anthropicError)
+        const { text } = await generateText({
+          model: openai(AIEnhancementService.OPENAI_MODEL),
+          prompt,
+          temperature: 0.7,
+        })
+        return text
+      }
     }
   }
   

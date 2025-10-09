@@ -8,7 +8,7 @@ function withSecurityHeaders(response: NextResponse) {
     "img-src 'self' data: https://*.supabase.co https://*.gravatar.com",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
-    "connect-src 'self' https://*.supabase.co https://*.supabase.in https://*.supabase.com https://api.openai.com https://api.anthropic.com",
+    "connect-src 'self' https://*.supabase.co https://*.supabase.in https://*.supabase.com https://api.openai.com https://api.anthropic.com https://api.groq.com",
     "connect-src 'self' wss://*.supabase.co wss://*.supabase.in",
     "font-src 'self' data:",
     "frame-ancestors 'none'",

@@ -291,7 +291,7 @@ export function EvaluationsListClient({ initial }: Props) {
                       <Textarea
                         value={editSummary}
                         onChange={(e) => setEditSummary(e.target.value)}
-                        placeholder="Edit evaluation summary..."
+                        placeholder="Edit feedback summary..."
                         className="min-h-[100px]"
                       />
                       <div className="flex gap-2">
@@ -423,9 +423,9 @@ export function EvaluationsListClient({ initial }: Props) {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
-              <CardTitle className="text-destructive">Delete Evaluation</CardTitle>
+              <CardTitle className="text-destructive">Delete Feedback</CardTitle>
               <CardDescription>
-                Are you sure you want to delete this evaluation? This action cannot be undone.
+                Are you sure you want to delete this feedback? This action cannot be undone.
               </CardDescription>
             </CardHeader>
             <CardContent>

@@ -460,7 +460,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                     </div>
                   </td>
                   <td className="px-3 py-2 text-muted-foreground">
-                    {teacher.observations.length} obs • {teacher.evaluations.length} evals
+                    {teacher.observations.length} obs • {teacher.evaluations.length} feedback
                   </td>
                 </tr>
               ))}

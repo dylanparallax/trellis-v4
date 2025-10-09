@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { openai } from '@ai-sdk/openai'
+import { openai, createOpenAI } from '@ai-sdk/openai'
 // Prisma is only needed if teacherId is provided; import dynamically to avoid env issues
 
 // Add proper types
@@ -68,30 +68,40 @@ export async function POST(request: NextRequest) {
 
     const prompt = buildEnhancementPrompt(rawNotes, teacher, observationType, focusAreas)
 
+    // Prefer Groq first
+    const groq = createOpenAI({ baseURL: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY })
     try {
       const { text } = await generateText({
-        model: anthropic('claude-sonnet-4-5-20250929'),
+        model: groq('llama-3.1-8b-instant'),
         prompt,
         temperature: 0.7,
       })
-      
-      console.log('Claude enhancement successful!')
+      console.log('Groq enhancement successful!')
       return NextResponse.json({ enhancedNotes: text })
-    } catch (error) {
-      console.error('Claude enhancement failed, falling back to GPT:', error)
-      
+    } catch (groqError) {
+      console.error('Groq enhancement failed, falling back to Claude:', groqError)
       try {
         const { text } = await generateText({
-          model: openai('gpt-4-turbo'),
+          model: anthropic('claude-sonnet-4-5-20250929'),
           prompt,
           temperature: 0.7,
         })
-        
-        console.log('GPT enhancement fallback successful!')
+        console.log('Claude enhancement fallback successful!')
         return NextResponse.json({ enhancedNotes: text })
-      } catch (gptError) {
-        console.error('Both AI models failed for enhancement:', gptError)
-        return NextResponse.json({ error: 'AI enhancement failed' }, { status: 502 })
+      } catch (anthropicError) {
+        console.error('Claude enhancement failed, falling back to GPT:', anthropicError)
+        try {
+          const { text } = await generateText({
+            model: openai('gpt-4-turbo'),
+            prompt,
+            temperature: 0.7,
+          })
+          console.log('GPT enhancement fallback successful!')
+          return NextResponse.json({ enhancedNotes: text })
+        } catch (gptError) {
+          console.error('All AI models failed for enhancement:', gptError)
+          return NextResponse.json({ error: 'AI enhancement failed' }, { status: 502 })
+        }
       }
     }
   } catch (error) {
