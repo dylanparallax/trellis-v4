@@ -8,8 +8,8 @@ function withSecurityHeaders(response: NextResponse) {
     "img-src 'self' data: https://*.supabase.co https://*.gravatar.com",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
-    "connect-src 'self' https://*.supabase.co https://*.supabase.in https://*.supabase.com https://api.openai.com https://api.anthropic.com https://api.groq.com",
-    "connect-src 'self' wss://*.supabase.co wss://*.supabase.in",
+    // Merge https and wss endpoints into a single connect-src directive
+    "connect-src 'self' https://*.supabase.co https://*.supabase.in https://*.supabase.com https://api.openai.com https://api.anthropic.com https://api.groq.com wss://*.supabase.co wss://*.supabase.in",
     "font-src 'self' data:",
     "frame-ancestors 'none'",
     "frame-src 'self' https://*.supabase.co https://*.supabase.com",
@@ -132,35 +132,7 @@ export async function middleware(req: NextRequest) {
       return withSecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)))
     }
 
-    // Role-based redirect: teacher → /teacher, staff → /dashboard
-    try {
-      const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-        cookies: {
-          get(name: string) { return req.cookies.get(name)?.value },
-          set() {},
-          remove() {},
-        },
-      })
-      const { data } = await supabase.auth.getUser()
-      const email = data.user?.email
-      if (email) {
-        // Resolve role quickly via headers fetch to API (avoids DB here)
-        const roleRes = await fetch(new URL('/api/me', req.url), { headers: { cookie: req.headers.get('cookie') || '' } })
-        if (roleRes.ok) {
-          const me = (await roleRes.json()) as { role?: string }
-          const isTeacher = me?.role === 'TEACHER'
-          const path = req.nextUrl.pathname
-          // Allow teachers to view specific evaluation detail pages under /dashboard/evaluations/:id
-          const isTeacherAllowedDashboardPath = path.startsWith('/dashboard/evaluations/')
-          if (isTeacher && (path === '/' || (path.startsWith('/dashboard') && !isTeacherAllowedDashboardPath))) {
-            return withSecurityHeaders(NextResponse.redirect(new URL('/teacher', req.url)))
-          }
-          if (!isTeacher && path.startsWith('/teacher')) {
-            return withSecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)))
-          }
-        }
-      }
-    } catch {}
+  // Role-based redirects are handled in app layout to avoid request-in-middleware and internal fetches
 
     return withSecurityHeaders(baseResponse)
   } catch (error) {

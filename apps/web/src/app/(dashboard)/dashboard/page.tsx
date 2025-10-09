@@ -31,47 +31,65 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
         </div>
       )
     }
-    // Resolve teacher by email within the same school
-    const teacher = await prisma.teacher.findFirst({ where: { email: { equals: auth.email, mode: 'insensitive' }, schoolId }, select: { id: true, name: true, schoolId: true } })
-    // If no Teacher found by email, we intentionally do not fallback to user linkage here
-    // to avoid surfacing cross-school or mismatched accounts.
-    let myEvals: Array<{ id: string; createdAt: Date; type: string; status: string }> = []
-    if (teacher) {
-      myEvals = await prisma.evaluation.findMany({
-        where: { teacherId: teacher.id, schoolId, status: 'SUBMITTED' },
-        select: { id: true, createdAt: true, type: true, status: true },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-      })
+    try {
+      // Resolve teacher by email within the same school
+      const teacher = await prisma.teacher.findFirst({ where: { email: { equals: auth.email, mode: 'insensitive' }, schoolId }, select: { id: true, name: true, schoolId: true } })
+      // If no Teacher found by email, we intentionally do not fallback to user linkage here
+      // to avoid surfacing cross-school or mismatched accounts.
+      let myEvals: Array<{ id: string; createdAt: Date; type: string; status: string }> = []
+      if (teacher) {
+        myEvals = await prisma.evaluation.findMany({
+          where: { teacherId: teacher.id, schoolId, status: 'SUBMITTED' },
+          select: { id: true, createdAt: true, type: true, status: true },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        })
+      }
+      return (
+        <div className="space-y-6">
+          <Header showNewObservationButton={false} />
+          <Card>
+            <CardHeader>
+              <CardTitle>My Feedback</CardTitle>
+              <CardDescription>{teacher?.name ? `Feedback for ${teacher.name}` : 'Your feedback'}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {myEvals.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No feedback yet.</div>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {myEvals.map((e) => (
+                    <li key={e.id} className="flex items-center justify-between">
+                      <span className="truncate">
+                        {new Date(e.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {` • ${e.type}`} {` • ${e.status}`}
+                      </span>
+                      <a className="underline" href={`/dashboard/evaluations/${e.id}`}>View</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )
+    } catch (error) {
+      console.error('Dashboard teacher section error:', error)
+      return (
+        <div className="space-y-6">
+          <Header showNewObservationButton={false} />
+          <Card>
+            <CardHeader>
+              <CardTitle>My Feedback</CardTitle>
+              <CardDescription>Unable to load your feedback right now.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">Please try again later.</div>
+            </CardContent>
+          </Card>
+        </div>
+      )
     }
-    return (
-      <div className="space-y-6">
-        <Header showNewObservationButton={false} />
-        <Card>
-          <CardHeader>
-            <CardTitle>My Feedback</CardTitle>
-            <CardDescription>{teacher?.name ? `Feedback for ${teacher.name}` : 'Your feedback'}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {myEvals.length === 0 ? (
-              <div className="text-sm text-muted-foreground">No feedback yet.</div>
-            ) : (
-              <ul className="space-y-2 text-sm">
-                {myEvals.map((e) => (
-                  <li key={e.id} className="flex items-center justify-between">
-                    <span className="truncate">
-                      {new Date(e.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      {` • ${e.type}`} {` • ${e.status}`}
-                    </span>
-                    <a className="underline" href={`/dashboard/evaluations/${e.id}`}>View</a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   if (!schoolId) {
@@ -94,22 +112,38 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   const sp = (await searchParams) || {}
   const timeframeDays = Math.max(7, Math.min(180, Number(sp.timeframe ?? 30)))
   const since = subDays(now, timeframeDays)
-  const [totalTeachers, observationsThisMonth, evaluationsDue, recentObservations, obsCurrent] = await Promise.all([
-    prisma.teacher.count({ where: { schoolId } }),
-    prisma.observation.count({ where: { schoolId, date: { gte: monthStart, lte: monthEnd } } }),
-    prisma.evaluation.count({ where: { schoolId, status: 'DRAFT' } }),
-    prisma.observation.findMany({
-      where: { schoolId },
-      orderBy: { date: 'desc' },
-      take: 5,
-      include: { teacher: { select: { id: true, name: true } } },
-    }),
-    prisma.observation.findMany({
-      where: { schoolId, date: { gte: since } },
-      select: { id: true, date: true, observationType: true, duration: true, focusAreas: true, teacherId: true, rawNotes: true, enhancedNotes: true },
-    }),
-    // teachers: not currently used in insights; fetch when needed
-  ])
+
+  let totalTeachers = 0
+  let observationsThisMonth = 0
+  let evaluationsDue = 0
+  let recentObservations: Array<{ id: string; teacherId: string; teacher?: { id: string; name: string | null } | null; date: Date }> = []
+  let obsCurrent: Array<{ rawNotes?: string | null; enhancedNotes?: string | null; focusAreas?: string[]; teacherId: string }> = []
+
+  try {
+    const results = await Promise.all([
+      prisma.teacher.count({ where: { schoolId } }),
+      prisma.observation.count({ where: { schoolId, date: { gte: monthStart, lte: monthEnd } } }),
+      prisma.evaluation.count({ where: { schoolId, status: 'DRAFT' } }),
+      prisma.observation.findMany({
+        where: { schoolId },
+        orderBy: { date: 'desc' },
+        take: 5,
+        include: { teacher: { select: { id: true, name: true } } },
+      }),
+      prisma.observation.findMany({
+        where: { schoolId, date: { gte: since } },
+        select: { id: true, date: true, observationType: true, duration: true, focusAreas: true, teacherId: true, rawNotes: true, enhancedNotes: true },
+      }),
+    ])
+    totalTeachers = results[0] as number
+    observationsThisMonth = results[1] as number
+    evaluationsDue = results[2] as number
+    recentObservations = results[3] as typeof recentObservations
+    obsCurrent = results[4] as typeof obsCurrent
+  } catch (error) {
+    console.error('Dashboard stats section error:', error)
+    // Leave defaults and continue to render with placeholders
+  }
 
   // Compute insights for the selected timeframe
 
