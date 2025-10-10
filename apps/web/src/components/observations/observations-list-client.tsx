@@ -63,6 +63,7 @@ export function ObservationsListClient({ initial }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editNotes, setEditNotes] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [saveToast, setSaveToast] = useState<'idle' | 'ok' | 'error'>('idle')
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [isImporting, setIsImporting] = useState(false)
   const [importResult, setImportResult] = useState<null | { createdCount: number; errors?: Array<{ row: number; error: string }> }>(null)
@@ -203,11 +204,17 @@ export function ObservationsListClient({ initial }: Props) {
         )
         setEditingId(null)
         setEditNotes('')
+        setSaveToast('ok')
+        setTimeout(() => setSaveToast('idle'), 2000)
       } else {
         console.error('Failed to update observation')
+        setSaveToast('error')
+        setTimeout(() => setSaveToast('idle'), 2500)
       }
     } catch (error) {
       console.error('Error updating observation:', error)
+      setSaveToast('error')
+      setTimeout(() => setSaveToast('idle'), 2500)
     } finally {
       setIsSaving(false)
     }
@@ -254,6 +261,16 @@ export function ObservationsListClient({ initial }: Props) {
 
   return (
     <div className="space-y-6">
+      {saveToast === 'ok' && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="px-4 py-2 rounded-md bg-emerald-600 text-white shadow">Saved</div>
+        </div>
+      )}
+      {saveToast === 'error' && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="px-4 py-2 rounded-md bg-rose-600 text-white shadow">Save failed</div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Observations</h1>

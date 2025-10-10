@@ -486,7 +486,7 @@ function EvaluationChatContent() {
                       <span className="text-sm font-medium">
                         {message.role === 'user' ? 'You' : 'Trellis'}
                       </span>
-                      <span className="npm runtext-xs opacity-70">
+                      <span className="text-xs opacity-70">
                         {message.timestamp.toLocaleTimeString()}
                       </span>
                     </div>
