@@ -135,6 +135,8 @@ export async function POST(request: NextRequest) {
         duration: validated.duration,
         focusAreas: validated.focusAreas,
         date: parsedDate,
+        // Persist optional subject selected in the form
+        subject: validated.subject && validated.subject.length > 0 ? validated.subject : undefined,
         artifacts: {
           create: validated.artifacts
         }

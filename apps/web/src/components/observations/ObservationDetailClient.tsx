@@ -71,10 +71,16 @@ export default function ObservationDetailClient({ observation }: Props) {
     setDate(observation.date.slice(0, 10))
     setObservationType(observation.observationType)
     setFocusAreas(observation.focusAreas || [])
+    // Ensure time and subject reset as well
+    const d = new Date(observation.date)
+    const hh = String(d.getUTCHours()).padStart(2, '0')
+    const mm = String(d.getUTCMinutes()).padStart(2, '0')
+    setTime(`${hh}:${mm}`)
+    setSubject(observation.subject || '')
   }
 
   const handleSave = useCallback(() => {
-    if (!isEditing || isSubmitting) return
+    if (isSubmitting) return
     const payload: Record<string, unknown> = {
       enhancedNotes: enhancedNotes || null,
       duration: duration ? parseInt(duration) : undefined,

@@ -205,9 +205,9 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
                 {recentObservations.map((o) => (
                   <li key={o.id} className="flex items-center justify-between">
                     <span className="truncate">
-                      <a href={`/dashboard/teachers/${o.teacherId}`} className="hover:underline">
+                      <Link href={`/dashboard/teachers/${o.teacherId}`} className="hover:underline">
                         {o.teacher?.name || 'Unknown Teacher'}
-                      </a>
+                      </Link>
                     </span>
                     <span className="text-muted-foreground">{format(new Date(o.date), 'MMM d, yyyy')}</span>
                   </li>

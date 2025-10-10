@@ -81,9 +81,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Resolve Prisma user id to ensure FK integrity
-    const prismaUser = await prisma.user.findUnique({ where: { email: auth.email } })
+    let prismaUser = await prisma.user.findUnique({ where: { email: auth.email } })
     if (!prismaUser) {
-      return NextResponse.json({ error: 'User not found in database' }, { status: 403 })
+      // Auto-create evaluator user to ensure FK integrity (mirrors observations POST behavior)
+      prismaUser = await prisma.user.create({
+        data: {
+          email: auth.email,
+          name: auth.name ?? auth.email.split('@')[0],
+          role: 'EVALUATOR',
+          schoolId: auth.schoolId,
+        },
+      })
     }
     const evaluation = await prisma.evaluation.create({
       data: {

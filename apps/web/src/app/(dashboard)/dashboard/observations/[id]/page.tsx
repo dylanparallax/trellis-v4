@@ -106,6 +106,7 @@ export default async function ObservationDetailPage({ params }: PageParams) {
               observationType: observation.observationType,
               focusAreas: observation.focusAreas || [],
               date: observation.date,
+              subject: observation.subject || null,
             }}
           />
         </CardContent>

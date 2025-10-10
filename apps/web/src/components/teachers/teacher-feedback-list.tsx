@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -74,7 +75,7 @@ export default function TeacherFeedbackList({ items }: Props) {
                   ) : null}
                 </div>
                 <div className="flex justify-end">
-                  <a className="underline" href={`/dashboard/evaluations/${e.id}`}>View</a>
+                  <Link className="underline" href={`/dashboard/evaluations/${e.id}`}>View</Link>
                 </div>
               </CardContent>
             </Card>
@@ -99,7 +100,7 @@ export default function TeacherFeedbackList({ items }: Props) {
                   <td className="px-3 py-2">{e.type}</td>
                   <td className="px-3 py-2">{renderStatusBadge(e.status)}</td>
                   <td className="px-3 py-2 text-muted-foreground">{e.evaluatorName || '—'}</td>
-                  <td className="px-3 py-2 text-right"><a className="underline" href={`/dashboard/evaluations/${e.id}`}>View</a></td>
+                  <td className="px-3 py-2 text-right"><Link className="underline" href={`/dashboard/evaluations/${e.id}`}>View</Link></td>
                 </tr>
               ))}
             </tbody>

@@ -73,10 +73,17 @@ export async function POST(request: NextRequest) {
     }
 
     const { prisma } = await import('@trellis/database')
-    // Resolve observer once
-    const prismaUser = await prisma.user.findUnique({ where: { email: auth.email } })
+    // Resolve observer once; auto-create if missing for smoother UX
+    let prismaUser = await prisma.user.findUnique({ where: { email: auth.email } })
     if (!prismaUser) {
-      return NextResponse.json({ error: 'User not found in database' }, { status: 403 })
+      prismaUser = await prisma.user.create({
+        data: {
+          email: auth.email,
+          name: auth.name ?? auth.email.split('@')[0],
+          role: 'EVALUATOR',
+          schoolId: auth.schoolId,
+        },
+      })
     }
 
     const parseList = (val?: string) => !val ? [] : [...new Set((val.includes(';') ? val.split(';') : val.split(',')).map(s => s.trim()).filter(Boolean))]

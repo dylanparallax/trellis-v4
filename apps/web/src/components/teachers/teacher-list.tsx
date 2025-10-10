@@ -289,7 +289,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTeachers.map((teacher) => (
-            <a href={`/dashboard/teachers/${teacher.id}`} key={teacher.id} className="block">
+            <Link href={`/dashboard/teachers/${teacher.id}`} key={teacher.id} className="block">
               <Card 
                 className="hover:shadow-lg hover:bg-blue-100/10 transition-shadow cursor-pointer"
               >
@@ -415,7 +415,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
                 </div>
               </CardContent>
               </Card>
-            </a>
+            </Link>
           ))}
         </div>
       ) : (
@@ -435,7 +435,7 @@ export function TeacherList({ onAddTeacher }: TeacherListProps) {
               {filteredTeachers.map((teacher) => (
                 <tr key={teacher.id} className="border-t">
                   <td className="px-3 py-2">
-                    <a href={`/dashboard/teachers/${teacher.id}`} className="hover:underline font-medium">{teacher.name}</a>
+                    <Link href={`/dashboard/teachers/${teacher.id}`} className="hover:underline font-medium">{teacher.name}</Link>
                   </td>
                   <td className="px-3 py-2">{teacher.subject || '—'} • Grade {teacher.gradeLevel || '—'}</td>
                   <td className="px-3 py-2">{teacher.email || '—'}</td>
