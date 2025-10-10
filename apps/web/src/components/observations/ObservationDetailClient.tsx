@@ -179,9 +179,9 @@ export default function ObservationDetailClient({ observation }: Props) {
   const handleDelete = useCallback(() => {
     startTransition(async () => {
       const res = await fetch(`/api/observations/${observation.id}`, { method: 'DELETE' })
-      if (res.ok) window.location.href = '/dashboard/observations'
+      if (res.ok) router.push('/dashboard/observations')
     })
-  }, [observation.id])
+  }, [observation.id, router])
 
   // Use shared markdown spacing formatter
 

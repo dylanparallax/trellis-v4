@@ -116,59 +116,106 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
   }
 
   const handleSaveDraft = async () => {
+    if (!selectedTeacherId) {
+      setDraftStatus('error')
+      setTimeout(() => setDraftStatus('idle'), 3000)
+      return
+    }
+
     setIsSavingDraft(true)
     setDraftStatus('idle')
     
     try {
-      const selectedTeacher = teachers.find(t => t.id === selectedTeacherId)
-      const draftData = {
+      // Try to save to database first as a draft observation
+      const data = {
         teacherId: selectedTeacherId,
-        teacher: selectedTeacher ? {
-          id: selectedTeacher.id,
-          name: selectedTeacher.name,
-          subject: selectedTeacher.subject,
-          gradeLevel: selectedTeacher.gradeLevel,
-        } : undefined,
-        observer: { id: 'me', name: 'You' },
-        rawNotes: notes,
-        enhancedNotes,
+        rawNotes: notes.trim() || 'Draft observation - no notes yet',
+        enhancedNotes: enhancedNotes || undefined,
         observationType,
         duration: parseInt(duration) || undefined,
         focusAreas,
         date: observationDate,
-        time: observationTime,
+        time: observationTime || undefined,
         subject: observationSubject || undefined,
-        artifacts: artifacts.map(f => ({ name: f.name, size: f.size })),
-        savedAt: new Date().toISOString(),
-        isDraft: true
+        artifacts: artifacts.map(f => ({ 
+          fileName: f.name, 
+          fileUrl: `draft-url/${f.name}`, // Placeholder for draft
+          fileType: f.type 
+        }))
       }
       
-      // Save to localStorage for now (in a real app, this would go to your API)
-      const existingDrafts = JSON.parse(localStorage.getItem('observationDrafts') || '[]')
-      const newDraft = {
-        id: Date.now().toString(),
-        ...draftData
+      // First try to save to database
+      const response = await fetch('/api/observations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Draft saved to database:', result)
+        setDraftStatus('success')
+        
+        // Don't clear form for drafts - let user continue editing
+        setTimeout(() => {
+          setDraftStatus('idle')
+        }, 3000)
+      } else {
+        throw new Error('Failed to save draft to database')
       }
-      existingDrafts.push(newDraft)
-      localStorage.setItem('observationDrafts', JSON.stringify(existingDrafts))
-      
-      console.log('Draft saved:', newDraft)
-      
-      setDraftStatus('success')
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setDraftStatus('idle')
-      }, 3000)
       
     } catch (error) {
-      console.error('Failed to save draft:', error)
-      setDraftStatus('error')
+      console.error('Failed to save draft to database, falling back to localStorage:', error)
       
-      // Clear error message after 3 seconds
-      setTimeout(() => {
-        setDraftStatus('idle')
-      }, 3000)
+      // Fallback to localStorage if database save fails
+      try {
+        const selectedTeacher = teachers.find(t => t.id === selectedTeacherId)
+        const draftData = {
+          teacherId: selectedTeacherId,
+          teacher: selectedTeacher ? {
+            id: selectedTeacher.id,
+            name: selectedTeacher.name,
+            subject: selectedTeacher.subject,
+            gradeLevel: selectedTeacher.gradeLevel,
+          } : undefined,
+          observer: { id: 'me', name: 'You' },
+          rawNotes: notes.trim() || 'Draft observation - no notes yet',
+          enhancedNotes,
+          observationType,
+          duration: parseInt(duration) || undefined,
+          focusAreas,
+          date: observationDate,
+          time: observationTime,
+          subject: observationSubject || undefined,
+          artifacts: artifacts.map(f => ({ name: f.name, size: f.size })),
+          savedAt: new Date().toISOString(),
+          isDraft: true
+        }
+        
+        const existingDrafts = JSON.parse(localStorage.getItem('observationDrafts') || '[]')
+        const newDraft = {
+          id: Date.now().toString(),
+          ...draftData
+        }
+        existingDrafts.push(newDraft)
+        localStorage.setItem('observationDrafts', JSON.stringify(existingDrafts))
+        
+        setDraftStatus('success')
+        
+        setTimeout(() => {
+          setDraftStatus('idle')
+        }, 3000)
+        
+      } catch (localError) {
+        console.error('Failed to save draft locally:', localError)
+        setDraftStatus('error')
+        
+        setTimeout(() => {
+          setDraftStatus('idle')
+        }, 3000)
+      }
     } finally {
       setIsSavingDraft(false)
     }
@@ -504,7 +551,11 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
       )}
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline" disabled={isSubmitting || isSavingDraft} onClick={handleSaveDraft}>
+        <Button 
+          variant="outline" 
+          disabled={isSubmitting || isSavingDraft || !selectedTeacherId} 
+          onClick={handleSaveDraft}
+        >
           {isSavingDraft ? 'Saving...' : 'Save Draft'}
         </Button>
         <Button 
