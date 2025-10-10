@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // For schema migrations
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model School {
@@ -66,9 +65,9 @@ model Teacher {
   // Performance tracking
   performanceHistory Json    @default("[]")
   currentGoals      Json     @default("[]")
-  strengths         String[]
-  growthAreas       String[]
-  departments       String[] @default([])
+  strengths         String   @default("[]") // JSON string for SQLite
+  growthAreas       String   @default("[]") // JSON string for SQLite
+  departments       String   @default("[]") // JSON string for SQLite
   tenureStatus      TenureStatus?
   
   observations      Observation[]
@@ -87,15 +86,21 @@ model Observation {
   school            School   @relation(fields: [schoolId], references: [id])
   
   // Raw observation data
-  rawNotes          String   @db.Text
-  enhancedNotes     String?  @db.Text
+  rawNotes          String
+  enhancedNotes     String?
   
   // Structured data
   date              DateTime
   duration          Int?     // minutes
   observationType   ObservationType
   subject           String?
-  focusAreas        String[]
+  focusAreas        String   @default("[]") // JSON string for SQLite
+  
+  // RAG/Embedding fields
+  embedding         String?  // JSON string of embedding vector for SQLite
+  embeddingText     String?  // Combined text used for embedding
+  embeddingVersion  String?  // Track embedding model version
+  embeddedAt        DateTime? // When embedding was generated
   
   artifacts         ObservationArtifact[]
   createdAt         DateTime @default(now())
@@ -125,7 +130,7 @@ model ObservationArtifact {
   fileName          String
   fileUrl           String
   fileType          String
-  ocrText           String?  @db.Text
+  ocrText           String?
   processedData     Json?
   
   createdAt         DateTime @default(now())
@@ -145,12 +150,18 @@ model Evaluation {
   
   // Content
   content           Json     // Structured evaluation data
-  summary           String?  @db.Text
-  recommendations   String[] 
-  nextSteps         String[]
+  summary           String?
+  recommendations   String   @default("[]") // JSON string for SQLite
+  nextSteps         String   @default("[]") // JSON string for SQLite
   
   // Metrics (based on school framework)
   scores            Json
+  
+  // RAG/Embedding fields
+  embedding         String?  // JSON string of embedding vector for SQLite
+  embeddingText     String?  // Combined text used for embedding
+  embeddingVersion  String?  // Track embedding model version
+  embeddedAt        DateTime? // When embedding was generated
   
   submittedAt       DateTime?
   createdAt         DateTime @default(now())

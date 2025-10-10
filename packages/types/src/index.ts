@@ -172,4 +172,64 @@ export interface RealtimeUpdate {
   action: 'create' | 'update' | 'delete'
   data: any
   timestamp: Date
+}
+
+// RAG/Embedding types
+export interface SearchResult {
+  id: string
+  type: 'observation' | 'evaluation'
+  score: number
+  teacherName: string
+  teacherId: string
+  schoolId: string
+  date: Date
+  title: string
+  snippet: string
+  metadata: {
+    subject?: string
+    gradeLevel?: string
+    observationType?: string
+    evaluationType?: string
+    focusAreas?: string[]
+  }
+}
+
+export interface SearchOptions {
+  limit?: number
+  minScore?: number
+  teacherId?: string
+  schoolId?: string
+  dateFrom?: Date
+  dateTo?: Date
+  type?: 'observation' | 'evaluation' | 'both'
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+  sources?: ChatSource[]
+}
+
+export interface ChatSource {
+  id: string
+  type: 'observation' | 'evaluation'
+  title: string
+  teacherName: string
+  date: string
+  score: number
+  snippet: string
+}
+
+export interface EmbeddingStats {
+  observations: {
+    total: number
+    embedded: number
+    percentage: number
+  }
+  evaluations: {
+    total: number
+    embedded: number
+    percentage: number
+  }
 } 

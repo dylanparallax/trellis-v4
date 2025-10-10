@@ -14,7 +14,8 @@ import {
   Award,
   User,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Sparkles
 } from 'lucide-react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ export const navigation = [
   { name: 'Teachers', href: '/dashboard/teachers', icon: Apple },
   { name: 'Observations', href: '/dashboard/observations', icon: Binoculars },
   { name: 'Feedback', href: '/dashboard/evaluations', icon: Award },
+  { name: 'RAG Search', href: '/dashboard/rag', icon: Sparkles, adminOnly: true },
   // { name: 'Guide', href: '/dashboard/guide', icon: BookOpen }, // Temporarily hidden
   // { name: 'Analytics', href: '/dashboard/analytics', icon: ChartSpline },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
@@ -161,7 +163,15 @@ export function Sidebar({ initialRole }: { initialRole?: 'ADMIN' | 'EVALUATOR' |
         { name: 'Settings', href: '/dashboard/settings', icon: Settings2 },
       ]
     }
-    return navigation
+    
+    // Filter navigation items based on role
+    return navigation.filter(item => {
+      // If item has adminOnly flag, only show to ADMIN and DISTRICT_ADMIN
+      if (item.adminOnly) {
+        return ['ADMIN', 'DISTRICT_ADMIN'].includes(effectiveRole || '')
+      }
+      return true
+    })
   })()
 
   return (

@@ -4,6 +4,7 @@ import { ReactNode } from 'react'
 import { redirect } from 'next/navigation'
 import { DashboardNav } from '@/components/dashboard/nav'
 import { Sidebar } from '@/components/dashboard/sidebar'
+import { RAGChatWidget } from '@/components/rag/chat-widget'
 import { getAuthContext } from '@/lib/auth/server'
 
 interface DashboardLayoutProps {
@@ -51,6 +52,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
             </div>
           </main>
         </div>
+        
+        {/* RAG Chat Widget - Only show for ADMIN and DISTRICT_ADMIN */}
+        {['ADMIN', 'DISTRICT_ADMIN'].includes(auth.role) && <RAGChatWidget />}
       </div>
     )
   } catch (error) {
