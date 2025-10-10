@@ -172,3 +172,77 @@ enum EvaluationStatus {
   SUBMITTED
   ACKNOWLEDGED
 } 
+
+// ---------------------------------------------
+// RAG (Retrieval-Augmented Generation) Schema
+// ---------------------------------------------
+
+enum RagSourceType {
+  OBSERVATION
+  EVALUATION
+}
+
+model RagChunk {
+  id           String        @id @default(cuid())
+  sourceType   RagSourceType
+  sourceId     String
+  // Scope
+  schoolId     String
+  // We store the district name/code from School.district for scoping across schools
+  district     String?
+  
+  // Content and embedding
+  content      String        @db.Text
+  contentHash  String        @unique
+  tokenCount   Int
+  // Store embedding as Postgres float8[] (Prisma Float[])
+  embedding    Float[]
+  metadata     Json          @default("{}")
+  
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([schoolId, createdAt])
+  @@index([district])
+  @@index([sourceType, sourceId])
+}
+
+model RagIndexQueue {
+  id           String        @id @default(cuid())
+  action       RagQueueAction
+  sourceType   RagSourceType
+  sourceId     String
+  createdAt    DateTime      @default(now())
+  attemptCount Int           @default(0)
+}
+
+enum RagQueueAction {
+  UPSERT
+  DELETE
+}
+
+model RagConversation {
+  id         String   @id @default(cuid())
+  userId     String
+  role       Role
+  schoolId   String?
+  district   String?
+  settings   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  messages   RagMessage[]
+
+  @@index([userId, createdAt])
+}
+
+model RagMessage {
+  id              String          @id @default(cuid())
+  conversationId  String
+  conversation    RagConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role            String          // 'user' | 'assistant' | 'system'
+  content         String          @db.Text
+  citations       Json?
+  tokenCount      Int?
+  createdAt       DateTime        @default(now())
+
+  @@index([conversationId, createdAt])
+}

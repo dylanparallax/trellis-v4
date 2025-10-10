@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@trellis/database'
 import { getAuthContext } from '@/lib/auth/server'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
+import { enqueueIndex } from '@/lib/rag/indexer'
 
 export async function GET(request: NextRequest) {
   try {
@@ -101,6 +102,9 @@ export async function POST(request: NextRequest) {
         evaluator: { select: { id: true, name: true } },
       }
     })
+
+    // Enqueue RAG indexing (best-effort)
+    enqueueIndex('UPSERT', 'EVALUATION', evaluation.id).catch(() => {})
 
     return NextResponse.json(evaluation, { status: 201 })
   } catch (error) {

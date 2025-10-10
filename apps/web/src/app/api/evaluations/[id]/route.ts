@@ -3,6 +3,7 @@ import { prisma } from '@trellis/database'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 import { z } from 'zod'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
+import { enqueueIndex } from '@/lib/rag/indexer'
 
 export const runtime = 'nodejs'
 
@@ -84,6 +85,8 @@ export async function PATCH(
         evaluator: { select: { id: true, name: true, email: true } },
       },
     })
+    // Re-index updated evaluation
+    enqueueIndex('UPSERT', 'EVALUATION', id).catch(() => {})
     return NextResponse.json(updated)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -111,6 +114,8 @@ export async function DELETE(
     assertSameSchool(existing, auth.schoolId)
 
     await prisma.evaluation.delete({ where: { id } })
+    // Remove from index
+    enqueueIndex('DELETE', 'EVALUATION', id).catch(() => {})
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Failed to delete evaluation' }, { status: 500 })
