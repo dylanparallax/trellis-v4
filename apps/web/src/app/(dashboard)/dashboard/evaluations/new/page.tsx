@@ -9,6 +9,8 @@ import { Search, Sparkles, User, Award, ArrowLeft } from 'lucide-react'
 import LoadingAnimation from '@/components/ui/loading-animation'
 
 export default function NewEvaluationPage() {
+  const router = useRouter()
+  
   // Client route guard: teachers should not access
   useEffect(() => {
     const run = async () => {
@@ -17,14 +19,13 @@ export default function NewEvaluationPage() {
         if (res.ok) {
           const me = await res.json()
           if (me?.role === 'TEACHER') {
-            window.location.replace('/dashboard')
+            router.replace('/dashboard')
           }
         }
       } catch {}
     }
     run()
-  }, [])
-  const router = useRouter()
+  }, [router])
   const [selectedTeacher, setSelectedTeacher] = useState('')
   const [evaluationType, setEvaluationType] = useState('FORMATIVE')
   const [schoolYear, setSchoolYear] = useState('2025-2026')

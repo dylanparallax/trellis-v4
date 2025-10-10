@@ -96,6 +96,11 @@ export function EvaluationsListClient({ initial }: Props) {
   }
 
   const handleSaveEdit = async (evaluationId: string) => {
+    if (!editSummary.trim()) {
+      alert('Summary cannot be empty')
+      return
+    }
+
     setIsSaving(true)
     try {
       const response = await fetch(`/api/evaluations/${evaluationId}`, {
@@ -104,7 +109,7 @@ export function EvaluationsListClient({ initial }: Props) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          summary: editSummary,
+          summary: editSummary.trim(),
         }),
       })
 
@@ -112,16 +117,21 @@ export function EvaluationsListClient({ initial }: Props) {
         setEvaluations(prev => 
           prev.map(item => 
             item.id === evaluationId 
-              ? { ...item, summary: editSummary }
+              ? { ...item, summary: editSummary.trim() }
               : item
           )
         )
         setEditingId(null)
         setEditSummary('')
       } else {
-        console.error('Failed to update evaluation')
+        const errorData = await response.json().catch(() => null)
+        const errorMessage = errorData?.error || 'Failed to update evaluation'
+        alert(errorMessage)
+        console.error('Failed to update evaluation:', errorMessage)
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Network error occurred'
+      alert(`Error updating evaluation: ${errorMessage}`)
       console.error('Error updating evaluation:', error)
     } finally {
       setIsSaving(false)

@@ -92,7 +92,7 @@ export default function EvaluationDetailClient({ evaluation }: Props) {
   const handleDelete = () => {
     startTransition(async () => {
       const res = await fetch(`/api/evaluations/${evaluation.id}`, { method: 'DELETE' })
-      if (res.ok) window.location.href = '/dashboard/evaluations'
+      if (res.ok) router.push('/dashboard/evaluations')
     })
   }
 

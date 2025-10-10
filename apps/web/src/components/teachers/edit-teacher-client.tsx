@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,7 @@ type Props = {
 }
 
 export default function EditTeacherClient({ teacher }: Props) {
+  const router = useRouter()
   const [isSaving, startTransition] = useTransition()
   const [name, setName] = useState(teacher.name || '')
   const [email, setEmail] = useState(teacher.email || '')
@@ -32,32 +34,85 @@ export default function EditTeacherClient({ teacher }: Props) {
   const [departments, setDepartments] = useState<string[]>((teacher.departments || []))
   const [strengths, setStrengths] = useState((teacher.strengths || []).join(', '))
   const [growthAreas, setGrowthAreas] = useState((teacher.growthAreas || []).join(', '))
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const handleSave = () => {
+    if (!name.trim()) {
+      setSaveStatus('error')
+      setErrorMessage('Teacher name is required')
+      setTimeout(() => {
+        setSaveStatus('idle')
+        setErrorMessage(null)
+      }, 4000)
+      return
+    }
+
+    setSaveStatus('idle')
+    setErrorMessage(null)
+    
     startTransition(async () => {
-      const body = {
-        name,
-        email,
-        subject,
-        gradeLevel,
-        tenureStatus,
-        departments,
-        strengths: strengths.split(',').map((s) => s.trim()).filter(Boolean),
-        growthAreas: growthAreas.split(',').map((s) => s.trim()).filter(Boolean),
-      }
-      const res = await fetch(`/api/teachers/${teacher.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) {
-        window.location.href = `/dashboard/teachers/${teacher.id}`
+      try {
+        const body = {
+          name: name.trim(),
+          email: email.trim() || undefined,
+          subject: subject.trim() || undefined,
+          gradeLevel: gradeLevel.trim() || undefined,
+          tenureStatus,
+          departments,
+          strengths: strengths.split(',').map((s) => s.trim()).filter(Boolean),
+          growthAreas: growthAreas.split(',').map((s) => s.trim()).filter(Boolean),
+        }
+        
+        const res = await fetch(`/api/teachers/${teacher.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => null)
+          throw new Error(errorData?.error || 'Failed to save teacher')
+        }
+        
+        setSaveStatus('success')
+        setTimeout(() => {
+          router.push(`/dashboard/teachers/${teacher.id}`)
+        }, 1500)
+        
+      } catch (error) {
+        console.error('Error saving teacher:', error)
+        setSaveStatus('error')
+        setErrorMessage(error instanceof Error ? error.message : 'Failed to save teacher')
+        setTimeout(() => {
+          setSaveStatus('idle')
+          setErrorMessage(null)
+        }, 4000)
       }
     })
   }
 
   return (
     <div className="space-y-6">
+      {/* Status Messages */}
+      {saveStatus === 'success' && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="flex items-center gap-2 p-4">
+            <div className="h-5 w-5 text-green-600">✓</div>
+            <span className="text-green-800">Teacher saved successfully! Redirecting...</span>
+          </CardContent>
+        </Card>
+      )}
+
+      {saveStatus === 'error' && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="flex items-center gap-2 p-4">
+            <div className="h-5 w-5 text-red-600">⚠</div>
+            <span className="text-red-800">{errorMessage || 'Failed to save teacher. Please try again.'}</span>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Profile</CardTitle>

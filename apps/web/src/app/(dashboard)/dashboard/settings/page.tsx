@@ -22,6 +22,8 @@ export default function SettingsPage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [passwordStatus, setPasswordStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
+  const [profileStatus, setProfileStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [profileMessage, setProfileMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const run = async () => {
@@ -58,16 +60,42 @@ export default function SettingsPage() {
   }
 
   const saveProfile = async () => {
+    setProfileStatus('idle')
+    setProfileMessage(null)
     setIsSaving(true)
+    
     try {
       const res = await fetch('/api/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: displayName, photoUrl: photoUrl || undefined })
       })
-      if (!res.ok) throw new Error('Save failed')
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null)
+        throw new Error(errorData?.error || 'Failed to save profile')
+      }
+      
+      setProfileStatus('success')
+      setProfileMessage('Profile updated successfully!')
+      
       // Notify other tabs/components (e.g., sidebar) to refresh user profile
       window.dispatchEvent(new Event('profile-updated'))
+      
+      setTimeout(() => {
+        setProfileStatus('idle')
+        setProfileMessage(null)
+      }, 4000)
+      
+    } catch (error) {
+      console.error('Error saving profile:', error)
+      setProfileStatus('error')
+      setProfileMessage(error instanceof Error ? error.message : 'Failed to save profile')
+      
+      setTimeout(() => {
+        setProfileStatus('idle')
+        setProfileMessage(null)
+      }, 4000)
     } finally {
       setIsSaving(false)
     }
@@ -245,6 +273,15 @@ export default function SettingsPage() {
               }`}
             >
               {passwordMessage}
+            </div>
+          )}
+          {profileMessage && (
+            <div
+              className={`text-sm ${
+                profileStatus === 'success' ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {profileMessage}
             </div>
           )}
           <div className="flex justify-end">
