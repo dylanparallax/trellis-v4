@@ -63,7 +63,12 @@ export function normalizeEvaluation(
     `[Status]: ${evaluation.status}`,
   ].join('\n')
 
-  const content = typeof evaluation.content === 'string' ? evaluation.content : (evaluation.content && (evaluation.content as any).markdown) || ''
+  const content =
+    typeof evaluation.content === 'string'
+      ? evaluation.content
+      : (typeof evaluation.content === 'object' && evaluation.content !== null && 'markdown' in (evaluation.content as Record<string, unknown>)
+          ? String((evaluation.content as Record<string, unknown>).markdown)
+          : '')
 
   const body = [
     evaluation.summary ? `Summary:\n${evaluation.summary}` : '',

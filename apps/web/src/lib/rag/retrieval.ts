@@ -17,7 +17,18 @@ export async function searchRag(
     topK?: number
     filters?: RagFilters
   }
-) {
+): Promise<
+  Array<{
+    chunkId: string
+    sourceType: 'OBSERVATION' | 'EVALUATION'
+    sourceId: string
+    schoolId: string
+    district?: string
+    snippet: string
+    metadata: Record<string, unknown>
+    score: number
+  }>
+> {
   const { query, role, userSchoolId } = params
   const topK = Math.min(20, Math.max(1, params.topK ?? 8))
 
@@ -29,7 +40,11 @@ export async function searchRag(
   }
 
   // Build where clause
-  const where: any = {}
+  const where: {
+    schoolId?: string
+    district?: string | null
+    sourceType?: 'OBSERVATION' | 'EVALUATION'
+  } = {}
   if (role === 'ADMIN' || role === 'EVALUATOR' || role === 'TEACHER') {
     where.schoolId = userSchoolId
   } else if (role === 'DISTRICT_ADMIN') {

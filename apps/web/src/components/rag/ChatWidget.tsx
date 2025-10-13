@@ -5,10 +5,26 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare } from 'lucide-react'
 
+type RagHit = {
+  chunkId: string
+  sourceType: 'OBSERVATION' | 'EVALUATION'
+  sourceId: string
+  schoolId: string
+  district?: string
+  snippet: string
+  metadata: Record<string, unknown>
+  score: number
+}
+
+type ChatResponse = {
+  message: string
+  hits?: RagHit[]
+}
+
 export function RagChatWidget() {
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState('')
-  const [history, setHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string; hits?: any[] }>>([])
+  const [history, setHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string; hits?: RagHit[] }>>([])
 
   async function send() {
     if (message.trim().length === 0) return
@@ -18,7 +34,7 @@ export function RagChatWidget() {
     try {
       const res = await fetch('/api/rag/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: userMsg, topK: 6 }) })
       if (!res.ok) return
-      const data = await res.json()
+      const data: ChatResponse = await res.json()
       setHistory((h) => [...h, { role: 'assistant', content: data.message, hits: data.hits }])
     } catch {}
   }
@@ -41,7 +57,7 @@ export function RagChatWidget() {
                   <div className="whitespace-pre-wrap text-sm">{m.content}</div>
                   {m.hits && m.hits.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {m.hits.map((h: any) => (
+                      {m.hits.map((h: RagHit) => (
                         <a key={h.chunkId} href={`/dashboard/${h.sourceType === 'OBSERVATION' ? 'observations' : 'evaluations'}/${h.sourceId}`} className="text-xs">
                           <Badge variant="outline">{h.sourceType.toLowerCase()}</Badge>
                         </a>
