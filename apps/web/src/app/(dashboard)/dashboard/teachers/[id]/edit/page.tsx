@@ -58,6 +58,8 @@ export default async function EditTeacherPage({ params }: PageParams) {
         email: teacher.email || '',
         subject: teacher.subject || '',
         gradeLevel: teacher.gradeLevel || '',
+        tenureStatus: teacher.tenureStatus || null,
+        departments: teacher.departments || [],
         strengths: teacher.strengths || [],
         growthAreas: teacher.growthAreas || [],
       }} />

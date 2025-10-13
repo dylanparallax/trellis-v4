@@ -55,10 +55,11 @@ export default function EditTeacherClient({ teacher }: Props) {
       try {
         const body = {
           name: name.trim(),
-          email: email.trim() || undefined,
-          subject: subject.trim() || undefined,
-          gradeLevel: gradeLevel.trim() || undefined,
-          tenureStatus,
+          email: email.trim(),
+          subject: subject.trim(),
+          gradeLevel: gradeLevel.trim(),
+          // API expects empty string to clear tenure status
+          tenureStatus: tenureStatus || '',
           departments,
           strengths: strengths.split(',').map((s) => s.trim()).filter(Boolean),
           growthAreas: growthAreas.split(',').map((s) => s.trim()).filter(Boolean),
