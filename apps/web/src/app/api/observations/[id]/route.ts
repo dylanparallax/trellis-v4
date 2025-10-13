@@ -3,6 +3,7 @@ import { prisma } from '@trellis/database'
 import { getAuthContext, assertSameSchool } from '@/lib/auth/server'
 import { z } from 'zod'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
+import { enqueueIndex } from '@/lib/rag/indexer'
 
 export const runtime = 'nodejs'
 
@@ -103,6 +104,9 @@ export async function PATCH(
       },
     })
 
+    // Re-index updated observation
+    enqueueIndex('UPSERT', 'OBSERVATION', id).catch(() => {})
+
     return NextResponse.json(updated)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -133,6 +137,9 @@ export async function DELETE(
     // Ensure artifacts are removed first if FK constraints block deletion
     await prisma.observationArtifact.deleteMany({ where: { observationId: id } })
     await prisma.observation.delete({ where: { id } })
+
+    // Remove from index
+    enqueueIndex('DELETE', 'OBSERVATION', id).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch {

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import type { ObservationType } from '@trellis/types'
 import { getAuthContext } from '@/lib/auth/server'
 import { checkRateLimit, getClientIpFromHeaders } from '@/lib/rate-limit'
+import { enqueueIndex } from '@/lib/rag/indexer'
 
 const observationSchema = z.object({
   teacherId: z.string().min(1, 'Teacher ID is required'),
@@ -157,6 +158,9 @@ export async function POST(request: NextRequest) {
         artifacts: true
       }
     })
+
+    // Enqueue RAG indexing (best-effort)
+    enqueueIndex('UPSERT', 'OBSERVATION', observation.id).catch(() => {})
 
     return NextResponse.json(observation, { status: 201 })
   } catch (error) {
