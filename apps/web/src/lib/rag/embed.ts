@@ -1,13 +1,14 @@
 import OpenAI from 'openai'
 
-const OPENAI_EMBED_MODEL = process.env.OPENAI_EMBED_MODEL || 'text-embedding-3-small'
+const OPENAI_EMBED_MODEL: OpenAI.Embeddings.EmbeddingCreateParams['model'] =
+  (process.env.OPENAI_EMBED_MODEL as OpenAI.Embeddings.EmbeddingCreateParams['model']) || 'text-embedding-3-small'
 
 export async function embedTexts(texts: string[]): Promise<number[][]> {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is not set')
   }
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  const res = await client.embeddings.create({ model: OPENAI_EMBED_MODEL as any, input: texts })
+  const res = await client.embeddings.create({ model: OPENAI_EMBED_MODEL, input: texts })
   // OpenAI returns floats as number[]
   return res.data.map((d) => d.embedding as unknown as number[])
 }

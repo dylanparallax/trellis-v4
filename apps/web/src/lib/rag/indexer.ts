@@ -132,9 +132,10 @@ async function upsertRagChunk(input: {
         metadata: input.metadata,
       },
     })
-  } catch (err: any) {
+  } catch (err) {
     // If unique violation on contentHash, update existing
-    if (String(err?.code) === 'P2002' || /Unique constraint/i.test(String(err?.message))) {
+    const error = err as { code?: string | number; message?: unknown }
+    if (String(error?.code) === 'P2002' || /Unique constraint/i.test(String(error?.message ?? ''))) {
       await prisma.ragChunk.update({
         where: { contentHash: input.contentHash },
         data: {
@@ -147,6 +148,6 @@ async function upsertRagChunk(input: {
       })
       return
     }
-    throw err
+    throw error
   }
 }
