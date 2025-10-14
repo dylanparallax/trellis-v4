@@ -1,4 +1,4 @@
-import { prisma } from '@trellis/database'
+import { prisma, Prisma } from '@trellis/database'
 import { createHash } from 'crypto'
 import { chunkText } from './chunk'
 import { embedTexts } from './embed'
@@ -63,7 +63,7 @@ async function upsertObservationChunks(observationId: string) {
       tokenCount: chunk.tokenCount,
       embedding,
       contentHash: hash,
-      metadata: { ...norm.metadata, chunkIndex: i },
+      metadata: { ...norm.metadata, chunkIndex: i } as Prisma.InputJsonValue,
     })
   }
 }
@@ -98,7 +98,7 @@ async function upsertEvaluationChunks(evaluationId: string) {
       tokenCount: chunk.tokenCount,
       embedding,
       contentHash: hash,
-      metadata: { ...norm.metadata, chunkIndex: i },
+      metadata: { ...norm.metadata, chunkIndex: i } as Prisma.InputJsonValue,
     })
   }
 }
@@ -116,7 +116,7 @@ async function upsertRagChunk(input: {
   tokenCount: number
   embedding: number[]
   contentHash: string
-  metadata: Record<string, unknown>
+  metadata: Prisma.InputJsonValue
 }) {
   try {
     await prisma.ragChunk.create({
