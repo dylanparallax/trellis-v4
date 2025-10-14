@@ -50,10 +50,7 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
               {children}
             </div>
             {/* Floating RAG Chat */}
-            {auth.role !== 'TEACHER' ? (
-              // @ts-expect-error Async boundary for client import
-              <RagChatClientWrapper />
-            ) : null}
+            {auth.role !== 'TEACHER' ? <RagChatClientWrapper /> : null}
           </main>
         </div>
       </div>
