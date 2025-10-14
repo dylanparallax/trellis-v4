@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 export const dynamic = 'force-dynamic'
 import { Button } from '@/components/ui/button'
-import { Users, Binoculars, Award, Plus, Search as SearchIcon } from 'lucide-react'
+import { Users, Binoculars, Award, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { prisma } from '@trellis/database'
 import { getAuthContext } from '@/lib/auth/server'
@@ -221,7 +221,6 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
           <QuickActions />
           {/* RAG Search inline */}
           {/* Client component */}
-          {/** @ts-expect-error Async Server Component boundary */}
           <RagSearchClientWrapper />
         </div>
       </div>
