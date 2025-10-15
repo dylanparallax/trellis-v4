@@ -46,6 +46,26 @@ function getStrengthClasses(label: string) {
   return strengthColorClasses[idx]
 }
 
+function normalizeGoals(input: unknown): { goal: string; progress?: number }[] {
+  if (Array.isArray(input)) {
+    if (input.length > 0 && typeof input[0] === 'string') {
+      return (input as string[]).filter(Boolean).map(goal => ({ goal }))
+    }
+    if (input.length > 0 && typeof input[0] === 'object' && input[0] !== null && 'goal' in (input[0] as Record<string, unknown>)) {
+      return (input as { goal: string; progress?: number }[]).filter(g => typeof g?.goal === 'string' && g.goal.trim().length > 0)
+    }
+    return []
+  }
+  if (typeof input === 'string') {
+    return input
+      .split(/\r?\n/)
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(goal => ({ goal }))
+  }
+  return []
+}
+
 export default async function TeacherDashboardPage({ params }: PageParams) {
   const { id } = await params
   const teacher = await getTeacherData(id)
@@ -64,6 +84,7 @@ export default async function TeacherDashboardPage({ params }: PageParams) {
 
   const observations = Array.isArray(teacher.observations) ? teacher.observations : []
   const evaluations = Array.isArray(teacher.evaluations) ? teacher.evaluations : []
+  const goals = normalizeGoals((teacher as unknown as { currentGoals?: unknown }).currentGoals)
 
   return (
     <div className="space-y-6">
@@ -88,6 +109,21 @@ export default async function TeacherDashboardPage({ params }: PageParams) {
           {teacher.email ? (
             <div className="pt-2">
               <InviteTeacherButton email={teacher.email} teacherId={teacher.id} />
+            </div>
+          ) : null}
+          {goals.length > 0 ? (
+            <div>
+              <h4 className="text-sm font-medium mb-1">Teacher Goals</h4>
+              <ul className="list-disc pl-5 text-sm space-y-1">
+                {goals.map((g: { goal: string; progress?: number }, i: number) => (
+                  <li key={i} className="flex items-center justify-between">
+                    <span>{g.goal}</span>
+                    {typeof g.progress === 'number' ? (
+                      <span className="text-xs text-muted-foreground">{g.progress}%</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : null}
           {teacher.strengths?.length ? (

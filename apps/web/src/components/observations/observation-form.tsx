@@ -36,6 +36,7 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
   const [artifacts, setArtifacts] = useState<File[]>([])
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [enhancedNotes, setEnhancedNotes] = useState('')
+  const [isEditingEnhanced, setIsEditingEnhanced] = useState(true)
   const [observationType, setObservationType] = useState('FORMAL')
   const [duration, setDuration] = useState('')
   const [focusAreas, setFocusAreas] = useState<string[]>([])
@@ -107,6 +108,7 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
 
       const data = await response.json()
       setEnhancedNotes(data.enhancedNotes)
+      setIsEditingEnhanced(true)
     } catch (error) {
       console.error('Enhancement failed:', error)
       setEnhancedNotes('')
@@ -440,17 +442,52 @@ export function ObservationForm({ teacherId, onSubmit }: ObservationFormProps) {
       {enhancedNotes && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-brand-orange">
-              <Sparkles className="h-5 w-5" />
-              AI Enhanced Notes
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-brand-orange">
+                <Sparkles className="h-5 w-5" />
+                AI Enhanced Notes
+              </CardTitle>
+              <div className="inline-flex items-center rounded-md border p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingEnhanced(true)}
+                  className={`px-3 py-1 text-sm rounded ${isEditingEnhanced ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                  aria-pressed={isEditingEnhanced}
+                  aria-label="Edit enhanced notes"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingEnhanced(false)}
+                  className={`px-3 py-1 text-sm rounded ${!isEditingEnhanced ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+                  aria-pressed={!isEditingEnhanced}
+                  aria-label="Preview enhanced notes"
+                >
+                  Preview
+                </button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="prose prose-sm md:prose-base max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {formatMarkdownForSpacing(enhancedNotes)}
-              </ReactMarkdown>
-            </div>
+            {isEditingEnhanced ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={enhancedNotes}
+                  onChange={(e) => setEnhancedNotes(e.target.value)}
+                  placeholder="Edit the AI-enhanced notes here before saving or submitting..."
+                  className="min-h-[200px]"
+                  aria-label="Enhanced notes editor"
+                />
+                <p className="text-xs text-muted-foreground">You can refine AI output. Use Markdown for structure.</p>
+              </div>
+            ) : (
+              <div className="prose prose-sm md:prose-base max-w-none prose-p:my-4 md:prose-p:my-5 prose-p:leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {formatMarkdownForSpacing(enhancedNotes)}
+                </ReactMarkdown>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

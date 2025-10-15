@@ -62,6 +62,7 @@ export default async function EditTeacherPage({ params }: PageParams) {
         departments: teacher.departments || [],
         strengths: teacher.strengths || [],
         growthAreas: teacher.growthAreas || [],
+        currentGoals: teacher.currentGoals || [],
       }} />
     </div>
   )

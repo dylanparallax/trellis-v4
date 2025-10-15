@@ -17,6 +17,7 @@ type Teacher = {
   departments?: string[]
   strengths?: string[]
   growthAreas?: string[]
+  currentGoals?: unknown
 }
 
 type Props = {
@@ -36,6 +37,26 @@ export default function EditTeacherClient({ teacher }: Props) {
   const [growthAreas, setGrowthAreas] = useState((teacher.growthAreas || []).join(', '))
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  function normalizeGoals(input: unknown): { goal: string; progress?: number }[] {
+    if (Array.isArray(input)) {
+      if (input.length > 0 && typeof input[0] === 'string') {
+        return (input as string[]).filter(Boolean).map(goal => ({ goal }))
+      }
+      if (input.length > 0 && typeof input[0] === 'object' && input[0] !== null && 'goal' in (input[0] as Record<string, unknown>)) {
+        return (input as { goal: string; progress?: number }[]).filter(g => typeof g?.goal === 'string' && g.goal.trim().length > 0)
+      }
+      return []
+    }
+    if (typeof input === 'string') {
+      return input
+        .split(/\r?\n/)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(goal => ({ goal }))
+    }
+    return []
+  }
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -150,6 +171,29 @@ export default function EditTeacherClient({ teacher }: Props) {
               <TagInput value={departments} onChange={setDepartments} placeholder="Type department and press Enter…" />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Teacher Goals</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {normalizeGoals(teacher.currentGoals).length === 0 ? (
+            <p className="text-sm text-muted-foreground">No goals set.</p>
+          ) : (
+            <ul className="list-disc pl-5 text-sm space-y-1">
+              {normalizeGoals(teacher.currentGoals).map((g, i) => (
+                <li key={i} className="flex items-center justify-between">
+                  <span>{g.goal}</span>
+                  {typeof g.progress === 'number' ? (
+                    <span className="text-xs text-muted-foreground">{g.progress}%</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-xs text-muted-foreground mt-2">Goals are set by the teacher from their dashboard.</p>
         </CardContent>
       </Card>
 

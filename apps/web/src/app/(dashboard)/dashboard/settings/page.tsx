@@ -296,6 +296,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/*
       <Card>
         <CardHeader>
           <CardTitle>Evaluation Framework (text)</CardTitle>
@@ -309,6 +310,7 @@ export default function SettingsPage() {
           />
         </CardContent>
       </Card>
+      */}
 
       <Card>
         <CardHeader>
