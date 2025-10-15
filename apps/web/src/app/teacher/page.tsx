@@ -1,9 +1,7 @@
 import { prisma } from '@trellis/database'
 import { getAuthContext } from '@/lib/auth/server'
 import TeacherFeedbackList from '@/components/teachers/teacher-feedback-list'
-import dynamic from 'next/dynamic'
-
-const TeacherGoalsClient = dynamic(() => import('@/components/teachers/teacher-goals-client'), { ssr: false })
+import TeacherGoalsClient from '@/components/teachers/teacher-goals-client'
 
 export default async function TeacherHomePage() {
   const auth = await getAuthContext()
