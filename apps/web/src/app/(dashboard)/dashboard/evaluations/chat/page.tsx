@@ -66,6 +66,8 @@ function EvaluationChatContent() {
   const [savedEvaluationId, setSavedEvaluationId] = useState<string>('')
   const [deliverStatus, setDeliverStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [showDeliverToast, setShowDeliverToast] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editDraft, setEditDraft] = useState('')
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -324,10 +326,47 @@ function EvaluationChatContent() {
           </div>
           {currentEvaluation && teacher && (
             <div className="mt-3 flex justify-end gap-2">
+              {!isEditing ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditing(true)
+                    setEditDraft(currentEvaluation.content)
+                  }}
+                >
+                  Edit Feedback
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      // Apply edits to current version
+                      if (!currentEvaluation) return
+                      setEvaluationVersions(prev => prev.map(v => v.id === currentEvaluation.id ? { ...v, content: editDraft } : v))
+                      setIsEditing(false)
+                    }}
+                  >
+                    Apply edits
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsEditing(false)
+                      setEditDraft('')
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              )}
               <Button
                 variant="default"
                 size="sm"
-                disabled={isSubmittingEval || submitSuccess}
+                disabled={isSubmittingEval || submitSuccess || isEditing}
                 onClick={async (event) => {
                   if (!currentEvaluation || !teacher) return
                   setIsSubmittingEval(true)
@@ -575,19 +614,53 @@ function EvaluationChatContent() {
           )}
           {/* Artifact content */}
           {currentEvaluation ? (
-            <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none flex-1 min-h-0 overflow-y-auto prose-p:leading-relaxed prose-p:mb-5 prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6 prose-li:my-1">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {formatMarkdownForSpacing(currentEvaluation.content)}
-              </ReactMarkdown>
-              <div className="sticky bottom-0 bg-white pt-3 mt-6 flex gap-2 border-t">
-                <Button variant="ghost" size="icon" onClick={copyEvaluation} aria-label="Copy Feedback">
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-                <Button variant="ghost" size="icon" onClick={downloadEvaluation} aria-label="Download Feedback">
-                  <Download className="h-4 w-4" />
-                </Button>
+            !isEditing ? (
+              <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none flex-1 min-h-0 overflow-y-auto prose-p:leading-relaxed prose-p:mb-5 prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-6 prose-ol:pl-6 prose-li:my-1">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {formatMarkdownForSpacing(currentEvaluation.content)}
+                </ReactMarkdown>
+                <div className="sticky bottom-0 bg-white pt-3 mt-6 flex gap-2 border-t">
+                  <Button variant="ghost" size="icon" onClick={copyEvaluation} aria-label="Copy Feedback">
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={downloadEvaluation} aria-label="Download Feedback">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                <Textarea
+                  value={editDraft}
+                  onChange={(e) => setEditDraft(e.target.value)}
+                  className="w-full min-h-[50vh] resize-y"
+                  placeholder="Edit the generated feedback before saving..."
+                />
+                <div className="sticky bottom-0 bg-white pt-3 mt-4 flex gap-2 border-t">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      if (!currentEvaluation) return
+                      setEvaluationVersions(prev => prev.map(v => v.id === currentEvaluation.id ? { ...v, content: editDraft } : v))
+                      setIsEditing(false)
+                    }}
+                  >
+                    Apply edits
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsEditing(false)
+                      setEditDraft('')
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )
           ) : (
             <div className="text-sm text-muted-foreground">No feedback generated yet.</div>
           )}
