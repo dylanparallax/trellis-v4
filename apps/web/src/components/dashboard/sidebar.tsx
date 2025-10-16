@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { signOut, getCurrentUser } from '@/lib/auth/supabase'
+import { signOut } from '@/lib/auth/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import { 
   Settings2,
@@ -47,20 +47,10 @@ function useCurrentUser() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const { user, error } = await getCurrentUser()
-        if (error) {
-          console.error('Error fetching user:', error)
-        } else {
-          setUser(user)
-          // optimistic photo from auth metadata (falls back to /api/me below)
-          const meta = (user?.user_metadata as { photo_url?: string; avatar_url?: string; picture?: string } | undefined)
-          const metaPhoto = meta?.photo_url || meta?.avatar_url || meta?.picture
-          if (metaPhoto) setProfilePhotoUrl(metaPhoto)
-        }
-        // Fetch DB-backed name/role
         const res = await fetch('/api/me', { cache: 'no-store' })
         if (res.ok) {
-          const data: { name?: string | null; photoUrl?: string | null; role?: 'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN' | 'TEACHER' } = await res.json()
+          const data: { name?: string | null; photoUrl?: string | null; role?: 'ADMIN' | 'EVALUATOR' | 'DISTRICT_ADMIN' | 'TEACHER'; email?: string } = await res.json()
+          setUser(data?.email ? ({ id: 'me', email: data.email } as unknown as SupabaseUser) : null)
           if (data?.name) setProfileName(data.name)
           if (data?.photoUrl) setProfilePhotoUrl(data.photoUrl)
           if (data?.role) setRole(data.role)

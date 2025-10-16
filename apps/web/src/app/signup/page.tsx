@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { Mail, Lock, User } from 'lucide-react'
-import { isSupabaseConfigured, signUpWithEmail } from '@/lib/auth/supabase'
+// Avoid importing Supabase at module scope on public route
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('')
@@ -27,6 +27,7 @@ export default function SignupPage() {
     setInfo('')
 
     try {
+      const { isSupabaseConfigured, signUpWithEmail } = await import('@/lib/auth/supabase')
       if (!isSupabaseConfigured) {
         setError('Authentication is not configured. Please contact support.')
         return

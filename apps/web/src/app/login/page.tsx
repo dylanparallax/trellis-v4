@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
-import { supabase, isSupabaseConfigured } from '@/lib/auth/supabase'
+// Note: Avoid importing Supabase at module scope to prevent pre-login initialization
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -23,6 +23,7 @@ export default function LoginPage() {
     setError('')
 
     try {
+      const { supabase, isSupabaseConfigured } = await import('@/lib/auth/supabase')
       if (!isSupabaseConfigured) {
         setError('Authentication is not configured. Please contact support.')
         return

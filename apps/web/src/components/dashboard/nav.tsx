@@ -5,7 +5,6 @@ import LoadingAnimation from '@/components/ui/loading-animation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEffect, useState } from 'react'
-import { getCurrentUser } from '@/lib/auth/supabase'
 import Link from 'next/link'
 import { navigation } from '@/components/dashboard/sidebar'
 
@@ -26,10 +25,6 @@ export function DashboardNav({ schoolName, role }: DashboardNavProps) {
     let isMounted = true
     ;(async () => {
       try {
-        const { user } = await getCurrentUser()
-        const meta = (user?.user_metadata as { schoolName?: string } | undefined)
-        if (isMounted && meta?.schoolName) setClientSchoolName(meta.schoolName)
-        // Prefer DB-backed value via API if available
         const res = await fetch('/api/me', { cache: 'no-store' })
         if (isMounted && res.ok) {
           const data: { schoolName?: string } = await res.json()
