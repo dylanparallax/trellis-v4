@@ -59,7 +59,7 @@ export async function middleware(req: NextRequest) {
           const cookieOptions = {
             path: '/',
             secure: req.nextUrl.protocol === 'https:',
-            httpOnly: true,
+            httpOnly: false,
             sameSite: 'lax' as const,
             maxAge: 60 * 60 * 24 * 7, // 7 days
             ...options,
@@ -71,7 +71,7 @@ export async function middleware(req: NextRequest) {
           const cookieOptions = {
             path: '/',
             secure: req.nextUrl.protocol === 'https:',
-            httpOnly: true,
+            httpOnly: false,
             sameSite: 'lax' as const,
             maxAge: 0,
             expires: new Date(0),

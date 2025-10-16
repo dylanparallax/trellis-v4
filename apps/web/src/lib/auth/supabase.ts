@@ -30,6 +30,49 @@ export const supabase = isBrowser
       },
     })
 
+// Client-side guard: throttle repeated refresh failures and force sign-out if stuck
+if (isBrowser) {
+  const MAX_FAILURES = 3
+  let consecutiveRefreshFailures = 0
+  let isBackoffActive = false
+
+  const backoff = async () => {
+    if (isBackoffActive) return
+    isBackoffActive = true
+    const delayMs = Math.min(30000, 1000 * 2 ** consecutiveRefreshFailures)
+    await new Promise((r) => setTimeout(r, delayMs))
+    isBackoffActive = false
+  }
+
+  // Subscribe once for the app lifecycle
+  supabase.auth.onAuthStateChange(async (event) => {
+    if (event === 'TOKEN_REFRESHED') {
+      consecutiveRefreshFailures = 0
+      return
+    }
+    if (event === 'SIGNED_OUT') {
+      consecutiveRefreshFailures = 0
+      return
+    }
+    // Some versions emit 'SIGNED_OUT' with refresh failure; also catch repeated null sessions
+    if ((event as unknown) === 'TOKEN_REFRESH_FAILED') {
+      consecutiveRefreshFailures += 1
+      await backoff()
+      if (consecutiveRefreshFailures >= MAX_FAILURES) {
+        // Hard reset to break refresh loops
+        try {
+          await supabase.auth.signOut()
+        } finally {
+          // Redirect to login to clear stuck state
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login'
+          }
+        }
+      }
+    }
+  })
+}
+
 // Auth helpers
 export const signInWithEmail = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({
