@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
   
   const router = useRouter()
 
@@ -21,6 +22,7 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    setInfo('')
 
     try {
       const { supabase, isSupabaseConfigured } = await import('@/lib/auth/supabase')
@@ -28,18 +30,56 @@ export default function LoginPage() {
         setError('Authentication is not configured. Please contact support.')
         return
       }
-      
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
-      } else if (data.session) {
-        // Ensure server httpOnly cookies are set via callback
-        await fetch('/api/auth/callback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } })
-        }).catch(() => {})
-        router.push('/dashboard')
+      // Clear any stale auth cookies to avoid bad session state
+      try {
+        document.cookie = 'sb-access-token=; Max-Age=0; path=/'
+        document.cookie = 'sb-refresh-token=; Max-Age=0; path=/'
+      } catch {}
+
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+      const isRateLimit = (err: unknown) => {
+        const msg = (err as { message?: string; status?: number } | null)?.message?.toLowerCase() || ''
+        const status = (err as { status?: number } | null)?.status
+        return status === 429 || msg.includes('rate limit') || msg.includes('too many requests') || msg.includes('over_request_rate_limit')
+      }
+
+      const MAX_ATTEMPTS = 5
+      let attempt = 0
+      let lastError: string | null = null
+      while (attempt < MAX_ATTEMPTS) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+        if (!error && data.session) {
+          // Ensure server cookies are set via callback
+          await fetch('/api/auth/callback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } })
+          }).catch(() => {})
+          // Success
+          setInfo('')
+          router.push('/dashboard')
+          return
+        }
+        if (error && isRateLimit(error)) {
+          const backoffMs = Math.min(30000, 1000 * 2 ** attempt)
+          setInfo(`Rate limited. Retrying in ${Math.round(backoffMs / 1000)}s…`)
+          await sleep(backoffMs)
+          attempt += 1
+          lastError = error.message
+          continue
+        }
+        if (error) {
+          setError(error.message)
+          return
+        }
+        break
+      }
+      if (lastError) {
+        setError(lastError)
+        return
+      }
+      if (!lastError) {
+        setError('Login failed. Try again.')
       }
     } catch {
       setError('Login failed. Check your credentials.')
@@ -105,6 +145,11 @@ export default function LoginPage() {
             {error && (
               <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
                 {error}
+              </div>
+            )}
+            {!error && info && (
+              <div className="text-sm text-blue-600 bg-blue-100 p-3 rounded-md">
+                {info}
               </div>
             )}
 
