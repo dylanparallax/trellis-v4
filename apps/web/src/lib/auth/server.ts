@@ -62,13 +62,29 @@ export async function getAuthContext(): Promise<AuthContext | null> {
     // Demo mode disabled entirely; require real auth
     
     const supabase = await getSupabaseServerClient()
-    const { data, error } = await supabase.auth.getUser()
-    
+    let { data, error } = await supabase.auth.getUser()
+
+    // Fallback: if SSR client fails, try reading the access token directly from cookies
+    if (error || !data.user?.email) {
+      try {
+        const cookieStore = await cookies()
+        const accessToken = cookieStore.get('sb-access-token')?.value
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        if (accessToken && supabaseUrl && supabaseAnonKey) {
+          const { createClient } = await import('@supabase/supabase-js')
+          const direct = createClient(supabaseUrl, supabaseAnonKey)
+          const directResult = await direct.auth.getUser(accessToken)
+          data = directResult.data as typeof data
+          error = directResult.error as typeof error
+        }
+      } catch {}
+    }
+
     if (error) {
       console.warn('Auth user error:', error.message)
       return null
     }
-    
     if (!data.user?.email) {
       console.warn('No user email found in auth data')
       return null

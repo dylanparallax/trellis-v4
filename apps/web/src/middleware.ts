@@ -97,6 +97,10 @@ export async function middleware(req: NextRequest) {
           return withSecurityHeaders(baseResponse)
         }
         console.warn('Auth session error in middleware:', error.message)
+        // If we do have auth cookies, allow request to proceed; otherwise handle as before
+        if (hasAuthCookies) {
+          return withSecurityHeaders(baseResponse)
+        }
         // Only redirect to login if we're not already on login/signup pages
         if (!req.nextUrl.pathname.startsWith('/login') && !req.nextUrl.pathname.startsWith('/signup')) {
           const response = NextResponse.redirect(new URL('/login', req.url))
@@ -113,6 +117,9 @@ export async function middleware(req: NextRequest) {
       session = sessionData
     } catch (error) {
       console.warn('Unexpected auth error in middleware:', error)
+      if (hasAuthCookies) {
+        return withSecurityHeaders(baseResponse)
+      }
       // Only redirect to login if we're not already on login/signup pages
       if (!req.nextUrl.pathname.startsWith('/login') && !req.nextUrl.pathname.startsWith('/signup')) {
         const response = NextResponse.redirect(new URL('/login', req.url))
