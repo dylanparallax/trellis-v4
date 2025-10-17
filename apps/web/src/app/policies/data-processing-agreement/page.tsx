@@ -8,9 +8,9 @@ export default function Page() {
     <article className="prose prose-slate dark:prose-invert max-w-none">
       <h1>Data Processing Agreement</h1>
       <p>
-        This Data Processing Agreement ("Agreement") is entered into as of [EFFECTIVE_DATE] between Trellis LLC ("Provider")
-        and [LEA_NAME] ("LEA"), collectively the "Parties". This Agreement follows the structure and substantive protections of
-        the California Student Data Privacy Agreement (CSDPA/NDPA style) and applies to Provider's educator observation and evaluation platform.
+        This Data Processing Agreement (&quot;Agreement&quot;) is entered into as of [EFFECTIVE_DATE] between Trellis LLC (&quot;Provider&quot;)
+        and [LEA_NAME] (&quot;LEA&quot;), collectively the &quot;Parties&quot;. This Agreement follows the structure and substantive protections of
+        the California Student Data Privacy Agreement (CSDPA/NDPA style) and applies to Provider&apos;s educator observation and evaluation platform.
       </p>
 
       <h2>1. Definitions</h2>

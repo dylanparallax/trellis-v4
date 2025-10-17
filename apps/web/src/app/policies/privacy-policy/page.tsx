@@ -7,11 +7,11 @@ export default function Page() {
   return (
     <article className="prose prose-slate dark:prose-invert max-w-none">
       <h1>Privacy Policy (SOPIPA)</h1>
-      <p>Effective as of [EFFECTIVE_DATE]. This Privacy Policy describes how Trellis LLC ("Trellis", "we", "us") collects, uses, discloses, and safeguards information in connection with our educator observation and evaluation platform (the "Service"). This policy is aligned with California’s Student Online Personal Information Protection Act (SOPIPA) for K–12 contexts. If you are a Local Education Agency (LEA), district, or school, this policy should be read together with any Data Processing Agreement (DPA) in place.</p>
+      <p>Effective as of [EFFECTIVE_DATE]. This Privacy Policy describes how Trellis LLC (&quot;Trellis&quot;, &quot;we&quot;, &quot;us&quot;) collects, uses, discloses, and safeguards information in connection with our educator observation and evaluation platform (the &quot;Service&quot;). This policy is aligned with California&apos;s Student Online Personal Information Protection Act (SOPIPA) for K–12 contexts. If you are a Local Education Agency (LEA), district, or school, this policy should be read together with any Data Processing Agreement (DPA) in place.</p>
 
       <h2>Scope and Roles</h2>
       <ul>
-        <li>We operate as an "operator" under SOPIPA for LEAs using the Service.</li>
+        <li>We operate as an &quot;operator&quot; under SOPIPA for LEAs using the Service.</li>
         <li>We do not build profiles for targeted advertising and do not sell personal information.</li>
         <li>We provide product functionality to staff users (e.g., evaluators, administrators, teachers). The Service is not directed to students.</li>
       </ul>
