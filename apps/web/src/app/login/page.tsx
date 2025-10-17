@@ -25,62 +25,23 @@ export default function LoginPage() {
     setInfo('')
 
     try {
-      const { supabase, isSupabaseConfigured } = await import('@/lib/auth/supabase')
+      const { isSupabaseConfigured } = await import('@/lib/auth/supabase')
       if (!isSupabaseConfigured) {
         setError('Authentication is not configured. Please contact support.')
         return
       }
-      // Clear any stale auth cookies to avoid bad session state
-      try {
-        document.cookie = 'sb-access-token=; Max-Age=0; path=/'
-        document.cookie = 'sb-refresh-token=; Max-Age=0; path=/'
-      } catch {}
-
-      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
-      const isRateLimit = (err: unknown) => {
-        const msg = (err as { message?: string; status?: number } | null)?.message?.toLowerCase() || ''
-        const status = (err as { status?: number } | null)?.status
-        return status === 429 || msg.includes('rate limit') || msg.includes('too many requests') || msg.includes('over_request_rate_limit')
-      }
-
-      const MAX_ATTEMPTS = 5
-      let attempt = 0
-      let lastError: string | null = null
-      while (attempt < MAX_ATTEMPTS) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-        if (!error && data.session) {
-          // Ensure server cookies are set via callback
-          await fetch('/api/auth/callback', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session: { access_token: data.session.access_token, refresh_token: data.session.refresh_token } })
-          }).catch(() => {})
-          // Success
-          setInfo('')
-          router.push('/dashboard')
-          return
-        }
-        if (error && isRateLimit(error)) {
-          const backoffMs = Math.min(30000, 1000 * 2 ** attempt)
-          setInfo(`Rate limited. Retrying in ${Math.round(backoffMs / 1000)}s…`)
-          await sleep(backoffMs)
-          attempt += 1
-          lastError = error.message
-          continue
-        }
-        if (error) {
-          setError(error.message)
-          return
-        }
-        break
-      }
-      if (lastError) {
-        setError(lastError)
+      const res = await fetch('/api/auth/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        setError(data?.error || 'Login failed. Try again.')
         return
       }
-      if (!lastError) {
-        setError('Login failed. Try again.')
-      }
+      setInfo('')
+      router.push('/dashboard')
     } catch {
       setError('Login failed. Check your credentials.')
     } finally {

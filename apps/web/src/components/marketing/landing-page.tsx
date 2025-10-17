@@ -519,6 +519,7 @@ export function LandingPage() {
               <h3 className="font-semibold mb-4">Legal</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/security" className="hover:text-foreground">Security</Link></li>
+                <li><Link href="/policies" className="hover:text-foreground">Policies</Link></li>
                 <li><a href="#" className="hover:text-foreground">Privacy Policy</a></li>
                 <li><a href="#" className="hover:text-foreground">Terms of Service</a></li>
                 <li><a href="mailto:josh@gettrellis.app" className="hover:text-foreground">Contact</a></li>

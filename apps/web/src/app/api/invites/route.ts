@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth/server'
 import { z } from 'zod'
+import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
@@ -18,14 +19,35 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, teacherId } = schema.parse(body)
 
-    const enableInvites = process.env.ENABLE_INVITES === 'true'
-    if (!enableInvites) {
-      return NextResponse.json({ ok: true, invited: false, message: 'Invites disabled; would invite', email, teacherId: teacherId || null })
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json({ error: 'Invites not configured (missing Supabase service role key or URL)' }, { status: 503 })
     }
 
-    // Intentionally do not send emails or create users in this environment.
-    // Placeholder for future integration with Supabase Admin API.
-    return NextResponse.json({ ok: true, invited: true, email, teacherId: teacherId || null })
+    const admin = createClient(supabaseUrl, serviceRoleKey)
+
+    // Send an invitation email via Supabase Admin API
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
+      data: {
+        teacherId: teacherId || null,
+        invitedByUserId: auth.userId,
+        schoolId: auth.schoolId,
+        role: 'TEACHER',
+      },
+      redirectTo: undefined, // use default confirmation redirect
+    })
+
+    if (error) {
+      // Handle idempotent cases gracefully
+      const alreadyInvited = /already exists|already registered|User already registered/i.test(error.message)
+      if (alreadyInvited) {
+        return NextResponse.json({ ok: true, invited: false, message: 'User already invited or registered' })
+      }
+      return NextResponse.json({ error: 'Failed to send invite', details: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ ok: true, invited: true, userId: data?.user?.id || null })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation failed', details: error.issues }, { status: 400 })

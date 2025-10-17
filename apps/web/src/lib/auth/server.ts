@@ -25,7 +25,7 @@ export async function getSupabaseServerClient() {
           const cookieOptions = {
             path: '/',
             secure: process.env.NODE_ENV === 'production',
-            httpOnly: false,
+            httpOnly: true,
             sameSite: 'lax' as const,
             maxAge: 60 * 60 * 24 * 7, // 7 days
             ...options,
@@ -40,7 +40,7 @@ export async function getSupabaseServerClient() {
           const cookieOptions = {
             path: '/',
             secure: process.env.NODE_ENV === 'production',
-            httpOnly: false,
+            httpOnly: true,
             sameSite: 'lax' as const,
             maxAge: 0,
             expires: new Date(0),
@@ -100,19 +100,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
           }),
         ])
 
-        // Prefer high-privilege staff roles first (ADMIN/DISTRICT_ADMIN)
-        if (prismaUser && ['ADMIN', 'DISTRICT_ADMIN'].includes(String(prismaUser.role))) {
-          return {
-            userId: prismaUser.id,
-            email: prismaUser.email ?? userEmail,
-            name: prismaUser.name ?? composedName,
-            role: prismaUser.role,
-            schoolId: prismaUser.schoolId,
-            schoolName: prismaUser.school?.name ?? userMetadata?.schoolName,
-          }
-        }
-
-        // Prefer teacher over evaluator if both exist (common when a teacher was initially created as evaluator)
+        // Always prefer Teacher role if a Teacher record exists
         if (prismaTeacher) {
           return {
             userId: prismaTeacher.id,
@@ -121,6 +109,18 @@ export async function getAuthContext(): Promise<AuthContext | null> {
             role: 'TEACHER',
             schoolId: prismaTeacher.schoolId,
             schoolName: prismaTeacher.school?.name ?? userMetadata?.schoolName,
+          }
+        }
+
+        // Then prefer high-privilege staff roles (ADMIN/DISTRICT_ADMIN)
+        if (prismaUser && ['ADMIN', 'DISTRICT_ADMIN'].includes(String(prismaUser.role))) {
+          return {
+            userId: prismaUser.id,
+            email: prismaUser.email ?? userEmail,
+            name: prismaUser.name ?? composedName,
+            role: prismaUser.role,
+            schoolId: prismaUser.schoolId,
+            schoolName: prismaUser.school?.name ?? userMetadata?.schoolName,
           }
         }
 
@@ -148,29 +148,7 @@ export async function getAuthContext(): Promise<AuthContext | null> {
         const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
         if (supabaseUrl && supabaseAnonKey) {
           const client = createClient(supabaseUrl, supabaseAnonKey)
-          // Look up staff user first
-          const { data: dbUser } = await client
-            .from('User')
-            .select('name, role, schoolId, School(name)')
-            .eq('email', userEmail)
-            .limit(1)
-            .maybeSingle()
-          if (dbUser && ['ADMIN','DISTRICT_ADMIN'].includes(dbUser.role)) {
-            const schoolRelation = (dbUser as { School?: { name?: string } | { name?: string }[] }).School
-            const relatedSchoolName = Array.isArray(schoolRelation)
-              ? (schoolRelation as { name?: string }[])[0]?.name
-              : (schoolRelation as { name?: string } | undefined)?.name
-            return {
-              userId: user.id,
-              email: userEmail,
-              name: dbUser.name ?? composedName,
-              role: dbUser.role as AuthContext['role'],
-              schoolId: dbUser.schoolId ?? '',
-              schoolName: relatedSchoolName ?? userMetadata?.schoolName,
-            }
-          }
-
-          // Prefer Teacher over Evaluator when both exist
+          // Prefer Teacher over any staff role when a Teacher record exists
           const { data: teacher } = await client
             .from('Teacher')
             .select('id, email, schoolId, School(name)')
@@ -188,6 +166,28 @@ export async function getAuthContext(): Promise<AuthContext | null> {
               name: composedName,
               role: 'TEACHER',
               schoolId: teacher.schoolId ?? '',
+              schoolName: relatedSchoolName ?? userMetadata?.schoolName,
+            }
+          }
+
+          // Then look up staff user
+          const { data: dbUser } = await client
+            .from('User')
+            .select('name, role, schoolId, School(name)')
+            .eq('email', userEmail)
+            .limit(1)
+            .maybeSingle()
+          if (dbUser && ['ADMIN','DISTRICT_ADMIN'].includes(dbUser.role)) {
+            const schoolRelation = (dbUser as { School?: { name?: string } | { name?: string }[] }).School
+            const relatedSchoolName = Array.isArray(schoolRelation)
+              ? (schoolRelation as { name?: string }[])[0]?.name
+              : (schoolRelation as { name?: string } | undefined)?.name
+            return {
+              userId: user.id,
+              email: userEmail,
+              name: dbUser.name ?? composedName,
+              role: dbUser.role as AuthContext['role'],
+              schoolId: dbUser.schoolId ?? '',
               schoolName: relatedSchoolName ?? userMetadata?.schoolName,
             }
           }
