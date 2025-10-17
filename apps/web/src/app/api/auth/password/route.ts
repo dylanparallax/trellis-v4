@@ -34,7 +34,11 @@ export async function POST(req: NextRequest) {
         const refresh_token = data.session.refresh_token
         const response = NextResponse.json({ ok: true })
         const secure = req.nextUrl.protocol === 'https:'
-        const cookieBase = { path: '/', httpOnly: true, sameSite: 'lax' as const, secure }
+        const host = req.nextUrl.hostname
+        const isWww = host.startsWith('www.')
+        const parentDomain = isWww ? host.slice(4) : host
+        const domain = parentDomain.split('.').length >= 2 ? `.${parentDomain}` : undefined
+        const cookieBase = { path: '/', httpOnly: true, sameSite: 'lax' as const, secure, ...(domain ? { domain } : {}) }
         response.cookies.set({ name: 'sb-access-token', value: access_token, ...cookieBase })
         response.cookies.set({ name: 'sb-refresh-token', value: refresh_token, ...cookieBase })
         return response
