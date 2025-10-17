@@ -84,6 +84,9 @@ export async function middleware(req: NextRequest) {
 
     // Wrap the session check in try-catch to handle any auth errors gracefully
     let session = null
+    const hasAccessTokenCookie = Boolean(req.cookies.get('sb-access-token')?.value)
+    const hasRefreshTokenCookie = Boolean(req.cookies.get('sb-refresh-token')?.value)
+    const hasAuthCookies = hasAccessTokenCookie && hasRefreshTokenCookie
     try {
       const { data: { session: sessionData }, error } = await supabase.auth.getSession()
       if (error) {
@@ -124,11 +127,11 @@ export async function middleware(req: NextRequest) {
       return withSecurityHeaders(response)
     }
 
-    if (!session && (req.nextUrl.pathname.startsWith('/dashboard') || req.nextUrl.pathname.startsWith('/teacher'))) {
+    if (!session && !hasAuthCookies && (req.nextUrl.pathname.startsWith('/dashboard') || req.nextUrl.pathname.startsWith('/teacher'))) {
       return withSecurityHeaders(NextResponse.redirect(new URL('/login', req.url)))
     }
 
-    if (session && (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup'))) {
+    if ((session || hasAuthCookies) && (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup'))) {
       return withSecurityHeaders(NextResponse.redirect(new URL('/dashboard', req.url)))
     }
 
