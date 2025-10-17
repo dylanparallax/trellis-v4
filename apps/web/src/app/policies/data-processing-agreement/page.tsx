@@ -17,7 +17,7 @@ export default function Page() {
       <ul>
         <li><strong>Student Data</strong>: information relating to a K–12 student that is provided by LEA users or collected on behalf of LEA.</li>
         <li><strong>Covered Information</strong>: information subject to SOPIPA and applicable student privacy laws.</li>
-        <li><strong>Services</strong>: Provider's web-based platform used by LEA staff for observations, evaluations, and related workflows.</li>
+        <li><strong>Services</strong>: Provider&apos;s web-based platform used by LEA staff for observations, evaluations, and related workflows.</li>
       </ul>
 
       <h2>2. Roles and Scope</h2>
