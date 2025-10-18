@@ -20,7 +20,7 @@ type Observation = {
 
 export class AIEnhancementService {
   private static readonly GROQ_MODEL = 'llama-3.1-8b-instant'
-  private static readonly ANTHROPIC_MODEL = 'claude-sonnet-4-5-20250929'
+  private static readonly ANTHROPIC_MODEL = 'claude-haiku-4-5-20250929'
   private static readonly OPENAI_MODEL = 'gpt-4-turbo'
   
   // OpenAI-compatible provider for Groq
@@ -39,25 +39,25 @@ export class AIEnhancementService {
       previousObservations
     )
     
-    // Prefer Groq for enhancement (fast/cost-effective)
+    // Prefer Anthropic Claude Haiku 4.5 for enhancement
     try {
       const { text } = await generateText({
-        model: AIEnhancementService.groq(AIEnhancementService.GROQ_MODEL),
+        model: anthropic(AIEnhancementService.ANTHROPIC_MODEL),
         prompt,
         temperature: 0.7,
       })
       return text
-    } catch (groqError) {
-      console.error('Groq enhancement failed, falling back to Claude:', groqError)
+    } catch (anthropicError) {
+      console.error('Claude (Haiku 4.5) enhancement failed, falling back to Groq:', anthropicError)
       try {
         const { text } = await generateText({
-          model: anthropic(AIEnhancementService.ANTHROPIC_MODEL),
+          model: AIEnhancementService.groq(AIEnhancementService.GROQ_MODEL),
           prompt,
           temperature: 0.7,
         })
         return text
-      } catch (anthropicError) {
-        console.error('Claude enhancement failed, falling back to GPT:', anthropicError)
+      } catch (groqError) {
+        console.error('Groq enhancement failed, falling back to GPT:', groqError)
         const { text } = await generateText({
           model: openai(AIEnhancementService.OPENAI_MODEL),
           prompt,

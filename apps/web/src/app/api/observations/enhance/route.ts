@@ -68,28 +68,28 @@ export async function POST(request: NextRequest) {
 
     const prompt = buildEnhancementPrompt(rawNotes, teacher, observationType, focusAreas)
 
-    // Prefer Groq first
-    const groq = createOpenAI({ baseURL: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY })
+    // Prefer Claude Haiku 4.5 first
     try {
       const { text } = await generateText({
-        model: groq('llama-3.1-8b-instant'),
+        model: anthropic('claude-haiku-4-5-20250929'),
         prompt,
         temperature: 0.7,
       })
-      console.log('Groq enhancement successful!')
+      console.log('Claude (Haiku 4.5) enhancement successful!')
       return NextResponse.json({ enhancedNotes: text })
-    } catch (groqError) {
-      console.error('Groq enhancement failed, falling back to Claude:', groqError)
+    } catch (anthropicError) {
+      console.error('Claude (Haiku 4.5) enhancement failed, falling back to Groq:', anthropicError)
       try {
+        const groq = createOpenAI({ baseURL: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY })
         const { text } = await generateText({
-          model: anthropic('claude-sonnet-4-5-20250929'),
+          model: groq('llama-3.1-8b-instant'),
           prompt,
           temperature: 0.7,
         })
-        console.log('Claude enhancement fallback successful!')
+        console.log('Groq enhancement fallback successful!')
         return NextResponse.json({ enhancedNotes: text })
-      } catch (anthropicError) {
-        console.error('Claude enhancement failed, falling back to GPT:', anthropicError)
+      } catch (groqError) {
+        console.error('Groq enhancement failed, falling back to GPT:', groqError)
         try {
           const { text } = await generateText({
             model: openai('gpt-4-turbo'),
