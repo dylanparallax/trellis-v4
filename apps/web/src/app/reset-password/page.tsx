@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,22 +10,11 @@ import { supabase, isSupabaseConfigured } from '@/lib/auth/supabase'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // If Supabase sent a session via URL (type=recovery), we should have auth cookies via middleware callback
-  useEffect(() => {
-    // In some setups Supabase redirects with access_token in hash; this app relies on the auth callback route
-    // Nothing needed here beyond existence check for UX
-    const type = searchParams.get('type')
-    if (type && type !== 'recovery') {
-      // Not a recovery flow; ignore
-    }
-  }, [searchParams])
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
