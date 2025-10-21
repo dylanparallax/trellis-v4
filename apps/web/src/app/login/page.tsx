@@ -128,6 +128,9 @@ export default function LoginPage() {
             <a href="/signup" className="underline">Create one</a>
           </div>
         </CardContent>
+        <div className="px-6 pb-6 text-center text-sm">
+          <a href="/forgot-password" className="underline text-muted-foreground">Forgot your password?</a>
+        </div>
       </Card>
     </div>
   )

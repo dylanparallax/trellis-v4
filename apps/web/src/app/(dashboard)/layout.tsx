@@ -49,8 +49,6 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
             <div className="max-w-7xl mx-auto px-0 sm:px-2">
               {children}
             </div>
-            {/* Floating RAG Chat */}
-            {auth.role !== 'TEACHER' ? <RagChatClientWrapper /> : null}
           </main>
         </div>
       </div>
@@ -61,8 +59,3 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
     redirect('/login')
   }
 } 
-
-async function RagChatClientWrapper() {
-  const RagChatWidget = (await import('@/components/rag/ChatWidget')).RagChatWidget
-  return <RagChatWidget />
-}
